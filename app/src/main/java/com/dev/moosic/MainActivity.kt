@@ -1,4 +1,4 @@
-package com.example.moosic
+package com.dev.moosic
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
