@@ -3,6 +3,7 @@ package com.dev.moosic
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import com.dev.moosic.Track.Factory.fromListItem
 import com.spotify.android.appremote.api.ConnectionParams
 import com.spotify.android.appremote.api.Connector.ConnectionListener
 import com.spotify.android.appremote.api.ContentApi
@@ -12,7 +13,7 @@ import com.spotify.protocol.client.CallResult
 import com.spotify.protocol.types.ListItem
 import com.spotify.protocol.types.ListItems
 import com.spotify.protocol.types.PlayerState
-import com.spotify.protocol.types.Track
+import com.dev.moosic.Track
 
 class MainActivity : AppCompatActivity() {
     val TAG = "MainActivity"
@@ -22,7 +23,7 @@ class MainActivity : AppCompatActivity() {
     val REDIRECT_URI = "http://localhost:8080"
     var mSpotifyAppRemote : SpotifyAppRemote? = null
 
-    var reccomendedTracks : ArrayList<ListItem> =ArrayList()
+    var reccomendedTracks : ArrayList<Track> =ArrayList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,7 +84,8 @@ class MainActivity : AppCompatActivity() {
 //        if (userApi != null){
 //            // test
 //        }
-
+        
+        // this only contains playlists...
         val contentApi = mSpotifyAppRemote?.getContentApi()
         if (contentApi != null){
             var reccomended = contentApi.getRecommendedContentItems(ContentApi.ContentType.DEFAULT)
@@ -92,17 +94,52 @@ class MainActivity : AppCompatActivity() {
                 if (it != null){
                     Log.d(TAG, it.toString())
                 }
-                it.items.map{ addToReccomendedSongs(it) }
+
+                for (item in it.items){
+                    if (item.title.contains("Made For")){
+                        // pull its songs
+                        val mix1 = item
+                        addToPlaylist(mix1)
+                        break
+                    }
+                }
+
+//                Log.d(TAG, it.items.get(2).title + it.items.get(2).hasChildren)
+//                it.items.map{ addToReccomendedSongs(it) }
+            }
+        }
+    }
+
+    private fun addToPlaylist(mix1: ListItem) {
+        val children = mSpotifyAppRemote?.contentApi?.getChildrenOfItem(mix1, 1, 0)
+        if (children != null){
+            children.setResultCallback {
+                for (item in it.items){
+                    Log.d(TAG, item.hasChildren.toString())
+                    val track = Track.fromListItem(item)
+                    if (track != null){
+                        reccomendedTracks.add(track)
+                    }
+                }
+                // now send...
+                for (item in reccomendedTracks){
+                    item.mTitle?.let { it1 -> Log.d(TAG, it1 + " " + item.mImgUri) }
+                }
             }
         }
     }
 
     private fun addToReccomendedSongs(item: ListItem) {
-        if (reccomendedTracks.size > 20){
+        if (reccomendedTracks.size >= 20){
+            // send to fragment
+            for (track in reccomendedTracks){
+                Log.d(TAG, track.mTitle + " by " + track.mImgUri)
+            }
             return
         }
         if (!item.hasChildren){
-            reccomendedTracks.add(item)
+            val track = Track.fromListItem(item)
+            if (track != null) reccomendedTracks.add(track)
         }
         val children = mSpotifyAppRemote?.contentApi?.getChildrenOfItem(item, CHILDREN_LIMIT, 0)
         if (children != null) {
@@ -112,8 +149,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-//        Log.d(TAG, reccomendedTracks.size.toString())
-        // recursively?
+        Log.d(TAG, reccomendedTracks.size.toString()) // recursively?
     }
 
     override fun onStop() {

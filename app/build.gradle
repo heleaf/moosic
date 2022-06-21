@@ -49,4 +49,8 @@ dependencies {
 //    implementation project(':spotify-app-remote')
     implementation "com.google.code.gson:gson:2.8.5"
 
+    // parceler
+    implementation 'org.parceler:parceler-api:1.1.12'
+    annotationProcessor 'org.parceler:parceler:1.1.12'
+
 }
