@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity() {
 
 // Most (but not all) of the Spotify Web API endpoints require authorisation.
 // If you know you'll only use the ones that don't require authorisation you can skip this step
-        val token = getIntent().getStringExtra("accessToken")
+        val token = getIntent().getExtras()?.getString("accessToken")
         Log.d(TAG, "token: " + token)
         api.setAccessToken(token)
 

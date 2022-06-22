@@ -10,15 +10,16 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.parse.LogInCallback
 import com.parse.ParseUser
-import com.spotify.sdk.android.auth.AccountsQueryParameters.CLIENT_ID
+//import com.spotify.sdk.android.auth.AccountsQueryParameters.CLIENT_ID
 import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationRequest
 import com.spotify.sdk.android.auth.AuthorizationResponse
 import com.spotify.sdk.android.auth.LoginActivity
 import org.parceler.Parcels
+import java.lang.Exception
 
 class LoginActivity : AppCompatActivity() {
-//    val CLIENT_ID = "7b7fed9bf37945818d20992b055ac63b"
+    val CLIENT_ID = "7b7fed9bf37945818d20992b055ac63b"
     val TAG = "LoginActivity"
     val REDIRECT_URI = "http://localhost:8080"
     private val REQUEST_CODE = 1337
@@ -62,6 +63,20 @@ class LoginActivity : AppCompatActivity() {
 
     }
 
+    override fun onStart() {
+        super.onStart()
+        val builder: AuthorizationRequest.Builder = AuthorizationRequest.Builder(
+            CLIENT_ID,
+            AuthorizationResponse.Type.TOKEN,
+            REDIRECT_URI
+        )
+
+        builder.setScopes(arrayOf("streaming"))
+        val request: AuthorizationRequest = builder.build()
+
+        AuthorizationClient.openLoginActivity(this, REQUEST_CODE, request)
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         // Check if result comes from the correct activity
@@ -70,10 +85,16 @@ class LoginActivity : AppCompatActivity() {
             when (response.type) {
                 AuthorizationResponse.Type.TOKEN -> {
                     Log.d(TAG, "token: " + response.accessToken)
+                    accessToken = response.accessToken
                 }
                 AuthorizationResponse.Type.ERROR -> {Log.d(TAG, "error: " + response.error)}
                 else -> { Log.d(TAG, response.type.toString()) }
             }
+        }
+        try {
+            Log.d(TAG, "hi " + data!!.getBundleExtra("response").toString())
+        } catch (e : Exception){
+            Log.d(TAG, "i want die " + e.message)
         }
     }
 
@@ -88,19 +109,10 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun goMainActivity() {
-        val builder: AuthorizationRequest.Builder = AuthorizationRequest.Builder(
-            CLIENT_ID,
-            AuthorizationResponse.Type.TOKEN,
-            REDIRECT_URI
-        )
-
-        builder.setScopes(arrayOf("streaming"))
-        val request: AuthorizationRequest = builder.build()
-
-        AuthorizationClient.openLoginActivity(this, REQUEST_CODE, request)
-
         val intent = Intent(this, MainActivity::class.java)
         intent.putExtra("accessToken", accessToken)
+        Log.d(TAG, accessToken + " login ")
+
         startActivity(intent)
     }
 
