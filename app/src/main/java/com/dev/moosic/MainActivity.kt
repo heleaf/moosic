@@ -3,17 +3,16 @@ package com.dev.moosic
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import com.dev.moosic.Track.Factory.fromListItem
-import com.spotify.android.appremote.api.ConnectionParams
-import com.spotify.android.appremote.api.Connector.ConnectionListener
 import com.spotify.android.appremote.api.ContentApi
 import com.spotify.android.appremote.api.SpotifyAppRemote
-import com.spotify.android.appremote.api.UserApi
-import com.spotify.protocol.client.CallResult
+
 import com.spotify.protocol.types.ListItem
-import com.spotify.protocol.types.ListItems
-import com.spotify.protocol.types.PlayerState
-import com.dev.moosic.Track
+import kaaes.spotify.webapi.android.SpotifyApi
+import kaaes.spotify.webapi.android.models.Album
+import retrofit.Callback
+import retrofit.RetrofitError
+import retrofit.client.Response
+
 
 class MainActivity : AppCompatActivity() {
     val TAG = "MainActivity"
@@ -32,6 +31,33 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
+
+        val api = SpotifyApi()
+
+// Most (but not all) of the Spotify Web API endpoints require authorisation.
+// If you know you'll only use the ones that don't require authorisation you can skip this step
+
+// Most (but not all) of the Spotify Web API endpoints require authorisation.
+// If you know you'll only use the ones that don't require authorisation you can skip this step
+        val token = getIntent().getStringExtra("accessToken")
+        Log.d(TAG, "token: " + token)
+        api.setAccessToken(token)
+
+        val spotify = api.service
+
+        spotify.getAlbum("2dIGnmEIy1WZIcZCFSj6i8", object : Callback< Album?> {
+            override fun success(album: Album?, response: Response?) {
+                if (album != null) {
+                    Log.d("Album success", album.name)
+                }
+            }
+            override fun failure(error: RetrofitError) {
+                Log.d("Album failure", error.toString())
+            }
+        })
+
+
+        /*
         if (mSpotifyAppRemote != null) SpotifyAppRemote.disconnect(mSpotifyAppRemote);
         // Set the connection parameters
         val connectionParams = ConnectionParams.Builder(CLIENT_ID)
@@ -63,6 +89,8 @@ class MainActivity : AppCompatActivity() {
                 }
             })
 
+
+         */
     }
 
     private fun connected() {
@@ -154,7 +182,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        SpotifyAppRemote.disconnect(mSpotifyAppRemote);
-        mSpotifyAppRemote = null
+//        SpotifyAppRemote.disconnect(mSpotifyAppRemote);
+//        mSpotifyAppRemote = null
     }
 }
