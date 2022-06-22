@@ -56,4 +56,6 @@ dependencies {
     implementation("com.android.support.test:runner:0.2")
 
     implementation 'com.spotify.android:auth:1.2.5' // Maven dependency
+
+    implementation 'com.facebook.fresco:fresco:2.6.0'
 }

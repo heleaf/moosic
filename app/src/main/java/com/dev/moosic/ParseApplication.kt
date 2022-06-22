@@ -1,6 +1,7 @@
 package com.dev.moosic
 
 import android.app.Application
+import com.facebook.drawee.backends.pipeline.Fresco
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 
@@ -25,6 +26,8 @@ class ParseApplication : Application() {
                 .clientKey("VQmtewq3fK5NTZm5iBFwTKEtxp2NXjZL69BeV7CX") // should correspond to Client key env variable
                 .server("https://parseapi.back4app.com").build()
         )
+
+        Fresco.initialize(this);
 
     }
 }

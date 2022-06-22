@@ -71,9 +71,8 @@ class LoginActivity : AppCompatActivity() {
             REDIRECT_URI
         )
 
-        builder.setScopes(arrayOf("streaming"))
+        builder.setScopes(arrayOf("streaming", "user-top-read"))
         val request: AuthorizationRequest = builder.build()
-
         AuthorizationClient.openLoginActivity(this, REQUEST_CODE, request)
     }
 
@@ -91,11 +90,11 @@ class LoginActivity : AppCompatActivity() {
                 else -> { Log.d(TAG, response.type.toString()) }
             }
         }
-        try {
-            Log.d(TAG, "hi " + data!!.getBundleExtra("response").toString())
-        } catch (e : Exception){
-            Log.d(TAG, "i want die " + e.message)
-        }
+//        try {
+//            Log.d(TAG, "hi " + data!!.getBundleExtra("response").toString())
+//        } catch (e : Exception){
+//            Log.d(TAG, "i want die " + e.message)
+//        }
     }
 
     private fun logInUser(usernameText: String, passwordText: String) {
@@ -112,7 +111,6 @@ class LoginActivity : AppCompatActivity() {
         val intent = Intent(this, MainActivity::class.java)
         intent.putExtra("accessToken", accessToken)
         Log.d(TAG, accessToken + " login ")
-
         startActivity(intent)
     }
 
