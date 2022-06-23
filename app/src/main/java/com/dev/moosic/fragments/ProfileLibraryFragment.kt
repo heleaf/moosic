@@ -1,12 +1,17 @@
 package com.dev.moosic.fragments
 
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.MainActivity
 import com.dev.moosic.R
+import com.dev.moosic.adapters.TopTrackAdapter
 import kaaes.spotify.webapi.android.models.PlaylistTrack
 import org.parceler.Parcels
 
@@ -23,10 +28,15 @@ private const val ARG_PARAM3 = "userPlaylistId"
  */
 class ProfileLibraryFragment(controller : MainActivity.MainActivityController) : Fragment() {
     // TODO: Rename and change types of parameters
+    val TAG = "ProfileLibraryFragment"
+
     private var playlistTracks: ArrayList<PlaylistTrack> = ArrayList()
     private var currentUserId: String? = null
     private var userPlaylistId: String? = null
     private var mainActivityController = controller
+
+    var rvPlaylistTracks : RecyclerView? = null
+    var adapter : TopTrackAdapter? = null // TODO: switch to a different track adapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,8 +64,33 @@ class ProfileLibraryFragment(controller : MainActivity.MainActivityController) :
                 arguments = Bundle().apply {
                     putParcelable(ARG_PARAM1, Parcels.wrap(playlistTracks))
                     putString(ARG_PARAM2, userId)
-                    putString(ARG_PARAM2, playlistId)
+                    putString(ARG_PARAM3, playlistId)
                 }
             }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        // Hide for now
+        val title : TextView = view.findViewById(R.id.playlistTitle)
+        val author : TextView = view.findViewById(R.id.playlistAuthor)
+        val descrip : TextView = view.findViewById(R.id.playlistDescription)
+        listOf(title, author, descrip).map{ tv -> tv.visibility = View.GONE }
+
+        rvPlaylistTracks = view.findViewById(R.id.rvPlaylistTracks)
+        Log.d(TAG, "curent user id: " + currentUserId)
+        Log.d(TAG, "user playlist id: " + userPlaylistId)
+        adapter = TopTrackAdapter(view.context,
+            playlistTracks.map{ playlistTrack -> playlistTrack.track },
+            currentUserId!!, userPlaylistId!!, mainActivityController)
+
+        // one of these things is null....?
+
+        rvPlaylistTracks?.adapter = adapter
+
+        val linearLayoutManager = LinearLayoutManager(context)
+        rvPlaylistTracks?.setLayoutManager(linearLayoutManager)
+
     }
 }
