@@ -20,14 +20,17 @@ import retrofit.Callback
 import retrofit.RetrofitError
 import retrofit.client.Response
 import java.lang.Exception
+import kotlin.contracts.contract
 
-class TopTrackAdapter(context : Context, tracks : List<Track>, userId : String, playlistId : String)
+class TopTrackAdapter(context : Context, tracks : List<Track>, userId : String, playlistId : String,
+controller : MainActivity.MainActivityController)
     : RecyclerView.Adapter<TopTrackAdapter.ViewHolder>() {
     val TAG = "TopTrackAdapter"
     var mContext : Context? = null
     var mTracks : List<Track> = ArrayList()
     var mUserId : String? = null
     var mPlaylistId : String? = null
+    val mainActivityController : MainActivity.MainActivityController = controller
 
     var onAddToPlaylistClickListener : OnAddToPlaylistClickListener? = null
 
@@ -40,7 +43,7 @@ class TopTrackAdapter(context : Context, tracks : List<Track>, userId : String, 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TopTrackAdapter.ViewHolder {
         val view = LayoutInflater.from(this.mContext).inflate(R.layout.top_track_item, parent, false)
-        return ViewHolder(view, this.mUserId!!, this.mPlaylistId!!)
+        return ViewHolder(view, this.mUserId!!, this.mPlaylistId!!, mainActivityController)
     }
 
     override fun onBindViewHolder(holder: TopTrackAdapter.ViewHolder, position: Int) {
@@ -87,7 +90,7 @@ class TopTrackAdapter(context : Context, tracks : List<Track>, userId : String, 
 
 
 
-    class ViewHolder(itemView: View, userId: String, playlistId: String) : RecyclerView.ViewHolder(itemView) {
+    class ViewHolder(itemView: View, userId: String, playlistId: String, controller: MainActivity.MainActivityController) : RecyclerView.ViewHolder(itemView) {
         var albumCover : SimpleDraweeView? = null
         var trackTitle : TextView? = null
         var albumTitle : TextView? = null
@@ -95,6 +98,7 @@ class TopTrackAdapter(context : Context, tracks : List<Track>, userId : String, 
 
         var heartButton : ImageView? = null
         var addToPlaylistButton : ImageView? = null
+        var mainActivityController = controller
 
         var mUserId = userId
         var mPlaylistId = playlistId
@@ -137,6 +141,7 @@ class TopTrackAdapter(context : Context, tracks : List<Track>, userId : String, 
 
             addToPlaylistButton?.setOnClickListener(View.OnClickListener {
                 addTrackToPlaylist(track)
+                mainActivityController.addToPlaylist(mUserId, mPlaylistId, track)
             })
 
         }

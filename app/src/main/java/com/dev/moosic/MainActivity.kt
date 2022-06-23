@@ -14,6 +14,7 @@ import com.spotify.android.appremote.api.SpotifyAppRemote
 
 import kaaes.spotify.webapi.android.SpotifyApi
 import kaaes.spotify.webapi.android.models.*
+import org.parceler.Parcel
 import retrofit.Callback
 import retrofit.RetrofitError
 import retrofit.client.Response
@@ -29,7 +30,9 @@ class MainActivity : AppCompatActivity() {
     var topTracks : ArrayList<kaaes.spotify.webapi.android.models.Track> = ArrayList()
     var myPlaylists : ArrayList<PlaylistSimple> = ArrayList()
 
-    val spotifyApi = SpotifyApi()
+    companion object {
+        val spotifyApi = SpotifyApi()
+    }
     var spotifyApiAuthToken : String? = null
 
     var currentUserId : String? = null
@@ -54,6 +57,22 @@ class MainActivity : AppCompatActivity() {
             return@setOnItemSelectedListener true
         }
         setUpCurrentUser()
+    }
+
+    @Parcel
+    class MainActivityController() : Controller {
+        override fun addToPlaylist(userId: String, playlistId: String, track: Track) {
+            val queryParams : Map<String, Any> = mapOf("uris" to track.uri)
+            val bodyParams : Map<String, Any> = emptyMap()
+            spotifyApi.service.addTracksToPlaylist(userId, playlistId, queryParams, bodyParams, object: Callback<Pager<PlaylistTrack>>{
+                override fun success(t: Pager<PlaylistTrack>?, response: Response?) {
+                    Log.d(TopTrackAdapter.TAG, "added: " + track.name + " to playlist " + playlistId)
+                }
+                override fun failure(error: RetrofitError?) {
+                    Log.d(TopTrackAdapter.TAG, "bad request: " + error?.message)
+                }
+            })
+        }
     }
 
     private fun setUpCurrentUser() {
@@ -121,7 +140,7 @@ class MainActivity : AppCompatActivity() {
                     topTracks.addAll(t.items)
                     if (currentUserId != null && userPlaylistId != null){
                         val homeFragment = HomeFeedFragment.newInstance(topTracks,
-                            currentUserId!!, userPlaylistId!!
+                            currentUserId!!, userPlaylistId!!, MainActivityController()
                         )
                         fragmentManager.beginTransaction().replace(R.id.flContainer, homeFragment).commit()
                     } else {
