@@ -1,21 +1,20 @@
 package com.dev.moosic
 
 import android.os.Bundle
-import android.telecom.Call
 import android.util.Log
+import android.view.Menu
 import android.view.MenuItem
+import android.widget.SearchView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.dev.moosic.adapters.TopTrackAdapter
 import com.dev.moosic.fragments.HomeFeedFragment
 import com.dev.moosic.fragments.ProfileLibraryFragment
+import com.dev.moosic.fragments.SearchFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.parse.ParseUser
 import com.spotify.android.appremote.api.SpotifyAppRemote
-
 import kaaes.spotify.webapi.android.SpotifyApi
 import kaaes.spotify.webapi.android.models.*
-import org.parceler.Parcel
 import retrofit.Callback
 import retrofit.RetrofitError
 import retrofit.client.Response
@@ -44,6 +43,8 @@ class MainActivity : AppCompatActivity() {
     var bottomNavigationView : BottomNavigationView? = null
     val fragmentManager = supportFragmentManager
 
+    var searchMenuItem : MenuItem? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -59,7 +60,16 @@ class MainActivity : AppCompatActivity() {
             }
             return@setOnItemSelectedListener true
         }
+//        bottomNavigationView.
         setUpCurrentUser()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.search_menu, menu)
+        searchMenuItem = menu?.findItem(R.id.searchMenuIcon)
+        searchMenuItem?.setVisible(false)
+
+        return super.onCreateOptionsMenu(menu)
     }
 
     class MainActivityController() : Controller {
@@ -123,6 +133,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setUpProfileFragment() {
+        searchMenuItem?.setVisible(false)
         Toast.makeText(this, "Profile", Toast.LENGTH_LONG).show()
         val queryParams : Map<String, Any> = emptyMap()
         spotifyApi.service.getPlaylistTracks(currentUserId, userPlaylistId, queryParams,
@@ -151,9 +162,64 @@ class MainActivity : AppCompatActivity() {
 
     private fun setUpSearchFragment() {
         Toast.makeText(this, "Search", Toast.LENGTH_LONG).show()
+        searchMenuItem?.setVisible(true)
+
+        var searchView = (searchMenuItem?.actionView) as androidx.appcompat.widget.SearchView
+        searchView.onActionViewExpanded()
+        searchView.requestFocus()
+        searchView.setOnQueryTextListener(object : androidx.appcompat.widget.SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                searchView.clearFocus()
+                // showProgressBar()
+                if (query != null) {
+                    fetchQuery(query)
+                }
+                return true
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                return false
+            }
+        })
+
+    }
+
+    private fun fetchQuery(query: String) {
+        // use my query to search the spotify api
+        spotifyApi.service.searchTracks(query, object: Callback<TracksPager> {
+            override fun success(t: TracksPager?, response: Response?) {
+                Log.d(TAG, "successfully queried " + query)
+                if (t != null){
+                    // send the tracks to the search fragment to display
+                    var searchedTracks : ArrayList<Track> = ArrayList()
+                    searchedTracks.addAll(t.tracks.items)
+                    if (currentUserId != null && userPlaylistId != null){
+                        val searchFragment = SearchFragment.newInstance(searchedTracks,
+                            currentUserId!!, userPlaylistId!!, MainActivityController()
+                        )
+                        fragmentManager.beginTransaction().replace(R.id.flContainer, searchFragment)
+                            .commit()
+                    } else {
+                        Toast.makeText(
+                            this@MainActivity, "Setting up search page.. please refresh",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+
+                }
+//                hideProgressBar()
+            }
+
+            override fun failure(error: RetrofitError?) {
+                Log.d(TAG, "error querying " + query + ": " + error?.message)
+//                hideProgressBar()
+            }
+
+        })
     }
 
     private fun setUpHomeFragment() {
+        searchMenuItem?.setVisible(false)
         spotifyApi.service.getTopTracks(object : Callback<Pager<kaaes.spotify.webapi.android.models.Track>> {
             override fun success(
                 t: Pager<kaaes.spotify.webapi.android.models.Track>?,

@@ -69,7 +69,8 @@ class LoginActivity : AppCompatActivity() {
             REDIRECT_URI
         )
         builder.setScopes(arrayOf("streaming", "user-top-read", "playlist-modify-public",
-            "playlist-read-private", "playlist-modify-private", "user-library-modify", "user-library-read"))
+            "playlist-read-private", "playlist-modify-private", "user-library-modify",
+            "user-library-read", "user-read-private"))
         val request: AuthorizationRequest = builder.build()
         AuthorizationClient.openLoginActivity(this, REQUEST_CODE, request)
     }
