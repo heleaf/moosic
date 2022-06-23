@@ -32,7 +32,7 @@ controller : MainActivity.MainActivityController)
     var mPlaylistId : String? = null
     val mainActivityController : MainActivity.MainActivityController = controller
 
-    var onAddToPlaylistClickListener : OnAddToPlaylistClickListener? = null
+//    var onAddToPlaylistClickListener : OnAddToPlaylistClickListener? = null
 
     init {
         this.mContext = context
@@ -54,41 +54,39 @@ controller : MainActivity.MainActivityController)
     override fun getItemCount(): Int {
         return this.mTracks.size
     }
-
-    interface OnAddToPlaylistClickListener {
-        fun onAddToPlaylistClickListener(itemView : View, position : Int);
-    }
-
-    @JvmName("setOnAddToPlaylistClickListener1")
-    fun setOnAddToPlaylistClickListener(listener : OnAddToPlaylistClickListener) {
-        this.onAddToPlaylistClickListener = listener
-    }
-
-    companion object Factory {
-        val TAG = "TopTrackAdapter Factory"
-        fun getOnAddToPlaylistClickListener(spotifyApi : SpotifyApi, userId: String, playlistId: String, tracks: List<Track>) :
-                OnAddToPlaylistClickListener {
-            return object : OnAddToPlaylistClickListener {
-                override fun onAddToPlaylistClickListener(itemView: View, position: Int) {
-                    val track = tracks[position]
-                    val queryParams : Map<String, Any> = emptyMap()
-                    val bodyParams : Map<String, Any> = emptyMap()
-                    spotifyApi.service.addTracksToPlaylist(userId, playlistId, queryParams, bodyParams, object: Callback<Pager<PlaylistTrack>>{
-                        override fun success(t: Pager<PlaylistTrack>?, response: Response?) {
-                            Log.d(TAG, "added: " + track.name + " to playlist " + playlistId)
-                        }
-
-                        override fun failure(error: RetrofitError?) {
-                            Log.d(TAG, "bad request: " + error?.message)
-                        }
-
-                    })
-                }
-            }
-        }
-    }
-
-
+//
+//    interface OnAddToPlaylistClickListener {
+//        fun onAddToPlaylistClickListener(itemView : View, position : Int);
+//    }
+//
+//    @JvmName("setOnAddToPlaylistClickListener1")
+//    fun setOnAddToPlaylistClickListener(listener : OnAddToPlaylistClickListener) {
+//        this.onAddToPlaylistClickListener = listener
+//    }
+//
+//    companion object Factory {
+//        val TAG = "TopTrackAdapter Factory"
+//        fun getOnAddToPlaylistClickListener(spotifyApi : SpotifyApi, userId: String, playlistId: String, tracks: List<Track>) :
+//                OnAddToPlaylistClickListener {
+//            return object : OnAddToPlaylistClickListener {
+//                override fun onAddToPlaylistClickListener(itemView: View, position: Int) {
+//                    val track = tracks[position]
+//                    val queryParams : Map<String, Any> = emptyMap()
+//                    val bodyParams : Map<String, Any> = emptyMap()
+//                    spotifyApi.service.addTracksToPlaylist(userId, playlistId, queryParams, bodyParams, object: Callback<Pager<PlaylistTrack>>{
+//                        override fun success(t: Pager<PlaylistTrack>?, response: Response?) {
+//                            Log.d(TAG, "added: " + track.name + " to playlist " + playlistId)
+//                        }
+//
+//                        override fun failure(error: RetrofitError?) {
+//                            Log.d(TAG, "bad request: " + error?.message)
+//                        }
+//
+//                    })
+//                }
+//            }
+//        }
+//    }
 
     class ViewHolder(itemView: View, userId: String, playlistId: String, controller: MainActivity.MainActivityController) : RecyclerView.ViewHolder(itemView) {
         var albumCover : SimpleDraweeView? = null

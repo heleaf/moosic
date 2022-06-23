@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.dev.moosic.adapters.TopTrackAdapter
 import com.dev.moosic.fragments.HomeFeedFragment
+import com.dev.moosic.fragments.ProfileLibraryFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.parse.ParseUser
 import com.spotify.android.appremote.api.SpotifyAppRemote
@@ -28,7 +29,9 @@ class MainActivity : AppCompatActivity() {
 
     var mSpotifyAppRemote : SpotifyAppRemote? = null
     var topTracks : ArrayList<kaaes.spotify.webapi.android.models.Track> = ArrayList()
-    var myPlaylists : ArrayList<PlaylistSimple> = ArrayList()
+//    var myPlaylists : ArrayList<PlaylistSimple> = ArrayList()
+
+    var playlistTracks : ArrayList<kaaes.spotify.webapi.android.models.PlaylistTrack> = ArrayList()
 
     companion object {
         val spotifyApi = SpotifyApi()
@@ -59,17 +62,17 @@ class MainActivity : AppCompatActivity() {
         setUpCurrentUser()
     }
 
-    @Parcel
     class MainActivityController() : Controller {
+        val TAG = "MainActivityController"
         override fun addToPlaylist(userId: String, playlistId: String, track: Track) {
             val queryParams : Map<String, Any> = mapOf("uris" to track.uri)
             val bodyParams : Map<String, Any> = emptyMap()
             spotifyApi.service.addTracksToPlaylist(userId, playlistId, queryParams, bodyParams, object: Callback<Pager<PlaylistTrack>>{
                 override fun success(t: Pager<PlaylistTrack>?, response: Response?) {
-                    Log.d(TopTrackAdapter.TAG, "added: " + track.name + " to playlist " + playlistId)
+                    Log.d(TAG, "added: " + track.name + " to playlist " + playlistId)
                 }
                 override fun failure(error: RetrofitError?) {
-                    Log.d(TopTrackAdapter.TAG, "bad request: " + error?.message)
+                    Log.d(TAG, "bad request: " + error?.message)
                 }
             })
         }
@@ -121,6 +124,29 @@ class MainActivity : AppCompatActivity() {
 
     private fun setUpProfileFragment() {
         Toast.makeText(this, "Profile", Toast.LENGTH_LONG).show()
+        val queryParams : Map<String, Any> = emptyMap()
+        spotifyApi.service.getPlaylistTracks(currentUserId, userPlaylistId, queryParams,
+        object: Callback<Pager<PlaylistTrack>> {
+            override fun success(t: Pager<PlaylistTrack>?, response: Response?) {
+                if (t != null) {
+                    Log.d(TAG, "got playlist tracks back: " + t.items.size)
+                    playlistTracks.clear()
+                    playlistTracks.addAll(t.items)
+                    if (currentUserId != null && userPlaylistId != null){
+                        val profileFragment = ProfileLibraryFragment.newInstance(playlistTracks,
+                            currentUserId!!, userPlaylistId!!, MainActivityController()
+                        )
+                        fragmentManager.beginTransaction().replace(R.id.flContainer, profileFragment).commit()
+                    } else {
+                        Toast.makeText(this@MainActivity, "Setting up home page.. please refresh",
+                            Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+            override fun failure(error: RetrofitError?) {
+                Log.d(TAG, "error querying playlist songs: " + error?.message)
+            }
+        })
     }
 
     private fun setUpSearchFragment() {
@@ -128,8 +154,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setUpHomeFragment() {
-        val spotifyApiService = spotifyApi.service
-        spotifyApiService?.getTopTracks(object : Callback<Pager<kaaes.spotify.webapi.android.models.Track>> {
+        spotifyApi.service.getTopTracks(object : Callback<Pager<kaaes.spotify.webapi.android.models.Track>> {
             override fun success(
                 t: Pager<kaaes.spotify.webapi.android.models.Track>?,
                 response: Response?
