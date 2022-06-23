@@ -10,22 +10,27 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.R
 import com.dev.moosic.adapters.TopTrackAdapter
+import kaaes.spotify.webapi.android.SpotifyApi
+import kaaes.spotify.webapi.android.models.Playlist
 import kaaes.spotify.webapi.android.models.Track
+import kaaes.spotify.webapi.android.models.UserPrivate
 import org.parceler.Parcels
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
 private const val ARG_PARAM1 = "topTracks"
-//private const val ARG_PARAM2 = "param2"
+private const val ARG_PARAM2 = "currentUser"
+private const val ARG_PARAM3 = "userPlaylist"
 
 /**
  * A simple [Fragment] subclass.
  * Use the [HomeFeedFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class HomeFeedFragment : Fragment() {
+class HomeFeedFragment() : Fragment() {
     // TODO: Rename and change types of parameters
     private var topTracks: ArrayList<Track> = ArrayList()
+    private var currentUserId : String? = null
+    private var userPlaylistId : String? = null
+
     val TAG = "HomeFeedFragment"
 
     var rvTopTracks : RecyclerView? = null
@@ -36,7 +41,8 @@ class HomeFeedFragment : Fragment() {
         arguments?.let {
             topTracks.clear()
             topTracks = Parcels.unwrap(it.getParcelable(ARG_PARAM1))
-            Log.d(TAG, topTracks.size.toString())
+            currentUserId = it.getString(ARG_PARAM2);
+            userPlaylistId = it.getString(ARG_PARAM3)
         }
     }
 
@@ -44,24 +50,18 @@ class HomeFeedFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_home_feed, container, false)
     }
 
     companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @return A new instance of fragment HomeFeedFragment.
-         */
         // TODO: Rename and change types and number of parameters
         @JvmStatic
-        fun newInstance(topTracks: ArrayList<Track>) =
+        fun newInstance(tracks: ArrayList<Track>, userId: String, playlistId: String) =
             HomeFeedFragment().apply {
                 arguments = Bundle().apply {
-                    putParcelable(ARG_PARAM1, Parcels.wrap(topTracks))
+                    putParcelable(ARG_PARAM1, Parcels.wrap(tracks))
+                    putString(ARG_PARAM2, userId)
+                    putString(ARG_PARAM3, playlistId)
                 }
             }
     }
@@ -70,7 +70,7 @@ class HomeFeedFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         rvTopTracks = view.findViewById(R.id.rvTopTracks)
 
-        adapter = TopTrackAdapter(view.context, topTracks)
+        adapter = TopTrackAdapter(view.context, topTracks, currentUserId!!, userPlaylistId!!)
 
         rvTopTracks?.adapter = adapter
         val linearLayoutManager = LinearLayoutManager(context)

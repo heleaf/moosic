@@ -20,28 +20,49 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="5dp"
+        android:layout_marginEnd="5dp"
         android:textSize="18sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/addToPlaylistButton"
         app:layout_constraintStart_toEndOf="@+id/topTrackImg"
         app:layout_constraintTop_toTopOf="parent"
         tools:text="Title" />
 
     <TextView
         android:id="@+id/artistName"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
+        app:layout_constraintEnd_toEndOf="@+id/trackTitle"
         app:layout_constraintStart_toStartOf="@+id/albumTitle"
         app:layout_constraintTop_toBottomOf="@+id/albumTitle"
         tools:text="Artist" />
 
     <TextView
         android:id="@+id/albumTitle"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
+        app:layout_constraintEnd_toEndOf="@+id/trackTitle"
         app:layout_constraintStart_toStartOf="@+id/trackTitle"
         app:layout_constraintTop_toBottomOf="@+id/trackTitle"
         tools:text="Album" />
+
+    <ImageView
+        android:id="@+id/addToPlaylistButton"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginTop="10dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/heartButton"
+        fresco:srcCompat="@android:drawable/ic_input_add" />
+
+    <ImageView
+        android:id="@+id/heartButton"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        fresco:srcCompat="@drawable/ufi_heart" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

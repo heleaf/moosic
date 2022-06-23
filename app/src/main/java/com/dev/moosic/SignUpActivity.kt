@@ -31,10 +31,10 @@ class SignUpActivity : AppCompatActivity() {
         mSignUpButton = findViewById(R.id.signUpSignUpButton)
 
         mSignUpButton?.setOnClickListener(View.OnClickListener {
-            var usernameText = mUsername?.text
-            var passwordText = mPassword?.text
-            var emailText = mEmail?.text
-            var phoneText = mPhoneNumber?.text
+            val usernameText = mUsername?.text
+            val passwordText = mPassword?.text
+            val emailText = mEmail?.text
+            val phoneText = mPhoneNumber?.text
 
             if (usernameText == null || passwordText == null ||
                     emailText == null || phoneText == null){

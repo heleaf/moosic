@@ -10,7 +10,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.parse.LogInCallback
 import com.parse.ParseUser
-//import com.spotify.sdk.android.auth.AccountsQueryParameters.CLIENT_ID
 import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationRequest
 import com.spotify.sdk.android.auth.AuthorizationResponse
@@ -55,7 +54,6 @@ class LoginActivity : AppCompatActivity() {
             }
             else logInUser(usernameText.toString(), passwordText.toString())
         })
-
         mSignUpButton?.setOnClickListener(View.OnClickListener {
             val intent = Intent(this, SignUpActivity::class.java)
             startActivity(intent)
@@ -70,15 +68,14 @@ class LoginActivity : AppCompatActivity() {
             AuthorizationResponse.Type.TOKEN,
             REDIRECT_URI
         )
-
-        builder.setScopes(arrayOf("streaming", "user-top-read"))
+        builder.setScopes(arrayOf("streaming", "user-top-read", "playlist-modify-public",
+            "playlist-read-private", "playlist-modify-private", "user-library-modify", "user-library-read"))
         val request: AuthorizationRequest = builder.build()
         AuthorizationClient.openLoginActivity(this, REQUEST_CODE, request)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        // Check if result comes from the correct activity
         if (requestCode == REQUEST_CODE) {
         val response = AuthorizationClient.getResponse(resultCode, data)
             when (response.type) {
@@ -90,11 +87,6 @@ class LoginActivity : AppCompatActivity() {
                 else -> { Log.d(TAG, response.type.toString()) }
             }
         }
-//        try {
-//            Log.d(TAG, "hi " + data!!.getBundleExtra("response").toString())
-//        } catch (e : Exception){
-//            Log.d(TAG, "i want die " + e.message)
-//        }
     }
 
     private fun logInUser(usernameText: String, passwordText: String) {
@@ -110,7 +102,6 @@ class LoginActivity : AppCompatActivity() {
     private fun goMainActivity() {
         val intent = Intent(this, MainActivity::class.java)
         intent.putExtra("accessToken", accessToken)
-        Log.d(TAG, accessToken + " login ")
         startActivity(intent)
     }
 
