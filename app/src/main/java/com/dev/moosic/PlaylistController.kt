@@ -2,6 +2,8 @@ package com.dev.moosic
 
 import kaaes.spotify.webapi.android.models.Track
 
-interface Controller {
+interface PlaylistController {
     fun addToPlaylist(userId : String, playlistId : String, track : Track) : Unit
+
+    fun removeFromPlaylist(userId : String, playlistId : String, track : Track) : Unit
 }

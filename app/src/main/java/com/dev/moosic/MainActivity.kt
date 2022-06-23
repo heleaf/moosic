@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.SearchView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.dev.moosic.fragments.HomeFeedFragment
@@ -72,7 +71,7 @@ class MainActivity : AppCompatActivity() {
         return super.onCreateOptionsMenu(menu)
     }
 
-    class MainActivityController() : Controller {
+    class MainActivityController() : PlaylistController {
         val TAG = "MainActivityController"
         override fun addToPlaylist(userId: String, playlistId: String, track: Track) {
             val queryParams : Map<String, Any> = mapOf("uris" to track.uri)
@@ -83,6 +82,24 @@ class MainActivity : AppCompatActivity() {
                 }
                 override fun failure(error: RetrofitError?) {
                     Log.d(TAG, "bad request: " + error?.message)
+                }
+            })
+        }
+
+        override fun removeFromPlaylist(userId: String, playlistId: String, track: Track) {
+            val tracksToRemove : TracksToRemove = TracksToRemove()
+            val trackToRemove : TrackToRemove = TrackToRemove()
+            trackToRemove.uri = track.uri
+            Log.d(TAG, trackToRemove.toString())
+            Log.d(TAG, tracksToRemove.toString())
+            tracksToRemove.tracks = listOf(trackToRemove)
+            spotifyApi.service.removeTracksFromPlaylist(userId, playlistId, tracksToRemove,
+            object: Callback<SnapshotId> {
+                override fun success(t: SnapshotId?, response: Response?) {
+                    Log.d(TAG, "removed " + track.name)
+                }
+                override fun failure(error: RetrofitError?) {
+                    Log.d(TAG, "failed to remove " + track.name + ": " + error?.message)
                 }
             })
         }

@@ -76,7 +76,7 @@ class HomeFeedFragment(controller : MainActivity.MainActivityController) : Fragm
         rvTopTracks = view.findViewById(R.id.rvTopTracks)
 
         adapter = TopTrackAdapter(view.context, topTracks, currentUserId!!, userPlaylistId!!,
-        mainActivityController)
+        mainActivityController, true, false)
 
         rvTopTracks?.adapter = adapter
         val linearLayoutManager = LinearLayoutManager(context)

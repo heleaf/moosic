@@ -76,7 +76,7 @@ class SearchFragment(controller: MainActivity.MainActivityController) : Fragment
         super.onViewCreated(view, savedInstanceState)
         rvSearchedTracks = view.findViewById(R.id.rvSearchedTracks)
         adapter = TopTrackAdapter(view.context, searchedTracks,
-            userId!!, playlistId!!, mainActivityController)
+            userId!!, playlistId!!, mainActivityController, true, false)
 
         rvSearchedTracks?.adapter = adapter
         val linearLayoutManager = LinearLayoutManager(context)

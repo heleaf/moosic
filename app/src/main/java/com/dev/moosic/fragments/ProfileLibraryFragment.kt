@@ -83,7 +83,8 @@ class ProfileLibraryFragment(controller : MainActivity.MainActivityController) :
         Log.d(TAG, "user playlist id: " + userPlaylistId)
         adapter = TopTrackAdapter(view.context,
             playlistTracks.map{ playlistTrack -> playlistTrack.track },
-            currentUserId!!, userPlaylistId!!, mainActivityController)
+            currentUserId!!, userPlaylistId!!, mainActivityController,
+            false, true)
 
         // one of these things is null....?
 
