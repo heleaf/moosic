@@ -7,6 +7,7 @@ import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.dev.moosic.fragments.HomeFeedFragment
+import com.dev.moosic.fragments.LikedSongsFragment
 import com.dev.moosic.fragments.PlaylistFragment
 import com.dev.moosic.fragments.SearchFragment
 import com.dev.moosic.models.Song
@@ -99,6 +100,8 @@ class MainActivity : AppCompatActivity() {
         val TAG = "MainActivityController"
         override fun addToPlaylist(userId: String, playlistId: String, track: Track) {
             // addToParsePlaylist
+            // TODO: works, but parse playlist remove doesn't
+            /*
             Log.d(TAG, "adding " + track.name + " to parse playlist...")
             val user = ParseUser.getCurrentUser()
             val playlist = user.getParseObject("parsePlaylist")
@@ -115,6 +118,7 @@ class MainActivity : AppCompatActivity() {
                     Log.d(TAG, "adding " + track.name + " to spotify playlist...")
                 }
             }
+            */
 
             // add To SpotifyPlaylist
             val queryParams : Map<String, Any> = mapOf("uris" to track.uri)
@@ -156,6 +160,8 @@ class MainActivity : AppCompatActivity() {
                 }
             })
 
+            // TODO: currently doesn't work
+            /*
             val user = ParseUser.getCurrentUser()
             val playlist = user.getParseObject("parsePlaylist")
             if (playlist == null) Log.d(TAG, "playlist is null AAAAA")
@@ -163,13 +169,12 @@ class MainActivity : AppCompatActivity() {
             if (playlistSongsRelation == null) Log.d(TAG, "RELATION IS NULL AAAAAA")
             val songToRemove = parsePlaylistSongs[position]
             playlistSongsRelation?.remove(songToRemove)
-            playlist?.saveInBackground{
-                e -> if (e != null) Log.d(TAG, "error saving playlist? " + e.message)
+            if (playlistSongsRelation != null) {
+                playlist?.put("playlistSongs", playlistSongsRelation)
             }
+            playlist?.save()
             parsePlaylistSongs.removeAt(position)
-            // to remove from the parse playlist, need to query for the correct object id
-            // then remove that specific object
-            // this would require that i revamp the framework i've created for the adapter
+            */
         }
     }
 
@@ -238,11 +243,12 @@ class MainActivity : AppCompatActivity() {
                     val savedTracks = ArrayList<Track>()
                     savedTracks.addAll(t.items.map{it.track})
                     if (currentUserId != null && userPlaylistId != null){
-                        val playlistFragment = PlaylistFragment.newInstance(savedTracks,
+                        val likedSongsFragment = PlaylistFragment.newInstance(savedTracks,
                             currentUserId!!, userPlaylistId!!, MainActivityController(),
+                            false, false, true
                         )
-//                        fragmentManager.beginTransaction().replace(R.id.flContainer,
-//                            playlistFragment).commit()
+                        fragmentManager.beginTransaction().replace(R.id.flContainer,
+                            likedSongsFragment).commit()
                     } else {
                         Toast.makeText(this@MainActivity, "Setting up home page.. please refresh",
                             Toast.LENGTH_LONG).show()
@@ -272,7 +278,8 @@ class MainActivity : AppCompatActivity() {
                     tracks.addAll(playlistTracks.map{ it.track })
                     if (currentUserId != null && userPlaylistId != null){
                         val profileFragment = PlaylistFragment.newInstance(tracks,
-                            currentUserId!!, userPlaylistId!!, MainActivityController()
+                            currentUserId!!, userPlaylistId!!, MainActivityController(),
+                            false, true, true
                         )
                         fragmentManager.beginTransaction().replace(R.id.flContainer, profileFragment).commit()
                     } else {
@@ -296,7 +303,8 @@ class MainActivity : AppCompatActivity() {
         var searchView = (searchMenuItem?.actionView) as androidx.appcompat.widget.SearchView
         searchView.onActionViewExpanded()
         searchView.requestFocus()
-        searchView.setOnQueryTextListener(object : androidx.appcompat.widget.SearchView.OnQueryTextListener {
+        searchView.setOnQueryTextListener(object
+            : androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 searchView.clearFocus()
                 // showProgressBar()
@@ -364,9 +372,11 @@ class MainActivity : AppCompatActivity() {
                         val homeFragment = HomeFeedFragment.newInstance(topTracks,
                             currentUserId!!, userPlaylistId!!, MainActivityController()
                         )
-                        fragmentManager.beginTransaction().replace(R.id.flContainer, homeFragment).commit()
+                        fragmentManager.beginTransaction()
+                            .replace(R.id.flContainer, homeFragment).commit()
                     } else {
-                        Toast.makeText(this@MainActivity, "Setting up home page.. please refresh",
+                        Toast.makeText(this@MainActivity,
+                            "Setting up home page.. please refresh",
                         Toast.LENGTH_LONG).show()
                     }
                 }
@@ -383,11 +393,4 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    override fun onStart() {
-        super.onStart()
-    }
-
-    override fun onStop() {
-        super.onStop()
-    }
 }
