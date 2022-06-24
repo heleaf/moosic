@@ -1,55 +1,73 @@
 package com.dev.moosic.models
 
+import com.parse.ParseClassName
+import com.parse.ParseObject
 import com.spotify.protocol.types.ListItem
 import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcel
 
-@Parcel
-// TODO: make into parse object to update database
-class Song () {
-    var mId : String? = null
-    var mTitle : String? = null
-    var mAlbum : SongAlbum? = null
-    var mArtist : List<SongArtist>? = null
-    var mUri : String? = null
-    var mImgUri : String? = null
+@ParseClassName("Song")
+class Song () : ParseObject() {
+    final val KEY_SPOTIFYID = "spotifyId"
+    final val KEY_NAME = "name"
+    final val KEY_ARTISTS = "artists"
+    final val KEY_SPOTIFYURI = "spotifyUri"
+    final val KEY_IMAGEURI = "imageUri"
+
+    public fun getSpotifyId(): String? {
+        return getString(KEY_SPOTIFYID)
+    }
+
+    public fun setSpotifyId(id: String) {
+        put(KEY_SPOTIFYID, id)
+    }
+
+    public fun getName(): String? {
+        return getString(KEY_NAME)
+    }
+
+    public fun setName(name: String) {
+        put(KEY_NAME, name)
+    }
+
+    public fun getArtists() : List<String>? {
+        return getList(KEY_ARTISTS)
+    }
+
+    public fun setArtist(artist: String) {
+        put(KEY_ARTISTS, artist); // does this work?
+    }
+
+    public fun getSpotifyUri() : String? {
+        return getString(KEY_SPOTIFYURI)
+    }
+
+    public fun setSpotifyUri(uri: String) {
+        put(KEY_SPOTIFYURI, uri)
+    }
+
+    public fun getImageUri() : String? {
+        return getString(KEY_IMAGEURI)
+    }
+
+    public fun setImageUri(uri: String) {
+        put(KEY_IMAGEURI, uri)
+    }
 
     companion object Factory {
-//        fun fromListItem(listItem: ListItem) : Song? {
-//            if (listItem.hasChildren) return null // not a valid track
-//            var song = Song()
-//            song.mId = listItem.id
-//            song.mTitle = listItem.title
-//            song.mSubtitle = listItem.title
-//            song.mUri = listItem.uri
-//            song.mImgUri = listItem.imageUri.raw
-//            val trackFields = listOf(song.mId, song.mTitle, song.mSubtitle, song.mUri, song.mImgUri)
-//            val hasNull = trackFields.fold(false, {acc, elem -> (elem == null) or acc})
-//            return if (hasNull) null else song
-//        }
-//
-//        fun fromTrack(track: Track) : Song? {
-//            var song = Song()
-//            song.mId = track.id
-//            song.mTitle = track.name
-//            song.mArtist = SongArtist.fromArtists(track.artists)
-//            song.mAlbum = SongAlbum.fromAlbum(track.album)
-//            song.mUri = track.uri
-//            song.mImgUri = if (track.album.images.size > 0) track.album.images.get(0).url else ""
-//            val songFields = listOf(song.mId, song.mTitle, song.mArtist, song.mAlbum, song.mUri, song.mImgUri)
-//            val hasNull = songFields.fold(false, {acc, elem -> (elem == null) or acc})
-//            return if (hasNull) null else song
-//        }
-//
-//        fun fromTracks(tracks: List<Track>) : List<Song> {
-//            val songs = (1..(tracks.size-1)).map{ index ->
-//                val track = tracks.get(index)
-//                val song = Song.fromTrack(track)
-//                song
+        fun fromTrack(track: Track): Song {
+            var song = Song()
+            song.setSpotifyId(track.id)
+            song.setName(track.name)
+//            for (artist in track.artists) {
+//                song.setArtist(artist.name) // ?
 //            }
-//            val nonNullSongs = songs.filterNotNull()
-//            return nonNullSongs
-//        }
+            song.setSpotifyUri(track.uri)
+            song.setImageUri(if (track.album.images.size > 0)
+                track.album.images.get(0).url else "")
+            // TODO: replace "" with placeholder image uri
+            return song // need to save in background
+        }
     }
 
 }
