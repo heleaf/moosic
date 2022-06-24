@@ -31,9 +31,9 @@ private const val ARG_PARAM6 = "showHeartButton"
  */
 open class PlaylistFragment(controller : MainActivity.MainActivityController) : Fragment() {
     // TODO: Rename and change types of parameters
-    val TAG = "ProfileLibraryFragment"
+    val TAG = "PlaylistFragment"
 
-//    private var playlistTracks: ArrayList<PlaylistTrack> = ArrayList()
+    // private var playlistTracks: ArrayList<PlaylistTrack> = ArrayList()
     private var tracks: List<Track> = ArrayList()
     private var currentUserId: String? = null
     private var userPlaylistId: String? = null

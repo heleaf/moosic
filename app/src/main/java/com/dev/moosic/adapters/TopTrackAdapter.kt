@@ -91,6 +91,8 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
 
             heartButton?.setOnClickListener(View.OnClickListener {
                 updateTrackLikedStatus(track, heartButton!!)
+//                val isLiked = mainActivityController.tracksAreSaved(listOf(track))
+                mainActivityController.addToSavedTracks(track.id)
             })
 
             if (mShowAddButton) {

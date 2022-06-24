@@ -7,7 +7,6 @@ import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.dev.moosic.fragments.HomeFeedFragment
-import com.dev.moosic.fragments.LikedSongsFragment
 import com.dev.moosic.fragments.PlaylistFragment
 import com.dev.moosic.fragments.SearchFragment
 import com.dev.moosic.models.Song
@@ -20,6 +19,8 @@ import kaaes.spotify.webapi.android.models.*
 import retrofit.Callback
 import retrofit.RetrofitError
 import retrofit.client.Response
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 class MainActivity : AppCompatActivity() {
@@ -175,6 +176,44 @@ class MainActivity : AppCompatActivity() {
             playlist?.save()
             parsePlaylistSongs.removeAt(position)
             */
+        }
+
+        override fun addToSavedTracks(trackId: String) {
+            spotifyApi.service.addToMySavedTracks(trackId, object: Callback<Any> {
+                override fun success(t: Any?, response: Response?) {
+                    Log.d(TAG, "added track " + trackId + " to saved tracks")
+                }
+
+                override fun failure(error: RetrofitError?) {
+                    Log.d(TAG, "failed to add track " + trackId + " to saved songs: " +
+                    error?.message)
+                }
+            });
+        }
+
+        override fun removeFromSavedTracks(trackId: String) {
+            spotifyApi.service.removeFromMySavedTracks(trackId, object: Callback<Any> {
+                override fun success(t: Any?, response: Response?) {
+                    Log.d(TAG, "removed track " + trackId + " from saved tracks")
+                }
+
+                override fun failure(error: RetrofitError?) {
+                    Log.d(TAG, "failed to remove track " + trackId + " from saved songs: " +
+                            error?.message)
+                }
+            })
+        }
+
+        override fun tracksAreSaved(tracks: List<Track>): Array<out Boolean>? {
+            val commaSeparatedIds = tracks.fold(
+                ""
+            ) { acc: String, track: Track ->
+                Log.d(TAG, acc.isEmpty().toString() + " " + acc.isBlank().toString())
+                acc
+            }
+
+            // test.
+            return spotifyApi.service.containsMySavedTracks(tracks[0].id);
         }
     }
 
