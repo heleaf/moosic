@@ -8,6 +8,8 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import com.dev.moosic.models.Playlist
+import com.parse.ParseObject
 import com.parse.ParseUser
 
 class SignUpActivity : AppCompatActivity() {
@@ -69,9 +71,19 @@ class SignUpActivity : AppCompatActivity() {
             } else {
                 Toast.makeText(this,
                 "Successfully signed up", Toast.LENGTH_SHORT).show()
-                finish()
+                val playlist = Playlist()
+                playlist.saveInBackground { e ->
+                    if (e != null) Log.d(TAG, "error saving playlist: " + e.message)
+                    else {
+                        user.put("parsePlaylist", playlist)
+                        user.saveInBackground()
+                        finish()
+                    }
+                }
             }
         }
+
+
 
     }
 }

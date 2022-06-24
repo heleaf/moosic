@@ -26,7 +26,7 @@ private const val ARG_PARAM3 = "userPlaylist"
  * Use the [HomeFeedFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class HomeFeedFragment(controller : MainActivity.MainActivityController) : Fragment() {
+open class HomeFeedFragment(controller : MainActivity.MainActivityController) : Fragment() {
     // TODO: Rename and change types of parameters
     private var topTracks: ArrayList<Track> = ArrayList()
     private var currentUserId : String? = null

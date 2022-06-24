@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.MainActivity
 import com.dev.moosic.R
 import com.dev.moosic.adapters.TopTrackAdapter
-import kaaes.spotify.webapi.android.models.PlaylistTrack
 import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
 
@@ -24,14 +23,14 @@ private const val ARG_PARAM3 = "userPlaylistId"
 
 /**
  * A simple [Fragment] subclass.
- * Use the [ProfileLibraryFragment.newInstance] factory method to
+ * Use the [PlaylistFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class ProfileLibraryFragment(controller : MainActivity.MainActivityController) : Fragment() {
+open class PlaylistFragment(controller : MainActivity.MainActivityController) : Fragment() {
     // TODO: Rename and change types of parameters
     val TAG = "ProfileLibraryFragment"
 
-    private var playlistTracks: ArrayList<PlaylistTrack> = ArrayList()
+//    private var playlistTracks: ArrayList<PlaylistTrack> = ArrayList()
     private var tracks: List<Track> = ArrayList()
     private var currentUserId: String? = null
     private var userPlaylistId: String? = null
@@ -43,8 +42,8 @@ class ProfileLibraryFragment(controller : MainActivity.MainActivityController) :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            playlistTracks = Parcels.unwrap(it.getParcelable(ARG_PARAM1))
-            tracks = playlistTracks.map{ playlistTrack -> playlistTrack.track }
+            tracks = Parcels.unwrap(it.getParcelable(ARG_PARAM1))
+//            tracks = playlistTracks.map{ playlistTrack -> playlistTrack.track }
             currentUserId = it.getString(ARG_PARAM2)
             userPlaylistId = it.getString(ARG_PARAM3)
         }
@@ -61,9 +60,9 @@ class ProfileLibraryFragment(controller : MainActivity.MainActivityController) :
     companion object {
         // TODO: Rename and change types and number of parameters
         @JvmStatic
-        fun newInstance(playlistTracks: ArrayList<PlaylistTrack>, userId: String, playlistId: String,
+        fun newInstance(playlistTracks: ArrayList<Track>, userId: String, playlistId: String,
                         controller: MainActivity.MainActivityController) =
-            ProfileLibraryFragment(controller).apply {
+            PlaylistFragment(controller).apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_PARAM1, Parcels.wrap(playlistTracks))
                     putString(ARG_PARAM2, userId)
@@ -74,13 +73,11 @@ class ProfileLibraryFragment(controller : MainActivity.MainActivityController) :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         // Hide for now
         val title : TextView = view.findViewById(R.id.playlistTitle)
         val author : TextView = view.findViewById(R.id.playlistAuthor)
         val descrip : TextView = view.findViewById(R.id.playlistDescription)
         listOf(title, author, descrip).map{ tv -> tv.visibility = View.GONE }
-
         rvPlaylistTracks = view.findViewById(R.id.rvPlaylistTracks)
         Log.d(TAG, "curent user id: " + currentUserId)
         Log.d(TAG, "user playlist id: " + userPlaylistId)
@@ -88,13 +85,9 @@ class ProfileLibraryFragment(controller : MainActivity.MainActivityController) :
             tracks,
             currentUserId!!, userPlaylistId!!, mainActivityController,
             false, true)
-
         // one of these things is null....?
-
         rvPlaylistTracks?.adapter = adapter
-
         val linearLayoutManager = LinearLayoutManager(context)
         rvPlaylistTracks?.setLayoutManager(linearLayoutManager)
-
     }
 }

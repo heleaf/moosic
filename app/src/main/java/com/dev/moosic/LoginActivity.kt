@@ -13,15 +13,13 @@ import com.parse.ParseUser
 import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationRequest
 import com.spotify.sdk.android.auth.AuthorizationResponse
-import com.spotify.sdk.android.auth.LoginActivity
-import org.parceler.Parcels
-import java.lang.Exception
 
 class LoginActivity : AppCompatActivity() {
     val CLIENT_ID = "7b7fed9bf37945818d20992b055ac63b"
     val TAG = "LoginActivity"
     val REDIRECT_URI = "http://localhost:8080"
-    private val REQUEST_CODE = 1337
+    private val SPOTIFY_AUTH_REQUEST_CODE = 1337
+    private val LOGGED_OUT_REQUEST_CODE = 1338
 
     var mEtUsername : EditText? = null
     var mEtPassword : EditText? = null
@@ -72,21 +70,27 @@ class LoginActivity : AppCompatActivity() {
             "playlist-read-private", "playlist-modify-private", "user-library-modify",
             "user-library-read", "user-read-private"))
         val request: AuthorizationRequest = builder.build()
-        AuthorizationClient.openLoginActivity(this, REQUEST_CODE, request)
+        AuthorizationClient.openLoginActivity(this, SPOTIFY_AUTH_REQUEST_CODE, request)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_CODE) {
+        if (requestCode == SPOTIFY_AUTH_REQUEST_CODE) {
         val response = AuthorizationClient.getResponse(resultCode, data)
             when (response.type) {
                 AuthorizationResponse.Type.TOKEN -> {
                     Log.d(TAG, "token: " + response.accessToken)
                     accessToken = response.accessToken
+                    if (ParseUser.getCurrentUser() != null) {
+                        goMainActivity();
+                    }
                 }
                 AuthorizationResponse.Type.ERROR -> {Log.d(TAG, "error: " + response.error)}
                 else -> { Log.d(TAG, response.type.toString()) }
             }
+        } else if (requestCode == LOGGED_OUT_REQUEST_CODE) {
+            mEtUsername?.setText("")
+            mEtPassword?.setText("")
         }
     }
 
@@ -103,7 +107,8 @@ class LoginActivity : AppCompatActivity() {
     private fun goMainActivity() {
         val intent = Intent(this, MainActivity::class.java)
         intent.putExtra("accessToken", accessToken)
-        startActivity(intent)
+//        startActivity(intent)
+        startActivityForResult(intent, LOGGED_OUT_REQUEST_CODE)
     }
 
 }

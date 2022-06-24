@@ -24,8 +24,8 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
     var mPlaylistId : String? = null
     val mainActivityController : MainActivity.MainActivityController = controller
 
-    val mShowDeleteButton = showDeleteButton
-    val mShowAddButton = showAddButton
+    var mShowDeleteButton = showDeleteButton
+    var mShowAddButton = showAddButton
 
     init {
         this.mContext = context
@@ -111,7 +111,7 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
                     Log.d(TAG, "deleting " + track.name + " from playlist")
                      mainActivityController.removeFromPlaylist(this@TopTrackAdapter.mUserId!!,
                          this@TopTrackAdapter.mPlaylistId!!, track, position)
-//                    mTracks.remove(track) // i shouldn't need to do this...
+                    // mTracks.remove(track) // i shouldn't need to do this...
                     mTracks.removeAt(position)
                     this@TopTrackAdapter.notifyItemRemoved(position)
                     this@TopTrackAdapter.notifyItemRangeChanged(position, mTracks.size);
