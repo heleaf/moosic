@@ -19,7 +19,7 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
     : RecyclerView.Adapter<TopTrackAdapter.ViewHolder>() {
     val TAG = "TopTrackAdapter"
     var mContext : Context? = null
-    var mTracks : List<Track> = ArrayList()
+    var mTracks : ArrayList<Track> = ArrayList()
     var mUserId : String? = null
     var mPlaylistId : String? = null
     val mainActivityController : MainActivity.MainActivityController = controller
@@ -29,15 +29,14 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
 
     init {
         this.mContext = context
-        this.mTracks = tracks
+        this.mTracks.addAll(tracks)
         this.mUserId = userId
         this.mPlaylistId = playlistId
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TopTrackAdapter.ViewHolder {
         val view = LayoutInflater.from(this.mContext).inflate(R.layout.single_track_item, parent, false)
-        return ViewHolder(view, this.mUserId!!, this.mPlaylistId!!, mainActivityController,
-            this.mShowAddButton, this.mShowDeleteButton)
+        return ViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: TopTrackAdapter.ViewHolder, position: Int) {
@@ -49,10 +48,7 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
         return this.mTracks.size
     }
 
-    class ViewHolder(itemView: View, userId: String, playlistId: String,
-                     controller: MainActivity.MainActivityController,
-                     showAddButton : Boolean,
-                     showDeleteButton: Boolean) : RecyclerView.ViewHolder(itemView) {
+    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var albumCover : SimpleDraweeView? = null
         var trackTitle : TextView? = null
         var albumTitle : TextView? = null
@@ -60,12 +56,6 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
 
         var heartButton : ImageView? = null
         var addToPlaylistButton : ImageView? = null
-        val mShowDeleteButton = showDeleteButton
-        val mShowAddButton = showAddButton
-        var mainActivityController = controller
-
-        var mUserId = userId
-        var mPlaylistId = playlistId
 
         val TAG = "TopTrackAdapter"
 
@@ -107,7 +97,8 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
                 addToPlaylistButton?.visibility = View.VISIBLE
                 addToPlaylistButton?.setOnClickListener(View.OnClickListener {
                     addTrackToPlaylist(track)
-                    mainActivityController.addToPlaylist(mUserId, mPlaylistId, track)
+                    mainActivityController.addToPlaylist(this@TopTrackAdapter.mUserId!!,
+                        this@TopTrackAdapter.mPlaylistId!!, track)
                 })
             } else {
                 addToPlaylistButton?.visibility = View.GONE
@@ -118,8 +109,12 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
                 deleteButton.visibility = View.VISIBLE
                 deleteButton.setOnClickListener(View.OnClickListener {
                     Log.d(TAG, "deleting " + track.name + " from playlist")
-                     mainActivityController.removeFromPlaylist(mUserId, mPlaylistId, track)
-                    // notify the adapter somehow
+                     mainActivityController.removeFromPlaylist(this@TopTrackAdapter.mUserId!!,
+                         this@TopTrackAdapter.mPlaylistId!!, track, position)
+//                    mTracks.remove(track) // i shouldn't need to do this...
+                    mTracks.removeAt(position)
+                    this@TopTrackAdapter.notifyItemRemoved(position)
+                    this@TopTrackAdapter.notifyItemRangeChanged(position, mTracks.size);
                 })
             } else {
                 deleteButton.visibility = View.GONE

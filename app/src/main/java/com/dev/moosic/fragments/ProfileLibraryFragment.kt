@@ -13,6 +13,7 @@ import com.dev.moosic.MainActivity
 import com.dev.moosic.R
 import com.dev.moosic.adapters.TopTrackAdapter
 import kaaes.spotify.webapi.android.models.PlaylistTrack
+import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
 
 // TODO: Rename parameter arguments, choose names that match
@@ -31,6 +32,7 @@ class ProfileLibraryFragment(controller : MainActivity.MainActivityController) :
     val TAG = "ProfileLibraryFragment"
 
     private var playlistTracks: ArrayList<PlaylistTrack> = ArrayList()
+    private var tracks: List<Track> = ArrayList()
     private var currentUserId: String? = null
     private var userPlaylistId: String? = null
     private var mainActivityController = controller
@@ -42,6 +44,7 @@ class ProfileLibraryFragment(controller : MainActivity.MainActivityController) :
         super.onCreate(savedInstanceState)
         arguments?.let {
             playlistTracks = Parcels.unwrap(it.getParcelable(ARG_PARAM1))
+            tracks = playlistTracks.map{ playlistTrack -> playlistTrack.track }
             currentUserId = it.getString(ARG_PARAM2)
             userPlaylistId = it.getString(ARG_PARAM3)
         }
@@ -82,7 +85,7 @@ class ProfileLibraryFragment(controller : MainActivity.MainActivityController) :
         Log.d(TAG, "curent user id: " + currentUserId)
         Log.d(TAG, "user playlist id: " + userPlaylistId)
         adapter = TopTrackAdapter(view.context,
-            playlistTracks.map{ playlistTrack -> playlistTrack.track },
+            tracks,
             currentUserId!!, userPlaylistId!!, mainActivityController,
             false, true)
 

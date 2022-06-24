@@ -86,14 +86,23 @@ class MainActivity : AppCompatActivity() {
             })
         }
 
-        override fun removeFromPlaylist(userId: String, playlistId: String, track: Track) {
+        override fun removeFromPlaylist(userId: String, playlistId: String, track: Track, position : Int) {
             val tracksToRemove : TracksToRemove = TracksToRemove()
             val trackToRemove : TrackToRemove = TrackToRemove()
             trackToRemove.uri = track.uri
             Log.d(TAG, trackToRemove.toString())
             Log.d(TAG, tracksToRemove.toString())
             tracksToRemove.tracks = listOf(trackToRemove)
-            spotifyApi.service.removeTracksFromPlaylist(userId, playlistId, tracksToRemove,
+
+            val tracksToRemoveWithPosition : TracksToRemoveWithPosition =
+                TracksToRemoveWithPosition()
+            val trackToRemoveWithPosition : TrackToRemoveWithPosition =
+                TrackToRemoveWithPosition()
+            trackToRemoveWithPosition.uri = track.uri
+            trackToRemoveWithPosition.positions = listOf(position)
+            tracksToRemoveWithPosition.tracks = listOf(trackToRemoveWithPosition)
+
+            spotifyApi.service.removeTracksFromPlaylist(userId, playlistId, tracksToRemoveWithPosition,
             object: Callback<SnapshotId> {
                 override fun success(t: SnapshotId?, response: Response?) {
                     Log.d(TAG, "removed " + track.name)
