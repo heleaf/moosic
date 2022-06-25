@@ -77,6 +77,10 @@ class SignUpActivity : AppCompatActivity() {
                     else {
                         user.put("parsePlaylist", playlist)
                         user.saveInBackground()
+
+                        // make an array?
+                        // user.get("parseLikedSongs")
+
                         finish()
                     }
                 }

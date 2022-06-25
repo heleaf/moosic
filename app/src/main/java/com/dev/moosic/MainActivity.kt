@@ -102,7 +102,6 @@ class MainActivity : AppCompatActivity() {
         override fun addToPlaylist(userId: String, playlistId: String, track: Track) {
             // addToParsePlaylist
             // TODO: works, but parse playlist remove doesn't
-            /*
             Log.d(TAG, "adding " + track.name + " to parse playlist...")
             val user = ParseUser.getCurrentUser()
             val playlist = user.getParseObject("parsePlaylist")
@@ -119,7 +118,7 @@ class MainActivity : AppCompatActivity() {
                     Log.d(TAG, "adding " + track.name + " to spotify playlist...")
                 }
             }
-            */
+
 
             // add To SpotifyPlaylist
             val queryParams : Map<String, Any> = mapOf("uris" to track.uri)
@@ -142,7 +141,6 @@ class MainActivity : AppCompatActivity() {
             Log.d(TAG, trackToRemove.toString())
             Log.d(TAG, tracksToRemove.toString())
             tracksToRemove.tracks = listOf(trackToRemove)
-
             val tracksToRemoveWithPosition : TracksToRemoveWithPosition =
                 TracksToRemoveWithPosition()
             val trackToRemoveWithPosition : TrackToRemoveWithPosition =
@@ -150,7 +148,6 @@ class MainActivity : AppCompatActivity() {
             trackToRemoveWithPosition.uri = track.uri
             trackToRemoveWithPosition.positions = listOf(position)
             tracksToRemoveWithPosition.tracks = listOf(trackToRemoveWithPosition)
-
             spotifyApi.service.removeTracksFromPlaylist(userId, playlistId, tracksToRemoveWithPosition,
             object: Callback<SnapshotId> {
                 override fun success(t: SnapshotId?, response: Response?) {
@@ -160,22 +157,14 @@ class MainActivity : AppCompatActivity() {
                     Log.d(TAG, "failed to remove " + track.name + ": " + error?.message)
                 }
             })
-
-            // TODO: currently doesn't work
-            /*
             val user = ParseUser.getCurrentUser()
             val playlist = user.getParseObject("parsePlaylist")
-            if (playlist == null) Log.d(TAG, "playlist is null AAAAA")
             val playlistSongsRelation = playlist?.getRelation<Song>("playlistSongs")
-            if (playlistSongsRelation == null) Log.d(TAG, "RELATION IS NULL AAAAAA")
-            val songToRemove = parsePlaylistSongs[position]
-            playlistSongsRelation?.remove(songToRemove)
-            if (playlistSongsRelation != null) {
-                playlist?.put("playlistSongs", playlistSongsRelation)
-            }
+            val songToDelete = parsePlaylistSongs.get(position)
+            playlistSongsRelation?.remove(songToDelete)
             playlist?.save()
             parsePlaylistSongs.removeAt(position)
-            */
+            songToDelete.deleteInBackground()
         }
 
         override fun addToSavedTracks(trackId: String) {
