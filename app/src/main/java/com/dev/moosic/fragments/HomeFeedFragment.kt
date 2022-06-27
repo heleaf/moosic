@@ -8,6 +8,8 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.dev.moosic.EndlessRecyclerViewScrollListener
+import com.dev.moosic.LoadMoreFunction
 import com.dev.moosic.MainActivity
 import com.dev.moosic.R
 import com.dev.moosic.adapters.TopTrackAdapter
@@ -28,7 +30,7 @@ private const val ARG_PARAM3 = "userPlaylist"
  */
 open class HomeFeedFragment(controller : MainActivity.MainActivityController) : Fragment() {
     // TODO: Rename and change types of parameters
-    private var topTracks: ArrayList<Track> = ArrayList()
+    var topTracks: ArrayList<Track> = ArrayList()
     private var currentUserId : String? = null
     private var userPlaylistId : String? = null
     private var mainActivityController : MainActivity.MainActivityController = controller
@@ -37,6 +39,7 @@ open class HomeFeedFragment(controller : MainActivity.MainActivityController) : 
 
     var rvTopTracks : RecyclerView? = null
     var adapter : TopTrackAdapter? = null
+    var scrollListener: EndlessRecyclerViewScrollListener? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,5 +84,14 @@ open class HomeFeedFragment(controller : MainActivity.MainActivityController) : 
         rvTopTracks?.adapter = adapter
         val linearLayoutManager = LinearLayoutManager(context)
         rvTopTracks?.setLayoutManager(linearLayoutManager)
+
+        scrollListener = EndlessRecyclerViewScrollListener(linearLayoutManager, object: LoadMoreFunction {
+            override fun onLoadMore(offset: Int, totalItemsCount: Int, view: RecyclerView?) {
+                mainActivityController.loadMoreTopSongs(topTracks.size, totalItemsCount, adapter!!)
+            }
+        })
+
+        rvTopTracks?.addOnScrollListener(scrollListener!!);
+
     }
 }

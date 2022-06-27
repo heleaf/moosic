@@ -6,6 +6,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.dev.moosic.adapters.TopTrackAdapter
 import com.dev.moosic.fragments.HomeFeedFragment
 import com.dev.moosic.fragments.PlaylistFragment
 import com.dev.moosic.fragments.SearchFragment
@@ -193,6 +194,7 @@ class MainActivity : AppCompatActivity() {
             })
         }
 
+        // TODO: synchronous calls don't work for me?
         override fun tracksAreSaved(tracks: List<Track>): Array<out Boolean>? {
             val commaSeparatedIds = tracks.fold(
                 ""
@@ -200,9 +202,11 @@ class MainActivity : AppCompatActivity() {
                 Log.d(TAG, acc.isEmpty().toString() + " " + acc.isBlank().toString())
                 acc
             }
-
-            // test.
             return spotifyApi.service.containsMySavedTracks(tracks[0].id);
+        }
+
+        override fun loadMoreTopSongs(offset: Int, numberItemsToLoad: Int, adapter: TopTrackAdapter) {
+            loadUserTopTracks(offset, numberItemsToLoad, false, adapter)
         }
     }
 
@@ -387,7 +391,9 @@ class MainActivity : AppCompatActivity() {
         searchMenuItem?.setVisible(false)
         likedSongsMenuItem?.setVisible(false)
         playlistMenuItem?.setVisible(false)
-        spotifyApi.service.getTopTracks(object : Callback<Pager<kaaes.spotify.webapi.android.models.Track>> {
+        // TODO: constants instead of magic nums
+        spotifyApi.service.getTopTracks(
+            object : Callback<Pager<kaaes.spotify.webapi.android.models.Track>> {
             override fun success(
                 t: Pager<kaaes.spotify.webapi.android.models.Track>?,
                 response: Response?
@@ -419,6 +425,37 @@ class MainActivity : AppCompatActivity() {
             }
 
         })
+
+    }
+
+    private fun loadUserTopTracks(itemOffset: Int, numberItems: Int,
+        clearItemList: Boolean, adapter: TopTrackAdapter) {
+        val queryMap = mapOf("limit" to numberItems, "offset" to itemOffset)
+        spotifyApi.service.getTopTracks(
+            queryMap,
+            object : Callback<Pager<kaaes.spotify.webapi.android.models.Track>> {
+                override fun success(
+                    t: Pager<kaaes.spotify.webapi.android.models.Track>?,
+                    response: Response?
+                ) {
+                    if (t != null){
+                        Log.d(TAG, "success: " + t.toString() + " size: " + t.items.size)
+                        val prevSize = topTracks.size
+                        if (clearItemList) topTracks.clear()
+                        topTracks.addAll(t.items)
+                        adapter.notifyItemRangeInserted(prevSize, t.items.size)
+                    }
+                    if (response != null){
+                        Log.d(TAG, "success: " + response.body)
+                    }
+                }
+
+                override fun failure(error: RetrofitError?) {
+                    Log.d(TAG, "Top tracks failure: " +  error.toString())
+
+                }
+
+            })
     }
 
 }

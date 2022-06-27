@@ -34,7 +34,7 @@ open class PlaylistFragment(controller : MainActivity.MainActivityController) : 
     val TAG = "PlaylistFragment"
 
     // private var playlistTracks: ArrayList<PlaylistTrack> = ArrayList()
-    private var tracks: List<Track> = ArrayList()
+    private var tracks: ArrayList<Track> = ArrayList()
     private var currentUserId: String? = null
     private var userPlaylistId: String? = null
     private var mainActivityController = controller

@@ -1,5 +1,6 @@
 package com.dev.moosic
 
+import com.dev.moosic.adapters.TopTrackAdapter
 import kaaes.spotify.webapi.android.models.Track
 
 interface PlaylistController {
@@ -12,4 +13,8 @@ interface PlaylistController {
     fun removeFromSavedTracks(trackId: String) : Unit
 
     fun tracksAreSaved(tracks: List<Track>) : Array<out Boolean>?
+
+    fun loadMoreTopSongs(offset: Int, numberItemsToLoad: Int, adapter: TopTrackAdapter)
+    
+//    fun loadMoreSearchResults(query: String, offset: Int, numberItemsToLoad: Int, adapter: TopTrackAdapter)
 }

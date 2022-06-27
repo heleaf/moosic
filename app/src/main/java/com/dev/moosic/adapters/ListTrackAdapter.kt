@@ -7,45 +7,33 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.paging.PagedListAdapter
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.MainActivity
 import com.dev.moosic.R
+import com.dev.moosic.models.Song
 import com.facebook.drawee.view.SimpleDraweeView
+import com.parse.ParseUser
 import kaaes.spotify.webapi.android.models.Track
 import java.lang.Exception
 
-class TopTrackAdapter(context : Context, tracks : ArrayList<Track>, userId : String, playlistId : String,
-controller : MainActivity.MainActivityController, showAddButton : Boolean, showDeleteButton : Boolean)
-    : RecyclerView.Adapter<TopTrackAdapter.ViewHolder>() {
-    val TAG = "TopTrackAdapter"
-    var mContext : Context? = null
-    var mTracks : ArrayList<Track> = ArrayList()
-    var mUserId : String? = null
-    var mPlaylistId : String? = null
-    val mainActivityController : MainActivity.MainActivityController = controller
+class ListTrackAdapter(context: Context, tracks : List<Track>, controller: MainActivity.MainActivityController,
+showAddButton : Boolean, showDeleteButton : Boolean) : PagedListAdapter <Track, ListTrackAdapter.ViewHolder>(DIFF_CALLBACK) {
+    val TAG = "ListSongAdapter"
 
-    var mShowDeleteButton = showDeleteButton
-    var mShowAddButton = showAddButton
+    var mContext : Context? = null
+    var mTracks : List<Track> = ArrayList()
+    val mUserSpotifyId : String? = ParseUser.getCurrentUser().getString("userId")
+    val mPlaylistId : String? = ParseUser.getCurrentUser().getString("playlistId")
+
+    val mainActivityController : MainActivity.MainActivityController = controller
+    val mShowAddButton = showAddButton
+    val mShowDeleteButton = showDeleteButton
 
     init {
         this.mContext = context
-        this.mTracks = tracks
-        this.mUserId = userId
-        this.mPlaylistId = playlistId
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TopTrackAdapter.ViewHolder {
-        val view = LayoutInflater.from(this.mContext).inflate(R.layout.single_track_item, parent, false)
-        return ViewHolder(view)
-    }
-
-    override fun onBindViewHolder(holder: TopTrackAdapter.ViewHolder, position: Int) {
-        val track = this.mTracks.get(position)
-        holder.bind(track, position)
-    }
-
-    override fun getItemCount(): Int {
-        return this.mTracks.size
+        this.mTracks = tracks // addAll?
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -56,8 +44,6 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
 
         var heartButton : ImageView? = null
         var addToPlaylistButton : ImageView? = null
-
-        val TAG = "TopTrackAdapter"
 
         init {
             albumCover = itemView.findViewById(R.id.topTrackImg)
@@ -90,7 +76,7 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
             }
 
             heartButton?.setOnClickListener(View.OnClickListener {
-                updateTrackLikedStatus(track, heartButton!!)
+//                updateTrackLikedStatus(track, heartButton!!)
 //                val isLiked = mainActivityController.tracksAreSaved(listOf(track))
                 mainActivityController.addToSavedTracks(track.id)
             })
@@ -98,9 +84,9 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
             if (mShowAddButton) {
                 addToPlaylistButton?.visibility = View.VISIBLE
                 addToPlaylistButton?.setOnClickListener(View.OnClickListener {
-                    addTrackToPlaylist(track)
-                    mainActivityController.addToPlaylist(this@TopTrackAdapter.mUserId!!,
-                        this@TopTrackAdapter.mPlaylistId!!, track)
+//                    addTrackToPlaylist(track)
+                    mainActivityController.addToPlaylist(this@ListTrackAdapter.mUserSpotifyId!!,
+                        this@ListTrackAdapter.mPlaylistId!!, track)
                 })
             } else {
                 addToPlaylistButton?.visibility = View.GONE
@@ -111,12 +97,11 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
                 deleteButton.visibility = View.VISIBLE
                 deleteButton.setOnClickListener(View.OnClickListener {
                     Log.d(TAG, "deleting " + track.name + " from playlist")
-                     mainActivityController.removeFromPlaylist(this@TopTrackAdapter.mUserId!!,
-                         this@TopTrackAdapter.mPlaylistId!!, track, position)
-                    // mTracks.remove(track) // i shouldn't need to do this...
-                    mTracks.removeAt(position)
-                    this@TopTrackAdapter.notifyItemRemoved(position)
-                    this@TopTrackAdapter.notifyItemRangeChanged(position, mTracks.size);
+                    mainActivityController.removeFromPlaylist(this@ListTrackAdapter.mUserSpotifyId!!,
+                        this@ListTrackAdapter.mPlaylistId!!, track, position)
+                    // mTracks.remove(track) // i shouldn't need to do this...?
+                    this@ListTrackAdapter.notifyItemRemoved(position)
+                    this@ListTrackAdapter.notifyItemRangeChanged(position, mTracks.size);
                 })
             } else {
                 deleteButton.visibility = View.GONE
@@ -124,15 +109,36 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
         }
 
         // TODO: pick between playlists
-        private fun addTrackToPlaylist(track: Track) {
-            Log.d(TAG, "adding " + track.name + " to playlist")
-        }
-
-        private fun updateTrackLikedStatus(track: Track, heartButton: ImageView) {
-            Log.d(TAG, "updating liked status of " + track.name)
-            // if it is liked, mSpotifyApi.service.addToMySavedTracks()
-            // if it is not liked, mSpotifyApi.service.removeFromMySavedTracks()
-        }
+        // fully implement likes
 
     }
+
+    companion object {
+        val DIFF_CALLBACK: DiffUtil.ItemCallback<Track> = object : DiffUtil.ItemCallback<Track>() {
+            override fun areItemsTheSame(oldItem: Track, newItem: Track): Boolean {
+                return oldItem.id == newItem.id // same spotify id
+            }
+            override fun areContentsTheSame(oldItem: Track, newItem: Track): Boolean {
+                return oldItem.name == newItem.name
+            }
+        }
+    }
+
+//    fun addMoreTracks(newTracks: List<Track>) {
+//        tracks.addAll(newTracks)
+//        submitList(tracks) // DiffUtil takes care of the check
+//    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val view = LayoutInflater.from(this.mContext).inflate(R.layout.single_track_item,
+            parent, false)
+        return ViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val song = getItem(position) ?: return
+        // TODO: non-null handling
+        holder.bind(song, position)
+    }
+
 }
