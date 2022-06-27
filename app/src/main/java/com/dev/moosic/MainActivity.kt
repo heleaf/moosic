@@ -12,7 +12,6 @@ import com.dev.moosic.fragments.PlaylistFragment
 import com.dev.moosic.fragments.SearchFragment
 import com.dev.moosic.models.Song
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.parse.ParseQuery
 import com.parse.ParseUser
 import com.spotify.android.appremote.api.SpotifyAppRemote
 import kaaes.spotify.webapi.android.SpotifyApi
@@ -20,19 +19,20 @@ import kaaes.spotify.webapi.android.models.*
 import retrofit.Callback
 import retrofit.RetrofitError
 import retrofit.client.Response
-import java.util.*
 import kotlin.collections.ArrayList
 
 
 class MainActivity : AppCompatActivity() {
     val TAG = "MainActivity"
+    val DEFAULT_ITEM_OFFSET = 0
+    val DEFAULT_NUMBER_ITEMS = 20
 
     val CLIENT_ID = "7b7fed9bf37945818d20992b055ac63b"
     val REDIRECT_URI = "http://localhost:8080"
 
     var mSpotifyAppRemote : SpotifyAppRemote? = null
     var topTracks : ArrayList<kaaes.spotify.webapi.android.models.Track> = ArrayList()
-//    var myPlaylists : ArrayList<PlaylistSimple> = ArrayList()
+    var searchedTracks : ArrayList<Track> = ArrayList()
 
     var playlistTracks : ArrayList<kaaes.spotify.webapi.android.models.PlaylistTrack> = ArrayList()
     var parsePlaylistSongs : ArrayList<Song> = ArrayList()
@@ -208,6 +208,12 @@ class MainActivity : AppCompatActivity() {
         override fun loadMoreTopSongs(offset: Int, numberItemsToLoad: Int, adapter: TopTrackAdapter) {
             loadUserTopTracks(offset, numberItemsToLoad, false, adapter)
         }
+
+        override fun loadMoreSearchTracks(query: String, offset: Int, numberItemsToLoad: Int,
+                                          adapter: TopTrackAdapter
+        ) {
+             loadMoreQueryTracks(query, offset, numberItemsToLoad, false, adapter)
+        }
     }
 
     private fun setUpCurrentUser() {
@@ -331,7 +337,6 @@ class MainActivity : AppCompatActivity() {
         likedSongsMenuItem?.setVisible(false)
         playlistMenuItem?.setVisible(false)
         searchMenuItem?.setVisible(true)
-
         var searchView = (searchMenuItem?.actionView) as androidx.appcompat.widget.SearchView
         searchView.onActionViewExpanded()
         searchView.requestFocus()
@@ -341,7 +346,7 @@ class MainActivity : AppCompatActivity() {
                 searchView.clearFocus()
                 // showProgressBar()
                 if (query != null) {
-                    fetchQuery(query)
+                    fetchQueryAndSendToFragment(query, DEFAULT_ITEM_OFFSET, DEFAULT_NUMBER_ITEMS)
                 }
                 return true
             }
@@ -350,21 +355,35 @@ class MainActivity : AppCompatActivity() {
                 return false
             }
         })
-
+        searchedTracks.clear()
+        if (currentUserId != null && userPlaylistId != null){
+            val searchFragment = SearchFragment.newInstance(searchedTracks,
+                currentUserId!!, userPlaylistId!!, MainActivityController(), ""
+            )
+            fragmentManager.beginTransaction().replace(R.id.flContainer, searchFragment)
+                .commit()
+        } else {
+            Toast.makeText(
+                this@MainActivity, "Setting up search page.. please refresh",
+                Toast.LENGTH_LONG
+            ).show()
+        }
     }
 
-    private fun fetchQuery(query: String) {
+    private fun fetchQueryAndSendToFragment(query: String, itemOffset: Int, numberItems: Int) {
         // use my query to search the spotify api
+        val queryMap = mapOf("offset" to itemOffset, "limit" to numberItems)
         spotifyApi.service.searchTracks(query, object: Callback<TracksPager> {
             override fun success(t: TracksPager?, response: Response?) {
                 Log.d(TAG, "successfully queried " + query)
                 if (t != null){
                     // send the tracks to the search fragment to display
-                    var searchedTracks : ArrayList<Track> = ArrayList()
+                    searchedTracks.clear()
                     searchedTracks.addAll(t.tracks.items)
                     if (currentUserId != null && userPlaylistId != null){
                         val searchFragment = SearchFragment.newInstance(searchedTracks,
-                            currentUserId!!, userPlaylistId!!, MainActivityController()
+                            currentUserId!!, userPlaylistId!!, MainActivityController(),
+                            query
                         )
                         fragmentManager.beginTransaction().replace(R.id.flContainer, searchFragment)
                             .commit()
@@ -374,9 +393,7 @@ class MainActivity : AppCompatActivity() {
                             Toast.LENGTH_LONG
                         ).show()
                     }
-
                 }
-//                hideProgressBar()
             }
 
             override fun failure(error: RetrofitError?) {
@@ -384,6 +401,33 @@ class MainActivity : AppCompatActivity() {
 //                hideProgressBar()
             }
 
+        })
+    }
+
+    private fun loadMoreQueryTracks(query: String, itemOffset: Int, numberItems: Int,
+        clearItemList: Boolean, adapter: TopTrackAdapter) {
+        val queryMap = mapOf("offset" to itemOffset, "limit" to numberItems)
+        spotifyApi.service.searchTracks(query, object: Callback<TracksPager> {
+            override fun success(t: TracksPager?, response: Response?) {
+                Log.d(TAG, "successfully queried " + query)
+                if (t != null){
+                    Log.d(TAG, "loading from " + searchedTracks.size + " with " + t.tracks.items.size)
+                    val prevSize = searchedTracks.size
+                    if (clearItemList) searchedTracks.clear()
+                    searchedTracks.addAll(t.tracks.items)
+                    adapter.notifyItemRangeInserted(prevSize, t.tracks.items.size)
+                    } else {
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Setting up search results.. please refresh",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            override fun failure(error: RetrofitError?) {
+                Log.d(TAG, "error querying " + query + ": " + error?.message)
+//                hideProgressBar()
+            }
         })
     }
 

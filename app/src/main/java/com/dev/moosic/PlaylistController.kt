@@ -15,6 +15,6 @@ interface PlaylistController {
     fun tracksAreSaved(tracks: List<Track>) : Array<out Boolean>?
 
     fun loadMoreTopSongs(offset: Int, numberItemsToLoad: Int, adapter: TopTrackAdapter)
-    
-//    fun loadMoreSearchResults(query: String, offset: Int, numberItemsToLoad: Int, adapter: TopTrackAdapter)
+
+    fun loadMoreSearchTracks(query: String, offset: Int, numberItemsToLoad: Int, adapter: TopTrackAdapter)
 }

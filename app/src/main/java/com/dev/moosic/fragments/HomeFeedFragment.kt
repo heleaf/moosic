@@ -48,7 +48,6 @@ open class HomeFeedFragment(controller : MainActivity.MainActivityController) : 
             topTracks = Parcels.unwrap(it.getParcelable(ARG_PARAM1))
             currentUserId = it.getString(ARG_PARAM2);
             userPlaylistId = it.getString(ARG_PARAM3)
-//            mainActivityController = Parcels.unwrap(it.getParcelable(ARG_PARAM4))
         }
     }
 
