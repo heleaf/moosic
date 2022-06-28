@@ -2,15 +2,14 @@ package com.dev.moosic.adapters
 
 import android.content.Context
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.MainActivity
 import com.dev.moosic.R
 import com.facebook.drawee.view.SimpleDraweeView
+import com.google.gson.Gson
 import kaaes.spotify.webapi.android.models.Track
 import java.lang.Exception
 
@@ -32,6 +31,7 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
         this.mTracks = tracks
         this.mUserId = userId
         this.mPlaylistId = playlistId
+
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TopTrackAdapter.ViewHolder {
@@ -69,7 +69,8 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
         }
         fun bind(track: Track, position: Int) {
 
-
+//            val gson = Gson()
+//            Log.d(TAG, gson.toJson(track).toString()) this works!
 
             val trackTitleText = track.name
             trackTitle?.setText(trackTitleText)
@@ -101,7 +102,7 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
             if (mShowAddButton) {
                 addToPlaylistButton?.visibility = View.VISIBLE
                 addToPlaylistButton?.setOnClickListener(View.OnClickListener {
-                    addTrackToPlaylist(track)
+//                    addTrackToPlaylist(track)
                     mainActivityController.addToPlaylist(this@TopTrackAdapter.mUserId!!,
                         this@TopTrackAdapter.mPlaylistId!!, track)
                 })
@@ -124,11 +125,6 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
             } else {
                 deleteButton.visibility = View.GONE
             }
-        }
-
-        // TODO: pick between playlists
-        private fun addTrackToPlaylist(track: Track) {
-            Log.d(TAG, "adding " + track.name + " to playlist")
         }
 
         private fun updateTrackLikedStatus(track: Track, heartButton: ImageView) {
