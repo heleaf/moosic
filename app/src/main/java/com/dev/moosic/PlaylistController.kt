@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.adapters.TopTrackAdapter
 import kaaes.spotify.webapi.android.models.Track
 
@@ -18,7 +19,8 @@ interface PlaylistController {
 
     fun tracksAreSaved(tracks: List<Track>) : Array<out Boolean>?
 
-    fun loadMoreTopSongs(offset: Int, numberItemsToLoad: Int, adapter: TopTrackAdapter)
+    fun loadMoreTopSongs(offset: Int, numberItemsToLoad: Int, clearItems: Boolean, adapter: TopTrackAdapter,
+        swipeContainer: SwipeRefreshLayout)
 
     fun loadMoreSearchTracks(query: String, offset: Int, numberItemsToLoad: Int, adapter: TopTrackAdapter)
 }

@@ -7,6 +7,7 @@ import android.view.MenuItem
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.adapters.TopTrackAdapter
 import com.dev.moosic.fragments.HomeFeedFragment
 import com.dev.moosic.fragments.ParsePlaylistFragment
@@ -238,8 +239,9 @@ class MainActivity : AppCompatActivity() {
             return spotifyApi.service.containsMySavedTracks(tracks[0].id);
         }
 
-        override fun loadMoreTopSongs(offset: Int, numberItemsToLoad: Int, adapter: TopTrackAdapter) {
-            loadUserTopTracks(offset, numberItemsToLoad, false, adapter)
+        override fun loadMoreTopSongs(offset: Int, numberItemsToLoad: Int, clearItemList: Boolean,
+            adapter: TopTrackAdapter, swipeContainer: SwipeRefreshLayout) {
+            loadUserTopTracks(offset, numberItemsToLoad, clearItemList, adapter, swipeContainer)
         }
 
         override fun loadMoreSearchTracks(query: String, offset: Int, numberItemsToLoad: Int,
@@ -523,7 +525,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadUserTopTracks(itemOffset: Int, numberItems: Int,
-        clearItemList: Boolean, adapter: TopTrackAdapter) {
+        clearItemList: Boolean, adapter: TopTrackAdapter, swipeContainer: SwipeRefreshLayout) {
         val queryMap = mapOf("limit" to numberItems, "offset" to itemOffset)
         spotifyApi.service.getTopTracks(
             queryMap,
@@ -542,11 +544,12 @@ class MainActivity : AppCompatActivity() {
                     if (response != null){
                         Log.d(TAG, "success: " + response.body)
                     }
+                    swipeContainer.isRefreshing = false
                 }
 
                 override fun failure(error: RetrofitError?) {
                     Log.d(TAG, "Top tracks failure: " +  error.toString())
-
+                    swipeContainer.isRefreshing = false
                 }
 
             })

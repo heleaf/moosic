@@ -1,22 +1,19 @@
 package com.dev.moosic.fragments
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.EndlessRecyclerViewScrollListener
 import com.dev.moosic.LoadMoreFunction
 import com.dev.moosic.MainActivity
 import com.dev.moosic.R
 import com.dev.moosic.adapters.TopTrackAdapter
-import kaaes.spotify.webapi.android.SpotifyApi
-import kaaes.spotify.webapi.android.models.Playlist
 import kaaes.spotify.webapi.android.models.Track
-import kaaes.spotify.webapi.android.models.UserPrivate
 import org.parceler.Parcels
 
 private const val ARG_PARAM1 = "topTracks"
@@ -40,6 +37,7 @@ open class HomeFeedFragment(controller : MainActivity.MainActivityController) : 
     var rvTopTracks : RecyclerView? = null
     var adapter : TopTrackAdapter? = null
     var scrollListener: EndlessRecyclerViewScrollListener? = null
+    var swipeContainer: SwipeRefreshLayout? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -86,11 +84,27 @@ open class HomeFeedFragment(controller : MainActivity.MainActivityController) : 
 
         scrollListener = EndlessRecyclerViewScrollListener(linearLayoutManager, object: LoadMoreFunction {
             override fun onLoadMore(offset: Int, totalItemsCount: Int, view: RecyclerView?) {
-                mainActivityController.loadMoreTopSongs(topTracks.size, totalItemsCount, adapter!!)
+                mainActivityController.loadMoreTopSongs(topTracks.size, totalItemsCount, false, adapter!!, swipeContainer!!)
             }
         })
 
         rvTopTracks?.addOnScrollListener(scrollListener!!);
+
+        swipeContainer = view.findViewById(R.id.homeFeedSwipeContainer)
+        swipeContainer?.setOnRefreshListener {
+            mainActivityController.loadMoreTopSongs(0, 20, true, adapter!!,
+                swipeContainer!!)
+            scrollListener?.resetState()
+        }
+
+        // Configure the refreshing colors
+        // Configure the refreshing colors
+        swipeContainer?.setColorSchemeResources(
+            android.R.color.holo_blue_bright,
+            android.R.color.holo_green_light,
+            android.R.color.holo_orange_light,
+            android.R.color.holo_red_light
+        )
 
     }
 }
