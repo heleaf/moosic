@@ -9,6 +9,8 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.dev.moosic.EndlessRecyclerViewScrollListener
+import com.dev.moosic.LoadMoreFunction
 import com.dev.moosic.MainActivity
 import com.dev.moosic.R
 import com.dev.moosic.adapters.TopTrackAdapter
@@ -44,10 +46,12 @@ open class PlaylistFragment(controller : MainActivity.MainActivityController) : 
 
     var rvPlaylistTracks : RecyclerView? = null
     var adapter : TopTrackAdapter? = null // TODO: switch to a different track adapter
+    var scrollListener : EndlessRecyclerViewScrollListener? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
+            tracks.clear()
             tracks = Parcels.unwrap(it.getParcelable(ARG_PARAM1))
 //            tracks = playlistTracks.map{ playlistTrack -> playlistTrack.track }
             currentUserId = it.getString(ARG_PARAM2)
@@ -102,5 +106,14 @@ open class PlaylistFragment(controller : MainActivity.MainActivityController) : 
         rvPlaylistTracks?.adapter = adapter
         val linearLayoutManager = LinearLayoutManager(context)
         rvPlaylistTracks?.setLayoutManager(linearLayoutManager)
+
+//        scrollListener = EndlessRecyclerViewScrollListener(linearLayoutManager, object: LoadMoreFunction {
+//            override fun onLoadMore(offset: Int, totalItemsCount: Int, view: RecyclerView?) {
+//                mainActivityController.loadMorePlaylistSongs(tracks.size, totalItemsCount, adapter!!)
+//            }
+//        })
+//
+//        rvPlaylistTracks?.addOnScrollListener(scrollListener!!);
+
     }
 }

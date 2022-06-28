@@ -68,6 +68,9 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
             addToPlaylistButton = itemView.findViewById(R.id.addToPlaylistButton)
         }
         fun bind(track: Track, position: Int) {
+
+
+
             val trackTitleText = track.name
             trackTitle?.setText(trackTitleText)
 

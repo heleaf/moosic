@@ -100,5 +100,6 @@ class SearchFragment(controller: MainActivity.MainActivityController) : Fragment
             rvSearchedTracks?.addOnScrollListener(scrollListener!!);
         }
 
+
     }
 }

@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.dev.moosic.adapters.TopTrackAdapter
@@ -19,13 +20,12 @@ import kaaes.spotify.webapi.android.models.*
 import retrofit.Callback
 import retrofit.RetrofitError
 import retrofit.client.Response
-import kotlin.collections.ArrayList
 
 
 class MainActivity : AppCompatActivity() {
     val TAG = "MainActivity"
     val DEFAULT_ITEM_OFFSET = 0
-    val DEFAULT_NUMBER_ITEMS = 20
+    val DEFAULT_NUMBER_ITEMS = 30
 
     val CLIENT_ID = "7b7fed9bf37945818d20992b055ac63b"
     val REDIRECT_URI = "http://localhost:8080"
@@ -52,6 +52,7 @@ class MainActivity : AppCompatActivity() {
     var likedSongsMenuItem : MenuItem? = null
     var playlistMenuItem : MenuItem? = null
     var logOutMenuItem : MenuItem? = null
+    var progressBar: ProgressBar? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,6 +69,7 @@ class MainActivity : AppCompatActivity() {
             }
             return@setOnItemSelectedListener true
         }
+        progressBar = findViewById(R.id.pbLoadingSearch)
         setUpCurrentUser()
     }
 
@@ -344,7 +346,6 @@ class MainActivity : AppCompatActivity() {
             : androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 searchView.clearFocus()
-                // showProgressBar()
                 if (query != null) {
                     fetchQueryAndSendToFragment(query, DEFAULT_ITEM_OFFSET, DEFAULT_NUMBER_ITEMS)
                 }
@@ -372,12 +373,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun fetchQueryAndSendToFragment(query: String, itemOffset: Int, numberItems: Int) {
         // use my query to search the spotify api
+        showProgressBar()
         val queryMap = mapOf("offset" to itemOffset, "limit" to numberItems)
         spotifyApi.service.searchTracks(query, object: Callback<TracksPager> {
             override fun success(t: TracksPager?, response: Response?) {
                 Log.d(TAG, "successfully queried " + query)
                 if (t != null){
                     // send the tracks to the search fragment to display
+                    if (progressBar != null) {
+                        progressBar!!.visibility = ProgressBar.INVISIBLE
+                    }
                     searchedTracks.clear()
                     searchedTracks.addAll(t.tracks.items)
                     if (currentUserId != null && userPlaylistId != null){
@@ -394,11 +399,12 @@ class MainActivity : AppCompatActivity() {
                         ).show()
                     }
                 }
+                hideProgressBar()
             }
 
             override fun failure(error: RetrofitError?) {
                 Log.d(TAG, "error querying " + query + ": " + error?.message)
-//                hideProgressBar()
+                hideProgressBar()
             }
 
         })
@@ -426,7 +432,7 @@ class MainActivity : AppCompatActivity() {
                 }
             override fun failure(error: RetrofitError?) {
                 Log.d(TAG, "error querying " + query + ": " + error?.message)
-//                hideProgressBar()
+                hideProgressBar()
             }
         })
     }
@@ -436,16 +442,19 @@ class MainActivity : AppCompatActivity() {
         likedSongsMenuItem?.setVisible(false)
         playlistMenuItem?.setVisible(false)
         // TODO: constants instead of magic nums
+        showProgressBar()
         spotifyApi.service.getTopTracks(
             object : Callback<Pager<kaaes.spotify.webapi.android.models.Track>> {
             override fun success(
                 t: Pager<kaaes.spotify.webapi.android.models.Track>?,
                 response: Response?
             ) {
+                hideProgressBar()
                 if (t != null){
                     Log.d(TAG, "success: " + t.toString() + " size: " + t.items.size)
                     topTracks.clear()
                     topTracks.addAll(t.items)
+
                     if (currentUserId != null && userPlaylistId != null){
                         val homeFragment = HomeFeedFragment.newInstance(topTracks,
                             currentUserId!!, userPlaylistId!!, MainActivityController()
@@ -465,6 +474,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun failure(error: RetrofitError?) {
                 Log.d(TAG, "Top tracks failure: " +  error.toString())
+                hideProgressBar()
 
             }
 
@@ -500,6 +510,18 @@ class MainActivity : AppCompatActivity() {
                 }
 
             })
+    }
+
+    fun showProgressBar(){
+        if (progressBar != null){
+            progressBar!!.visibility = ProgressBar.VISIBLE
+        }
+    }
+
+    fun hideProgressBar(){
+        if (progressBar != null){
+            progressBar!!.visibility = ProgressBar.GONE
+        }
     }
 
 }
