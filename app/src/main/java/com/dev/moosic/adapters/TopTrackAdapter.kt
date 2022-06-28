@@ -71,6 +71,11 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
 
 //            val gson = Gson()
 //            Log.d(TAG, gson.toJson(track).toString()) this works!
+            itemView.setOnLongClickListener {
+                Log.d(TAG, "adding $track to playlist")
+                mainActivityController.addToParsePlaylist(track)
+                return@setOnLongClickListener true
+            }
 
             val trackTitleText = track.name
             trackTitle?.setText(trackTitleText)
