@@ -95,12 +95,13 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
                 val albumCoverImgUri = track.album.images.get(0).url
                 albumCover?.setImageURI(albumCoverImgUri);
                 albumCover?.setOnClickListener {
-                    mainActivityController.playSongOnSpotify(track.uri)
+                    mainActivityController.playSongOnSpotify(track.uri, track.id)
                 }
             } catch (e : Exception) {
                 Log.e(TAG, "error: " + e.message)
             }
 
+            heartButton?.visibility = View.GONE
             heartButton?.setOnClickListener(View.OnClickListener {
                 updateTrackLikedStatus(track, heartButton!!)
 //                val isLiked = mainActivityController.tracksAreSaved(listOf(track))

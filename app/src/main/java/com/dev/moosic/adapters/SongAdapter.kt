@@ -110,14 +110,23 @@ controller: MainActivity.MainActivityController, buttonsToShow: List<String>)
             try {
                 val albumCoverImgUri = song.getImageUri()
                 albumCover?.setImageURI(albumCoverImgUri);
+                albumCover?.setOnClickListener {
+                    song.getSpotifyUri()
+                        ?.let { uri -> mainActivityController.playSongOnSpotify(uri, song.getSpotifyId()!!) }
+                }
             } catch (e : Exception) {
                 Log.e("SongAdapter", "error: " + e.message)
             }
 
-            heartButton?.setOnClickListener(View.OnClickListener {
+            if (mShowHeartButton) {
+                heartButton?.visibility = View.VISIBLE
+                heartButton?.setOnClickListener(View.OnClickListener {
 //                val isLiked = mainActivityController.tracksAreSaved(listOf(track))
-                mainActivityController.addToSavedTracks(track.id)
-            })
+                    mainActivityController.addToSavedTracks(track.id)
+                })
+            } else {
+                heartButton?.visibility = View.GONE
+            }
 
             if (mShowAddButton) {
                 addToPlaylistButton?.visibility = View.VISIBLE

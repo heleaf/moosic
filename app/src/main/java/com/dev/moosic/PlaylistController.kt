@@ -26,7 +26,7 @@ interface PlaylistController {
 
     fun loadReccomendedSongs(seedArtists: String, seedGenres: String, seedTracks: String, limit: Int)
 
-    fun playSongOnSpotify(uri: String)
+    fun playSongOnSpotify(uri: String, spotifyId: String)
 
     fun pauseSongOnSpotify()
 

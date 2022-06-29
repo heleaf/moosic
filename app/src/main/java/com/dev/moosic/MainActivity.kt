@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.adapters.TopTrackAdapter
 import com.dev.moosic.fragments.HomeFeedFragment
+import com.dev.moosic.fragments.MiniPlayerFragment
 import com.dev.moosic.fragments.ParsePlaylistFragment
 import com.dev.moosic.fragments.SearchFragment
 import com.dev.moosic.models.Song
@@ -147,7 +148,7 @@ class MainActivity : AppCompatActivity(){
 
     fun connected() {
         // Play a playlist
-        mSpotifyAppRemote?.getPlayerApi()?.play("spotify:playlist:37i9dQZF1DX2sUQwD7tbmL");
+//        mSpotifyAppRemote?.getPlayerApi()?.play("spotify:playlist:37i9dQZF1DX2sUQwD7tbmL");
         // ?.pause() ... ?.resume()
         // Subscribe to PlayerState
 //        mSpotifyAppRemote!!.playerApi
@@ -164,7 +165,6 @@ class MainActivity : AppCompatActivity(){
         super.onStop()
         SpotifyAppRemote.disconnect(mSpotifyAppRemote);
     }
-
 
     inner class MainActivityController() : PlaylistController {
         val TAG = "MainActivityController"
@@ -319,9 +319,26 @@ class MainActivity : AppCompatActivity(){
             })
         }
 
-        override fun playSongOnSpotify(uri: String) {
+        override fun playSongOnSpotify(uri: String, spotifyId: String) {
             // Play a playlist
             mSpotifyAppRemote?.getPlayerApi()?.play(uri);
+            // update fragment
+
+            spotifyApi.service.getTrack(spotifyId, object: Callback<Track> {
+                override fun success(t: Track?, response: Response?) {
+                    if (t != null) {
+                        val miniPlayerFragment = MiniPlayerFragment.newInstance(t)
+                        fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
+                            miniPlayerFragment).commit()
+
+                    }
+                }
+
+                override fun failure(error: RetrofitError?) {
+                    Log.d(TAG, "error setting up mini player: " + error?.message)
+                }
+            })
+
             // ?.pause() ... ?.resume()
             // Subscribe to PlayerState
 //        mSpotifyAppRemote!!.playerApi
