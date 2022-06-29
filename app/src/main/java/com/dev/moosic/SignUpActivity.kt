@@ -1,5 +1,6 @@
 package com.dev.moosic
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.telephony.PhoneNumberUtils
@@ -9,18 +10,27 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import com.dev.moosic.models.Playlist
+import com.google.gson.Gson
 import com.parse.ParseObject
 import com.parse.ParseUser
+import org.parceler.Parcels
 
 class SignUpActivity : AppCompatActivity() {
     val TAG = "SignUpActivity"
     val KEY_PHONE_NUMBER = "phoneNumber"
+    val REQUEST_CODE_GET_INTERESTS = 1999
+
+    val KEY_USER_PICKED_GENRES = "userPickedGenres"
 
     var mUsername : EditText? = null
     var mPassword : EditText? = null
     var mEmail : EditText? = null
     var mPhoneNumber : EditText? = null
     var mSignUpButton : Button? = null
+
+    var accessToken: String? = null
+
+    var user : ParseUser = ParseUser()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,10 +56,12 @@ class SignUpActivity : AppCompatActivity() {
 
         })
 
+        accessToken = intent.getStringExtra("accessToken")
+        Log.d(TAG, "accesstoken: " + accessToken)
+
     }
 
     private fun signUp(username: String, password: String, email: String, phone: String) {
-        val user = ParseUser()
         user.setUsername(username)
         user.setPassword(password)
         user.setEmail(email)
@@ -78,10 +90,18 @@ class SignUpActivity : AppCompatActivity() {
                         user.put("parsePlaylist", playlist)
                         user.saveInBackground()
 
-                        // make an array?
-                        // user.get("parseLikedSongs")
+                        Log.d(TAG, "wtf?")
 
-                        finish()
+                        // get user interests
+                        val intent = Intent(this, GetInterestsActivity::class.java)
+                        intent.putExtra("user", Parcels.wrap(user))
+                        intent.putExtra("accessToken", accessToken)
+                        startActivityForResult(intent, REQUEST_CODE_GET_INTERESTS)
+
+                        mUsername?.setText("")
+                        mPassword?.setText("")
+                        mEmail?.setText("")
+                        mPhoneNumber?.setText("")
                     }
                 }
             }
@@ -89,5 +109,26 @@ class SignUpActivity : AppCompatActivity() {
 
 
 
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == REQUEST_CODE_GET_INTERESTS) {
+            if (resultCode == RESULT_OK){
+                val genres : ArrayList<String>
+                    = Parcels.unwrap(data?.getParcelableExtra("userPickedGenres"))
+                // add these interests to the parse database
+                val gson = Gson()
+                val pickedGenresJsonString = gson.toJson(genres)
+                user.put(KEY_USER_PICKED_GENRES, pickedGenresJsonString)
+                user.saveInBackground {
+                    if (it != null) {
+                        Log.d(TAG, "error saving user's genres: " + it.message)
+                        return@saveInBackground
+                    }
+                    finish() // go back
+                }
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data)
     }
 }

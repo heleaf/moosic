@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.EndlessRecyclerViewScrollListener
 import com.dev.moosic.MainActivity
 import com.dev.moosic.R
@@ -35,6 +36,7 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivityControlle
     var rvPlaylistTracks : RecyclerView? = null
     var adapter : SongAdapter? = null
     var scrollListener : EndlessRecyclerViewScrollListener? = null
+    var swipeContainer: SwipeRefreshLayout? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,7 +73,10 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivityControlle
         val title : TextView = view.findViewById(R.id.playlistTitle)
         val author : TextView = view.findViewById(R.id.playlistAuthor)
         val descrip : TextView = view.findViewById(R.id.playlistDescription)
-        listOf(title, author, descrip).map{ tv -> tv.visibility = View.GONE }
+
+//        listOf(title, author, descrip).map{ tv -> tv.visibility = View.GONE }
+
+
         rvPlaylistTracks = view.findViewById(R.id.rvPlaylistTracks)
 
         adapter = SongAdapter(view.context,
@@ -81,6 +86,20 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivityControlle
         val linearLayoutManager = LinearLayoutManager(context)
         rvPlaylistTracks?.setLayoutManager(linearLayoutManager)
 
+
+        swipeContainer = view.findViewById(R.id.profileFeedSwipeContainer)
+        swipeContainer?.setOnRefreshListener {
+            // TODO: refresh the playlist?
+            swipeContainer?.isRefreshing = false
+            scrollListener?.resetState()
+        }
+
+        swipeContainer?.setColorSchemeResources(
+            android.R.color.holo_blue_bright,
+            android.R.color.holo_green_light,
+            android.R.color.holo_orange_light,
+            android.R.color.holo_red_light
+        )
 //        scrollListener = EndlessRecyclerViewScrollListener(linearLayoutManager, object: LoadMoreFunction {
 //            override fun onLoadMore(offset: Int, totalItemsCount: Int, view: RecyclerView?) {
 //                mainActivityController.loadMorePlaylistSongs(tracks.size, totalItemsCount, adapter!!)

@@ -29,9 +29,7 @@ private const val KEY_ADD_BUTTON = "add"
 private const val KEY_DELETE_BUTTON = "delete"
 private const val KEY_HEART_BUTTON = "heart"
 
-class MainActivity : AppCompatActivity(),
-    GestureDetector.OnGestureListener,
-    GestureDetector.OnDoubleTapListener {
+class MainActivity : AppCompatActivity(){
     val TAG = "MainActivity"
     val DEFAULT_ITEM_OFFSET = 0
     val DEFAULT_NUMBER_ITEMS = 5
@@ -63,7 +61,7 @@ class MainActivity : AppCompatActivity(),
     var logOutMenuItem : MenuItem? = null
     var progressBar: ProgressBar? = null
 
-    private lateinit var mDetector: GestureDetectorCompat
+//    private lateinit var mDetector: GestureDetectorCompat
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,7 +79,7 @@ class MainActivity : AppCompatActivity(),
             return@setOnItemSelectedListener true
         }
         progressBar = findViewById(R.id.pbLoadingSearch)
-        mDetector = GestureDetectorCompat(this, this)
+//        mDetector = GestureDetectorCompat(this, this)
         setUpCurrentUser()
     }
 
@@ -570,71 +568,6 @@ class MainActivity : AppCompatActivity(),
         if (progressBar != null){
             progressBar!!.visibility = ProgressBar.GONE
         }
-    }
-
-    // this function connects touch events to gestures
-    override fun onTouchEvent(event: MotionEvent): Boolean {
-        return if (mDetector.onTouchEvent(event)) {
-            true
-        } else {
-            super.onTouchEvent(event)
-        }
-    }
-
-    override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
-        Log.d(TAG, "onSingleTapConfirmed: $e")
-        return true
-    }
-
-    override fun onDoubleTap(e: MotionEvent?): Boolean {
-        Log.d(TAG, "onDoubleTap: $e")
-        return true
-    }
-
-    override fun onDoubleTapEvent(e: MotionEvent?): Boolean {
-        Log.d(TAG, "onDoubleTapEvent: $e")
-
-        // simple toast
-        Toast.makeText(this, "Double Tap", Toast.LENGTH_SHORT).show()
-        return true
-    }
-
-    override fun onDown(e: MotionEvent?): Boolean {
-        Log.d(TAG, "onDown: $e")
-        return true
-    }
-
-    override fun onShowPress(e: MotionEvent?) {
-        Log.d(TAG, "onShowPress: $e")
-    }
-
-    override fun onSingleTapUp(e: MotionEvent?): Boolean {
-        Log.d(TAG, "onSingleTapUp: $e")
-        return true
-    }
-
-    override fun onScroll(
-        e1: MotionEvent?,
-        e2: MotionEvent?,
-        distanceX: Float,
-        distanceY: Float
-    ): Boolean {
-        Log.d(TAG, "onScroll: $e1 $e2")
-        return true
-    }
-
-    override fun onLongPress(e: MotionEvent?) {
-        Log.d(TAG, "onLongPress: $e")
-    }
-
-    override fun onFling(
-        e1: MotionEvent?,
-        e2: MotionEvent?,
-        velocityX: Float,
-        velocityY: Float
-    ): Boolean {
-        Log.d(TAG, "onFling: $e1 $e2")
-        return true
     }
 
 }
