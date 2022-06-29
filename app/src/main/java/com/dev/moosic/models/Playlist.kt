@@ -2,7 +2,9 @@ package com.dev.moosic.models
 
 import android.util.Log
 import com.parse.*
+import org.parceler.Parcel
 
+@Parcel
 @ParseClassName("Playlist")
 class Playlist() : ParseObject() {
     final val KEY_NAME = "name"

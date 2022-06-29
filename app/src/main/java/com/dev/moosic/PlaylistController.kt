@@ -23,4 +23,13 @@ interface PlaylistController {
         swipeContainer: SwipeRefreshLayout)
 
     fun loadMoreSearchTracks(query: String, offset: Int, numberItemsToLoad: Int, adapter: TopTrackAdapter)
+
+    fun loadReccomendedSongs(seedArtists: String, seedGenres: String, seedTracks: String, limit: Int)
+
+    fun playSongOnSpotify(uri: String)
+
+    fun pauseSongOnSpotify()
+
+    fun resumeSongOnSpotify()
+
 }

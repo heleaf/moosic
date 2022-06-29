@@ -2,28 +2,29 @@ package com.dev.moosic
 
 import android.os.Bundle
 import android.util.Log
-import android.view.GestureDetector
 import android.view.Menu
 import android.view.MenuItem
-import android.view.MotionEvent
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.GestureDetectorCompat
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.adapters.TopTrackAdapter
 import com.dev.moosic.fragments.HomeFeedFragment
 import com.dev.moosic.fragments.ParsePlaylistFragment
-import com.dev.moosic.fragments.PlaylistFragment
 import com.dev.moosic.fragments.SearchFragment
 import com.dev.moosic.models.Song
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.parse.ParseUser
+import com.spotify.android.appremote.api.ConnectionParams
+import com.spotify.android.appremote.api.Connector
+import com.spotify.android.appremote.api.SpotifyAppRemote
+import com.spotify.protocol.types.PlayerState
 import kaaes.spotify.webapi.android.SpotifyApi
 import kaaes.spotify.webapi.android.models.*
 import retrofit.Callback
 import retrofit.RetrofitError
 import retrofit.client.Response
+
 
 private const val KEY_ADD_BUTTON = "add"
 private const val KEY_DELETE_BUTTON = "delete"
@@ -34,9 +35,9 @@ class MainActivity : AppCompatActivity(){
     val DEFAULT_ITEM_OFFSET = 0
     val DEFAULT_NUMBER_ITEMS = 5
 
-//    val CLIENT_ID = "7b7fed9bf37945818d20992b055ac63b"
-//    val REDIRECT_URI = "http://localhost:8080"
-//    var mSpotifyAppRemote : SpotifyAppRemote? = null
+    val CLIENT_ID = "7b7fed9bf37945818d20992b055ac63b"
+    val REDIRECT_URI = "http://localhost:8080"
+    var mSpotifyAppRemote : SpotifyAppRemote? = null
 
     var topTracks : ArrayList<kaaes.spotify.webapi.android.models.Track> = ArrayList()
     var searchedTracks : ArrayList<Track> = ArrayList()
@@ -117,6 +118,53 @@ class MainActivity : AppCompatActivity(){
             }
         }
     }
+
+    override fun onStart() {
+        super.onStart()
+        val connectionParams = ConnectionParams.Builder(CLIENT_ID)
+            .setRedirectUri(REDIRECT_URI)
+            .showAuthView(true)
+            .build()
+
+        SpotifyAppRemote.connect(this, connectionParams,
+            object : Connector.ConnectionListener {
+                override fun onConnected(spotifyAppRemote: SpotifyAppRemote) {
+                    mSpotifyAppRemote = spotifyAppRemote
+                    Log.d("MainActivity", "Connected! Yay!")
+
+                    // Now you can start interacting with App Remote
+                    connected()
+                }
+
+                override fun onFailure(throwable: Throwable) {
+                    Log.e("MainActivity", throwable.message, throwable)
+
+                    // Something went wrong when attempting to connect! Handle errors here
+                }
+            })
+
+    }
+
+    fun connected() {
+        // Play a playlist
+        mSpotifyAppRemote?.getPlayerApi()?.play("spotify:playlist:37i9dQZF1DX2sUQwD7tbmL");
+        // ?.pause() ... ?.resume()
+        // Subscribe to PlayerState
+//        mSpotifyAppRemote!!.playerApi
+//            .subscribeToPlayerState()
+//            .setEventCallback { playerState: PlayerState ->
+//                val track: com.spotify.protocol.types.Track? = playerState.track
+//                if (track != null) {
+//                    Log.d("MainActivity", track.name.toString() + " by " + track.artist.name)
+//                }
+//            }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        SpotifyAppRemote.disconnect(mSpotifyAppRemote);
+    }
+
 
     inner class MainActivityController() : PlaylistController {
         val TAG = "MainActivityController"
@@ -253,6 +301,48 @@ class MainActivity : AppCompatActivity(){
              loadMoreQueryTracks(query, offset, numberItemsToLoad, false, adapter)
         }
 
+        override fun loadReccomendedSongs(seedArtists: String, seedGenres: String, seedTracks: String,
+                                          limit: Int
+        ) {
+            val recommendationQuery : Map<String, Any> = mapOf(
+                "seed_artists" to seedArtists, "seed_genres" to seedGenres, "seed_tracks" to seedTracks
+            )
+            spotifyApi.service.getRecommendations(recommendationQuery, object: Callback<Recommendations> {
+                override fun success(t: Recommendations?, response: Response?) {
+                    if (t != null) {
+                        // place t.tracks into some global list variable
+                    }
+                }
+                override fun failure(error: RetrofitError?) {
+                    Log.d(TAG, "error querying reccomendations: " + error?.message)
+                }
+            })
+        }
+
+        override fun playSongOnSpotify(uri: String) {
+            // Play a playlist
+            mSpotifyAppRemote?.getPlayerApi()?.play(uri);
+            // ?.pause() ... ?.resume()
+            // Subscribe to PlayerState
+//        mSpotifyAppRemote!!.playerApi
+//            .subscribeToPlayerState()
+//            .setEventCallback { playerState: PlayerState ->
+//                val track: com.spotify.protocol.types.Track? = playerState.track
+//                if (track != null) {
+//                    Log.d("MainActivity", track.name.toString() + " by " + track.artist.name)
+//                }
+//            }
+        }
+
+        override fun pauseSongOnSpotify() {
+            mSpotifyAppRemote?.getPlayerApi()?.pause()
+        }
+
+        override fun resumeSongOnSpotify() {
+            mSpotifyAppRemote?.getPlayerApi()?.resume()
+        }
+
+
     }
 
     private fun setUpCurrentUser() {
@@ -318,17 +408,17 @@ class MainActivity : AppCompatActivity(){
                 if (t != null){
                     val savedTracks = ArrayList<Track>()
                     savedTracks.addAll(t.items.map{it.track})
-                    if (currentUserId != null && userPlaylistId != null){
-                        val likedSongsFragment = PlaylistFragment.newInstance(savedTracks,
-                            currentUserId!!, userPlaylistId!!, MainActivityController(),
-                            false, false, true
-                        )
-                        fragmentManager.beginTransaction().replace(R.id.flContainer,
-                            likedSongsFragment).commit()
-                    } else {
-                        Toast.makeText(this@MainActivity, "Setting up home page.. please refresh",
-                            Toast.LENGTH_LONG).show()
-                    }
+//                    if (currentUserId != null && userPlaylistId != null){
+//                        val likedSongsFragment = PlaylistFragment.newInstance(savedTracks,
+//                            currentUserId!!, userPlaylistId!!, MainActivityController(),
+//                            false, false, true
+//                        )
+//                        fragmentManager.beginTransaction().replace(R.id.flContainer,
+//                            likedSongsFragment).commit()
+//                    } else {
+//                        Toast.makeText(this@MainActivity, "Setting up home page.. please refresh",
+//                            Toast.LENGTH_LONG).show()
+//                    }
                 }
             }
             override fun failure(error: RetrofitError?) {
@@ -343,8 +433,10 @@ class MainActivity : AppCompatActivity(){
         playlistMenuItem?.setVisible(true)
         Toast.makeText(this, "Profile", Toast.LENGTH_LONG).show()
 
+        val playlistObject = ParseUser.getCurrentUser().getParseObject("parsePlaylist")
+
         val newFragment = ParsePlaylistFragment.newInstance(parsePlaylistSongs,
-            MainActivityController(), arrayListOf(KEY_DELETE_BUTTON)
+            MainActivityController(), arrayListOf(KEY_DELETE_BUTTON), playlistObject as com.dev.moosic.models.Playlist
         )
         fragmentManager.beginTransaction().replace(R.id.flContainer, newFragment).commit()
 //

@@ -94,6 +94,9 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
             try {
                 val albumCoverImgUri = track.album.images.get(0).url
                 albumCover?.setImageURI(albumCoverImgUri);
+                albumCover?.setOnClickListener {
+                    mainActivityController.playSongOnSpotify(track.uri)
+                }
             } catch (e : Exception) {
                 Log.e(TAG, "error: " + e.message)
             }
