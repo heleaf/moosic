@@ -35,7 +35,7 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivityControlle
     private var songs: ArrayList<Song> = ArrayList()
     private var mainActivityController = controller
     private var buttonsToShow: List<String> = ArrayList()
-    private var playlistObject: ParseObject? = null
+//    private var playlistObject: ParseObject? = null
 
     var rvPlaylistTracks : RecyclerView? = null
     var adapter : SongAdapter? = null
@@ -49,10 +49,10 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivityControlle
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            songs.clear()
+//            songs.clear()
             songs = Parcels.unwrap(it.getParcelable(ARG_PARAM1))
             buttonsToShow = it.getStringArrayList(ARG_PARAM2)!!
-            playlistObject = Parcels.unwrap(it.getParcelable(ARG_PARAM3))
+//            playlistObject = Parcels.unwrap(it.getParcelable(ARG_PARAM3))
         }
     }
 
@@ -67,12 +67,12 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivityControlle
         // TODO: Rename and change types and number of parameters
         @JvmStatic
         fun newInstance(playlistSongs: ArrayList<Song>, controller: MainActivity.MainActivityController,
-                        buttonsToShow: ArrayList<String>, playlistObject: Playlist) =
+                        buttonsToShow: ArrayList<String>/*, playlistObject: Playlist*/) =
             ParsePlaylistFragment(controller).apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_PARAM1, Parcels.wrap(playlistSongs))
                     putStringArrayList(ARG_PARAM2, buttonsToShow)
-                    putParcelable(ARG_PARAM3, Parcels.wrap(playlistObject))
+//                    putParcelable(ARG_PARAM3, Parcels.wrap(playlistObject))
                 }
             }
     }
@@ -110,13 +110,13 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivityControlle
 
         rvPlaylistTracks = view.findViewById(R.id.rvPlaylistTracks)
 
+        Log.d("ParsePlaylistFragment", "songs in parse playlist fragment: " + songs.size)
         adapter = SongAdapter(view.context,
             songs, mainActivityController, buttonsToShow) // TODO: replace w list..
 
         rvPlaylistTracks?.adapter = adapter
         val linearLayoutManager = LinearLayoutManager(context)
         rvPlaylistTracks?.setLayoutManager(linearLayoutManager)
-
 
         swipeContainer = view.findViewById(R.id.profileFeedSwipeContainer)
         swipeContainer?.setOnRefreshListener {

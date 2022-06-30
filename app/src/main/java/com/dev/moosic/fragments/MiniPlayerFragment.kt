@@ -1,30 +1,31 @@
 package com.dev.moosic.fragments
 
+import android.content.res.Resources
 import android.os.Bundle
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.fragment.app.Fragment
+import com.dev.moosic.MainActivity
 import com.dev.moosic.R
-import com.dev.moosic.models.Song
 import com.facebook.drawee.view.SimpleDraweeView
 import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
-import java.lang.Exception
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
 private const val ARG_PARAM1 = "currentSong"
+private const val ARG_PARAM2 = "isPaused"
 
 /**
  * A simple [Fragment] subclass.
  * Use the [MiniPlayerFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class MiniPlayerFragment : Fragment() {
+class MiniPlayerFragment(controller: MainActivity.MainActivityController) : Fragment() {
     val TAG = "MiniPlayerFragment"
     private var currentTrack: Track? = null
 
@@ -33,11 +34,19 @@ class MiniPlayerFragment : Fragment() {
     var trackAlbumCover: SimpleDraweeView? = null
     var playPauseButton: ImageView? = null
 
+    val mainActivityController = controller
+
+    var isPaused: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
             currentTrack = Parcels.unwrap(it.getParcelable(ARG_PARAM1))
             Log.d(TAG, "got current track: " + currentTrack?.name)
+            val id = currentTrack?.uri?.slice(IntRange(14, currentTrack!!.uri.length - 1))
+            Log.d(TAG, "uri: " + currentTrack?.uri)
+            Log.d(TAG, "id: " + id)
+            isPaused = it.getBoolean(ARG_PARAM2)
         }
     }
 
@@ -60,10 +69,12 @@ class MiniPlayerFragment : Fragment() {
          */
         // TODO: Rename and change types and number of parameters
         @JvmStatic
-        fun newInstance(currentTrack: Track) =
-            MiniPlayerFragment().apply {
+        fun newInstance(currentTrack: Track, controller: MainActivity.MainActivityController,
+        isPaused: Boolean) =
+            MiniPlayerFragment(controller).apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_PARAM1, Parcels.wrap(currentTrack))
+                    putBoolean(ARG_PARAM2, isPaused)
                 }
             }
     }
@@ -74,6 +85,10 @@ class MiniPlayerFragment : Fragment() {
         trackArtist = view.findViewById(R.id.miniPlayerSongArtist)
         trackAlbumCover = view.findViewById(R.id.miniPlayerAlbumCover)
         playPauseButton = view.findViewById(R.id.miniPlayerPlayPauseButton)
+
+        if (isPaused){
+            playPauseButton?.setImageResource(android.R.drawable.ic_media_play)
+        } else playPauseButton?.setImageResource(android.R.drawable.ic_media_pause)
 
         trackTitle?.setText(currentTrack?.name)
         val artistNameText = currentTrack?.artists?.fold(

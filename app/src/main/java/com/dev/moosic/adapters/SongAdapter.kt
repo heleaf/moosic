@@ -63,6 +63,7 @@ controller: MainActivity.MainActivityController, buttonsToShow: List<String>)
     }
 
     override fun getItemCount(): Int {
+        Log.d("SongAdapter", this.mSongs.size.toString())
         return this.mSongs.size
     }
 
@@ -87,6 +88,7 @@ controller: MainActivity.MainActivityController, buttonsToShow: List<String>)
         }
 
         fun bind(song: Song, position: Int) {
+            Log.d("SongAdapter", "song: " + song.getName())
             val jsonDataString = song.getJsonDataString()
             val gson = Gson()
             val track = gson.fromJson(jsonDataString, Track::class.java)

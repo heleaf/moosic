@@ -9,16 +9,14 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.adapters.TopTrackAdapter
-import com.dev.moosic.fragments.HomeFeedFragment
-import com.dev.moosic.fragments.MiniPlayerFragment
-import com.dev.moosic.fragments.ParsePlaylistFragment
-import com.dev.moosic.fragments.SearchFragment
+import com.dev.moosic.fragments.*
 import com.dev.moosic.models.Song
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.parse.ParseUser
 import com.spotify.android.appremote.api.ConnectionParams
 import com.spotify.android.appremote.api.Connector
 import com.spotify.android.appremote.api.SpotifyAppRemote
+import com.spotify.protocol.client.Subscription
 import com.spotify.protocol.types.PlayerState
 import kaaes.spotify.webapi.android.SpotifyApi
 import kaaes.spotify.webapi.android.models.*
@@ -39,6 +37,10 @@ class MainActivity : AppCompatActivity(){
     val CLIENT_ID = "7b7fed9bf37945818d20992b055ac63b"
     val REDIRECT_URI = "http://localhost:8080"
     var mSpotifyAppRemote : SpotifyAppRemote? = null
+
+    var currentTrack : Track? = null
+    var currentTrackIsPaused : Boolean? = null
+    var playerStateSubscription: Subscription<PlayerState>? = null
 
     var topTracks : ArrayList<kaaes.spotify.webapi.android.models.Track> = ArrayList()
     var searchedTracks : ArrayList<Track> = ArrayList()
@@ -151,8 +153,44 @@ class MainActivity : AppCompatActivity(){
 //        mSpotifyAppRemote?.getPlayerApi()?.play("spotify:playlist:37i9dQZF1DX2sUQwD7tbmL");
         // ?.pause() ... ?.resume()
         // Subscribe to PlayerState
-//        mSpotifyAppRemote!!.playerApi
-//            .subscribeToPlayerState()
+
+        playerStateSubscription = mSpotifyAppRemote!!.playerApi.subscribeToPlayerState()
+
+        playerStateSubscription?.setEventCallback { playerState: PlayerState ->
+            val track: com.spotify.protocol.types.Track? = playerState.track
+            if (track != null) {
+                if (track.name != currentTrack?.name) {
+                    // update the fragment
+                    val id = track.uri.slice(IntRange(14, track.uri.length - 1))
+                    spotifyApi.service.getTrack(id, object: Callback<Track> {
+                        override fun success(t: Track?, response: Response?) {
+                            if (t != null) {
+                                val newMiniFragment = MiniPlayerFragment.newInstance(t, MainActivityController(),
+                                playerState.isPaused)
+                                fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
+                                newMiniFragment).commit()
+                                currentTrack = t
+                            }
+                        }
+
+                        override fun failure(error: RetrofitError?) {
+                            Log.d(TAG, "failed to get track: " + error?.message)
+                        }
+
+                    })
+
+                }
+                else if (playerState.isPaused != currentTrackIsPaused) {
+                    // update the fragment
+                    val newMiniFragment = MiniPlayerFragment.newInstance(currentTrack!!, MainActivityController(),
+                        playerState.isPaused)
+                    fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
+                        newMiniFragment).commit()
+                }
+            }
+        }
+
+//
 //            .setEventCallback { playerState: PlayerState ->
 //                val track: com.spotify.protocol.types.Track? = playerState.track
 //                if (track != null) {
@@ -327,10 +365,10 @@ class MainActivity : AppCompatActivity(){
             spotifyApi.service.getTrack(spotifyId, object: Callback<Track> {
                 override fun success(t: Track?, response: Response?) {
                     if (t != null) {
-                        val miniPlayerFragment = MiniPlayerFragment.newInstance(t)
+                        currentTrack = t
+                        val miniPlayerFragment = MiniPlayerFragment.newInstance(t, MainActivityController(), false)
                         fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
                             miniPlayerFragment).commit()
-
                     }
                 }
 
@@ -387,23 +425,25 @@ class MainActivity : AppCompatActivity(){
 
     private fun setUpUserPlaylist() {
         val currentParseUser = ParseUser.getCurrentUser()
-        if (currentParseUser.getString("playlistId") == null){
-            var params = mapOf("name" to "My New Playlist")
-            spotifyApi.service.createPlaylist(currentUserId, params, object: Callback<Playlist> {
-                override fun success(t: Playlist?, response: Response?) {
-                    if (t != null) {
-                        userPlaylistId = t.id
-                        currentParseUser.put("playlistId", t.id)
-                        currentParseUser.saveInBackground()
-                    }
-                }
-                override fun failure(error: RetrofitError?) {
-                    if (error != null) {
-                        Log.e(TAG, "error: " + error.message)
-                    }
-                }
-            })
-        } else userPlaylistId = currentParseUser.getString("playlistId")
+//        if (currentParseUser.getString("playlistId") == null){
+//            var params = mapOf("name" to "My New Playlist")
+//            spotifyApi.service.createPlaylist(currentUserId, params, object: Callback<Playlist> {
+//                override fun success(t: Playlist?, response: Response?) {
+//                    if (t != null) {
+//                        userPlaylistId = t.id
+//                        currentParseUser.put("playlistId", t.id)
+//                        currentParseUser.saveInBackground()
+//                    }
+//                }
+//                override fun failure(error: RetrofitError?) {
+//                    if (error != null) {
+//                        Log.e(TAG, "error: " + error.message)
+//                    }
+//                }
+//            })
+//        } else userPlaylistId = currentParseUser.getString("playlistId")
+
+        userPlaylistId = "0" // placeholder
 
         // get the playlist from parse
         val playlistObj = currentParseUser.getParseObject("parsePlaylist")
@@ -448,15 +488,16 @@ class MainActivity : AppCompatActivity(){
         searchMenuItem?.setVisible(false)
         likedSongsMenuItem?.setVisible(true)
         playlistMenuItem?.setVisible(true)
-        Toast.makeText(this, "Profile", Toast.LENGTH_LONG).show()
+//        Toast.makeText(this, "Profile", Toast.LENGTH_LONG).show()
 
-        val playlistObject = ParseUser.getCurrentUser().getParseObject("parsePlaylist")
+//        val playlistObject = ParseUser.getCurrentUser().getParseObject("parsePlaylist")
 
         val newFragment = ParsePlaylistFragment.newInstance(parsePlaylistSongs,
-            MainActivityController(), arrayListOf(KEY_DELETE_BUTTON), playlistObject as com.dev.moosic.models.Playlist
-        )
+            MainActivityController(), arrayListOf(KEY_DELETE_BUTTON))
         fragmentManager.beginTransaction().replace(R.id.flContainer, newFragment).commit()
-//
+
+        Log.d(TAG, "help me" + parsePlaylistSongs.size.toString())
+
 //        val queryParams : Map<String, Any> = emptyMap()
 //        spotifyApi.service.getPlaylistTracks(currentUserId, userPlaylistId, queryParams,
 //        object: Callback<Pager<PlaylistTrack>> {
@@ -469,8 +510,6 @@ class MainActivity : AppCompatActivity(){
 //                    tracks.addAll(playlistTracks.map{ it.track })
 //                    if (currentUserId != null && userPlaylistId != null){
 //                        val profileFragment =
-//
-//
 //                            PlaylistFragment.newInstance(tracks,
 //                            currentUserId!!, userPlaylistId!!, MainActivityController(),
 //                            false, true, true
