@@ -1,5 +1,6 @@
 package com.dev.moosic
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
@@ -20,6 +21,7 @@ import com.spotify.protocol.client.Subscription
 import com.spotify.protocol.types.PlayerState
 import kaaes.spotify.webapi.android.SpotifyApi
 import kaaes.spotify.webapi.android.models.*
+import org.parceler.Parcels
 import retrofit.Callback
 import retrofit.RetrofitError
 import retrofit.client.Response
@@ -66,6 +68,11 @@ class MainActivity : AppCompatActivity(){
     var progressBar: ProgressBar? = null
 
 //    private lateinit var mDetector: GestureDetectorCompat
+
+    val context = this
+
+    var miniPlayerFragment: MiniPlayerFragment? = null
+    var showMiniPlayerFragment: Boolean? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -165,11 +172,12 @@ class MainActivity : AppCompatActivity(){
                     spotifyApi.service.getTrack(id, object: Callback<Track> {
                         override fun success(t: Track?, response: Response?) {
                             if (t != null) {
-                                val newMiniFragment = MiniPlayerFragment.newInstance(t, MainActivityController(),
+                                miniPlayerFragment = MiniPlayerFragment.newInstance(t, MainActivityController(),
                                 playerState.isPaused)
                                 fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
-                                newMiniFragment).commit()
+                                miniPlayerFragment!!).commit()
                                 currentTrack = t
+                                showMiniPlayerFragment = true
                             }
                         }
 
@@ -182,10 +190,10 @@ class MainActivity : AppCompatActivity(){
                 }
                 else if (playerState.isPaused != currentTrackIsPaused) {
                     // update the fragment
-                    val newMiniFragment = MiniPlayerFragment.newInstance(currentTrack!!, MainActivityController(),
+                    miniPlayerFragment = MiniPlayerFragment.newInstance(currentTrack!!, MainActivityController(),
                         playerState.isPaused)
                     fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
-                        newMiniFragment).commit()
+                        miniPlayerFragment!!).commit()
                 }
             }
         }
@@ -366,9 +374,9 @@ class MainActivity : AppCompatActivity(){
                 override fun success(t: Track?, response: Response?) {
                     if (t != null) {
                         currentTrack = t
-                        val miniPlayerFragment = MiniPlayerFragment.newInstance(t, MainActivityController(), false)
+                        miniPlayerFragment = MiniPlayerFragment.newInstance(t, MainActivityController(), false)
                         fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
-                            miniPlayerFragment).commit()
+                            miniPlayerFragment!!).commit()
                     }
                 }
 
@@ -397,7 +405,17 @@ class MainActivity : AppCompatActivity(){
             mSpotifyAppRemote?.getPlayerApi()?.resume()
         }
 
-
+        override fun goToMiniPlayerDetailView() {
+            // destroy a fragment?
+//             fragmentManager.beginTransaction().remove(miniPlayerFragment!!).commit()
+//             miniPlayerFragment = null
+//             val miniPlayerDetailFragment = MiniPlayerDetailFragment.newInstance(currentTrack!!)
+//             fragmentManager.beginTransaction().replace(R.id.flContainer, miniPlayerDetailFragment).commit()
+//            val intent = Intent(context, MiniPlayerDetailActivity::class.java)
+//            intent.putExtra("currentTrack", Parcels.wrap(currentTrack))
+//            intent.putExtra("currentTrackIsPaused", currentTrackIsPaused)
+//            startActivity(intent)
+        }
     }
 
     private fun setUpCurrentUser() {
@@ -454,6 +472,7 @@ class MainActivity : AppCompatActivity(){
         if (songs != null) {
             parsePlaylistSongs.addAll(songs)
         }
+        setUpHomeFragment()
     }
 
     private fun setUpLikedSongsFragment() {
@@ -485,6 +504,13 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun setUpPlaylistFragment() {
+//        miniPlayerFragment?.let { fragmentManager.beginTransaction().add(R.id.miniPlayerFlContainer,
+//            miniPlayerFragment!!).commit() }
+//        if (showMiniPlayerFragment == null) {
+//            miniPlayerFragment?.let { fragmentManager.beginTransaction().add(R.id.miniPlayerFlContainer,
+//            miniPlayerFragment!!).commit() }
+//            showMiniPlayerFragment = true
+//        }
         searchMenuItem?.setVisible(false)
         likedSongsMenuItem?.setVisible(true)
         playlistMenuItem?.setVisible(true)
@@ -528,6 +554,10 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun setUpSearchFragment() {
+        miniPlayerFragment?.let { fragmentManager.beginTransaction().remove(it).commit() }
+        if (showMiniPlayerFragment == true){
+            showMiniPlayerFragment = null
+        }
         Toast.makeText(this, "Search", Toast.LENGTH_LONG).show()
         likedSongsMenuItem?.setVisible(false)
         playlistMenuItem?.setVisible(false)
@@ -568,9 +598,10 @@ class MainActivity : AppCompatActivity(){
         // use my query to search the spotify api
         showProgressBar()
         val queryMap = mapOf("offset" to itemOffset, "limit" to numberItems)
-        spotifyApi.service.searchTracks(query, object: Callback<TracksPager> {
+        spotifyApi.service.searchTracks(query, queryMap, object: Callback<TracksPager> {
             override fun success(t: TracksPager?, response: Response?) {
-                Log.d(TAG, "successfully queried " + query)
+                Log.d(TAG, "originally successfully queried " + query + " with offset " + itemOffset
+                    + " and numItems " + t?.tracks?.items?.size)
                 if (t != null){
                     // send the tracks to the search fragment to display
                     if (progressBar != null) {
@@ -605,16 +636,19 @@ class MainActivity : AppCompatActivity(){
 
     private fun loadMoreQueryTracks(query: String, itemOffset: Int, numberItems: Int,
         clearItemList: Boolean, adapter: TopTrackAdapter) {
+        Log.d(TAG, "query: " + query + " itemOffset: " + itemOffset + " numitems: " + numberItems)
         val queryMap = mapOf("offset" to itemOffset, "limit" to numberItems)
-        spotifyApi.service.searchTracks(query, object: Callback<TracksPager> {
+        spotifyApi.service.searchTracks(query, queryMap, object: Callback<TracksPager> {
             override fun success(t: TracksPager?, response: Response?) {
                 Log.d(TAG, "successfully queried " + query)
                 if (t != null){
+//                    Log.d(TAG, "offset: " + itemOffset.toString())
                     Log.d(TAG, "loading from " + searchedTracks.size + " with " + t.tracks.items.size)
                     val prevSize = searchedTracks.size
                     if (clearItemList) searchedTracks.clear()
                     searchedTracks.addAll(t.tracks.items)
                     adapter.notifyItemRangeInserted(prevSize, t.tracks.items.size)
+//                    adapter.notifyDataSetChanged()
                     } else {
                         Toast.makeText(
                             this@MainActivity,
@@ -631,6 +665,11 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun setUpHomeFragment() {
+//        if (showMiniPlayerFragment == null){
+//            miniPlayerFragment?.let { fragmentManager.beginTransaction().add(R.id.miniPlayerFlContainer,
+//                miniPlayerFragment!!).commit() }
+//            showMiniPlayerFragment = true
+//        }
         searchMenuItem?.setVisible(false)
         likedSongsMenuItem?.setVisible(false)
         playlistMenuItem?.setVisible(false)

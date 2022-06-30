@@ -32,4 +32,6 @@ interface PlaylistController {
 
     fun resumeSongOnSpotify()
 
+    fun goToMiniPlayerDetailView()
+
 }

@@ -78,7 +78,7 @@ class EndlessRecyclerViewScrollListener(layoutManager: LinearLayoutManager, load
 
         if (!loading && lastVisibleItemPosition + visibleThreshold > totalItemCount) {
             currentPage++
-            mLoadMoreFunction.onLoadMore(currentPage, totalItemCount, view)
+            mLoadMoreFunction.onLoadMore(currentPage, 20, view)
             loading = true
         }
 

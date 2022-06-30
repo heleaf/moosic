@@ -93,7 +93,7 @@ class SearchFragment(controller: MainActivity.MainActivityController) : Fragment
 
         if (currentQuery != null){
             scrollListener = EndlessRecyclerViewScrollListener(linearLayoutManager, object: LoadMoreFunction {
-                override fun onLoadMore(offset: Int, totalItemsCount: Int, view: RecyclerView?) {
+                override fun onLoadMore(page: Int, totalItemsCount: Int, view: RecyclerView?) {
                     mainActivityController.loadMoreSearchTracks(currentQuery!!, searchedTracks.size, totalItemsCount, adapter!!)
                 }
             })

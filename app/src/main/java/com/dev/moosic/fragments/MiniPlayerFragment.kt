@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import com.dev.moosic.MainActivity
 import com.dev.moosic.R
@@ -33,6 +34,7 @@ class MiniPlayerFragment(controller: MainActivity.MainActivityController) : Frag
     var trackArtist: TextView? = null
     var trackAlbumCover: SimpleDraweeView? = null
     var playPauseButton: ImageView? = null
+    var layout: ConstraintLayout? = null
 
     val mainActivityController = controller
 
@@ -85,6 +87,7 @@ class MiniPlayerFragment(controller: MainActivity.MainActivityController) : Frag
         trackArtist = view.findViewById(R.id.miniPlayerSongArtist)
         trackAlbumCover = view.findViewById(R.id.miniPlayerAlbumCover)
         playPauseButton = view.findViewById(R.id.miniPlayerPlayPauseButton)
+        layout = view.findViewById(R.id.miniPlayerConstraintLayout)
 
         if (isPaused){
             playPauseButton?.setImageResource(android.R.drawable.ic_media_play)
@@ -97,6 +100,10 @@ class MiniPlayerFragment(controller: MainActivity.MainActivityController) : Frag
                 mainActivityController.pauseSongOnSpotify()
             }
             isPaused = !isPaused
+        }
+
+        layout?.setOnClickListener{
+            mainActivityController.goToMiniPlayerDetailView()
         }
 
         trackTitle?.setText(currentTrack?.name)

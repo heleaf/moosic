@@ -19,6 +19,9 @@
         android:theme="@style/Theme.Moosic"
         tools:targetApi="31">
         <activity
+            android:name=".MiniPlayerDetailActivity"
+            android:exported="false" />
+        <activity
             android:name=".GetInterestsActivity"
             android:exported="false" />
         <activity
