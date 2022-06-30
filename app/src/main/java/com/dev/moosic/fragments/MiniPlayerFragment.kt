@@ -90,6 +90,15 @@ class MiniPlayerFragment(controller: MainActivity.MainActivityController) : Frag
             playPauseButton?.setImageResource(android.R.drawable.ic_media_play)
         } else playPauseButton?.setImageResource(android.R.drawable.ic_media_pause)
 
+        playPauseButton?.setOnClickListener {
+            if (isPaused) {
+                mainActivityController.resumeSongOnSpotify()
+            } else {
+                mainActivityController.pauseSongOnSpotify()
+            }
+            isPaused = !isPaused
+        }
+
         trackTitle?.setText(currentTrack?.name)
         val artistNameText = currentTrack?.artists?.fold(
             ""
