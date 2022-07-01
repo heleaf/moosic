@@ -67,12 +67,10 @@ class MainActivity : AppCompatActivity(){
     var logOutMenuItem : MenuItem? = null
     var progressBar: ProgressBar? = null
 
-//    private lateinit var mDetector: GestureDetectorCompat
-
     val context = this
 
     var miniPlayerFragment: MiniPlayerFragment? = null
-    var showMiniPlayerFragment: Boolean? = null
+    var showMiniPlayerFragment: Boolean = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,17 +88,8 @@ class MainActivity : AppCompatActivity(){
             return@setOnItemSelectedListener true
         }
         progressBar = findViewById(R.id.pbLoadingSearch)
-//        mDetector = GestureDetectorCompat(this, this)
         setUpCurrentUser()
     }
-
-//    class MyGestureListener : GestureDetector.SimpleOnGestureListener() {
-//        val TAG = "MainActivity"
-//        override fun onDoubleTap(e: MotionEvent?): Boolean {
-//            Log.d(TAG, "onDoubleTap: $e")
-//            return super.onDoubleTap(e)
-//        }
-//    }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
@@ -114,7 +103,6 @@ class MainActivity : AppCompatActivity(){
         playlistMenuItem?.setVisible(false)
 
         logOutMenuItem = menu?.findItem(R.id.logOutButton)
-
         return super.onCreateOptionsMenu(menu)
     }
 
@@ -140,47 +128,35 @@ class MainActivity : AppCompatActivity(){
             object : Connector.ConnectionListener {
                 override fun onConnected(spotifyAppRemote: SpotifyAppRemote) {
                     mSpotifyAppRemote = spotifyAppRemote
-                    Log.d("MainActivity", "Connected! Yay!")
-
-                    // Now you can start interacting with App Remote
                     connected()
                 }
 
                 override fun onFailure(throwable: Throwable) {
                     Log.e("MainActivity", throwable.message, throwable)
-
-                    // Something went wrong when attempting to connect! Handle errors here
+                    // handle errors
                 }
             })
 
     }
 
     fun connected() {
-        // Play a playlist
-//        mSpotifyAppRemote?.getPlayerApi()?.play("spotify:playlist:37i9dQZF1DX2sUQwD7tbmL");
-        // ?.pause() ... ?.resume()
-        // Subscribe to PlayerState
-
         playerStateSubscription = mSpotifyAppRemote!!.playerApi.subscribeToPlayerState()
-
         playerStateSubscription?.setEventCallback { playerState: PlayerState ->
             val track: com.spotify.protocol.types.Track? = playerState.track
             if (track != null) {
                 if (track.name != currentTrack?.name) {
-                    // update the fragment
                     val id = track.uri.slice(IntRange(14, track.uri.length - 1))
                     spotifyApi.service.getTrack(id, object: Callback<Track> {
                         override fun success(t: Track?, response: Response?) {
-                            if (t != null) {
+                            if (t != null && showMiniPlayerFragment) {
                                 miniPlayerFragment = MiniPlayerFragment.newInstance(t, MainActivityController(),
                                 playerState.isPaused)
                                 fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
                                 miniPlayerFragment!!).commit()
                                 currentTrack = t
-                                showMiniPlayerFragment = true
                             }
-                        }
 
+                        }
                         override fun failure(error: RetrofitError?) {
                             Log.d(TAG, "failed to get track: " + error?.message)
                         }
@@ -188,8 +164,7 @@ class MainActivity : AppCompatActivity(){
                     })
 
                 }
-                else if (playerState.isPaused != currentTrackIsPaused) {
-                    // update the fragment
+                else if (playerState.isPaused != currentTrackIsPaused && showMiniPlayerFragment) {
                     miniPlayerFragment = MiniPlayerFragment.newInstance(currentTrack!!, MainActivityController(),
                         playerState.isPaused)
                     fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
@@ -197,14 +172,6 @@ class MainActivity : AppCompatActivity(){
                 }
             }
         }
-
-//
-//            .setEventCallback { playerState: PlayerState ->
-//                val track: com.spotify.protocol.types.Track? = playerState.track
-//                if (track != null) {
-//                    Log.d("MainActivity", track.name.toString() + " by " + track.artist.name)
-//                }
-//            }
     }
 
     override fun onStop() {
@@ -504,13 +471,8 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun setUpPlaylistFragment() {
-//        miniPlayerFragment?.let { fragmentManager.beginTransaction().add(R.id.miniPlayerFlContainer,
-//            miniPlayerFragment!!).commit() }
-//        if (showMiniPlayerFragment == null) {
-//            miniPlayerFragment?.let { fragmentManager.beginTransaction().add(R.id.miniPlayerFlContainer,
-//            miniPlayerFragment!!).commit() }
-//            showMiniPlayerFragment = true
-//        }
+        showMiniPlayerPreview()
+
         searchMenuItem?.setVisible(false)
         likedSongsMenuItem?.setVisible(true)
         playlistMenuItem?.setVisible(true)
@@ -554,10 +516,9 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun setUpSearchFragment() {
-        miniPlayerFragment?.let { fragmentManager.beginTransaction().remove(it).commit() }
-        if (showMiniPlayerFragment == true){
-            showMiniPlayerFragment = null
-        }
+
+        hideMiniPlayerPreview()
+
         Toast.makeText(this, "Search", Toast.LENGTH_LONG).show()
         likedSongsMenuItem?.setVisible(false)
         playlistMenuItem?.setVisible(false)
@@ -570,12 +531,14 @@ class MainActivity : AppCompatActivity(){
             override fun onQueryTextSubmit(query: String?): Boolean {
                 searchView.clearFocus()
                 if (query != null) {
+                    showMiniPlayerPreview()
                     fetchQueryAndSendToFragment(query, DEFAULT_ITEM_OFFSET, DEFAULT_NUMBER_ITEMS)
                 }
                 return true
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
+                hideMiniPlayerPreview()
                 return false
             }
         })
@@ -665,11 +628,8 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun setUpHomeFragment() {
-//        if (showMiniPlayerFragment == null){
-//            miniPlayerFragment?.let { fragmentManager.beginTransaction().add(R.id.miniPlayerFlContainer,
-//                miniPlayerFragment!!).commit() }
-//            showMiniPlayerFragment = true
-//        }
+        showMiniPlayerPreview()
+
         searchMenuItem?.setVisible(false)
         likedSongsMenuItem?.setVisible(false)
         playlistMenuItem?.setVisible(false)
@@ -754,6 +714,26 @@ class MainActivity : AppCompatActivity(){
     fun hideProgressBar(){
         if (progressBar != null){
             progressBar!!.visibility = ProgressBar.GONE
+        }
+    }
+
+    fun showMiniPlayerPreview(){
+        showMiniPlayerFragment = true
+        if (fragmentManager.findFragmentById(R.id.miniPlayerFlContainer) == null
+            && miniPlayerFragment != null){
+            // add it in
+            fragmentManager.beginTransaction()
+                .add(R.id.miniPlayerFlContainer, miniPlayerFragment!!)
+                .commit()
+        }
+    }
+
+    fun hideMiniPlayerPreview() {
+        showMiniPlayerFragment = false
+        if (fragmentManager.findFragmentById(R.id.miniPlayerFlContainer) != null
+            && miniPlayerFragment != null
+        ) {
+            fragmentManager.beginTransaction().remove(miniPlayerFragment!!).commit()
         }
     }
 
