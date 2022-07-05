@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.EndlessRecyclerViewScrollListener
 import com.dev.moosic.LoadMoreFunction
 import com.dev.moosic.MainActivity
@@ -38,6 +39,8 @@ class SearchFragment(controller: MainActivity.MainActivityController) : Fragment
     var rvSearchedTracks : RecyclerView? = null
     var adapter : TopTrackAdapter? = null // TODO: switch to a custom adapter
     var scrollListener : EndlessRecyclerViewScrollListener? = null
+
+    var swipeContainer : SwipeRefreshLayout? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -99,6 +102,22 @@ class SearchFragment(controller: MainActivity.MainActivityController) : Fragment
             })
             rvSearchedTracks?.addOnScrollListener(scrollListener!!);
         }
+
+        swipeContainer = view.findViewById(R.id.searchFeedSwipeContainer)
+        swipeContainer?.setOnRefreshListener {
+//            mainActivityController.loadMoreSearchTracks(
+//                currentQuery!!,
+//                0, 20, adapter!!)
+//            scrollListener?.resetState()
+            swipeContainer?.isRefreshing = false
+        }
+
+        swipeContainer?.setColorSchemeResources(
+            android.R.color.holo_blue_bright,
+            android.R.color.holo_green_light,
+            android.R.color.holo_orange_light,
+            android.R.color.holo_red_light
+        )
 
 
     }

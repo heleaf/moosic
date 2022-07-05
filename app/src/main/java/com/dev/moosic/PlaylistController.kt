@@ -34,4 +34,6 @@ interface PlaylistController {
 
     fun goToMiniPlayerDetailView()
 
+    fun exitMiniPlayerDetailView()
+
 }

@@ -97,8 +97,6 @@ open class HomeFeedFragment(controller : MainActivity.MainActivityController) : 
             scrollListener?.resetState()
         }
 
-        // Configure the refreshing colors
-        // Configure the refreshing colors
         swipeContainer?.setColorSchemeResources(
             android.R.color.holo_blue_bright,
             android.R.color.holo_green_light,

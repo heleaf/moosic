@@ -1,14 +1,102 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#673AB7"
     tools:context=".fragments.MiniPlayerDetailFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+    <com.facebook.drawee.view.SimpleDraweeView
+        android:id="@+id/miniPlayerDetailImg"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="30dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/miniPlayerDetailBackToHome"
+        tools:src="@tools:sample/avatars" />
 
-</FrameLayout>
+    <SeekBar
+        android:id="@+id/miniPlayerSeekBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="-10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="-10dp"
+        app:layout_constraintEnd_toEndOf="@+id/miniPlayerDetailArtist"
+        app:layout_constraintStart_toStartOf="@+id/miniPlayerDetailArtist"
+        app:layout_constraintTop_toBottomOf="@+id/miniPlayerDetailArtist" />
+
+    <ImageView
+        android:id="@+id/miniPlayerDetailPlayPause"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="10dp"
+        app:layout_constraintEnd_toEndOf="@+id/miniPlayerTotalTime"
+        app:layout_constraintStart_toStartOf="@+id/miniPlayerDetailCurrentTime"
+        app:layout_constraintTop_toBottomOf="@+id/miniPlayerDetailCurrentTime"
+        app:srcCompat="@android:drawable/ic_media_pause" />
+
+    <TextView
+        android:id="@+id/miniPlayerDetailTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="Song title"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="@+id/miniPlayerDetailImg"
+        app:layout_constraintStart_toStartOf="@+id/miniPlayerDetailImg"
+        app:layout_constraintTop_toBottomOf="@+id/miniPlayerDetailImg" />
+
+    <TextView
+        android:id="@+id/miniPlayerDetailArtist"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:text="song artist"
+        android:textColor="#FFFFFF"
+        app:layout_constraintEnd_toEndOf="@+id/miniPlayerDetailTitle"
+        app:layout_constraintStart_toStartOf="@+id/miniPlayerDetailTitle"
+        app:layout_constraintTop_toBottomOf="@+id/miniPlayerDetailTitle" />
+
+    <TextView
+        android:id="@+id/miniPlayerDetailCurrentTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:text="1:10"
+        android:textColor="#FFFFFF"
+        android:textSize="10sp"
+        app:layout_constraintStart_toStartOf="@+id/miniPlayerDetailArtist"
+        app:layout_constraintTop_toBottomOf="@+id/miniPlayerSeekBar" />
+
+    <TextView
+        android:id="@+id/miniPlayerTotalTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:text="4:15"
+        android:textColor="#FFFFFF"
+        android:textSize="10sp"
+        app:layout_constraintEnd_toEndOf="@+id/miniPlayerDetailArtist"
+        app:layout_constraintTop_toBottomOf="@+id/miniPlayerSeekBar" />
+
+    <ImageButton
+        android:id="@+id/miniPlayerDetailBackToHome"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="-5dp"
+        android:layout_marginTop="20dp"
+        android:backgroundTint="#FFFFFF"
+        android:src="?attr/homeAsUpIndicator"
+        android:tint="#673AB7"
+        app:layout_constraintStart_toStartOf="@+id/miniPlayerDetailTitle"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
