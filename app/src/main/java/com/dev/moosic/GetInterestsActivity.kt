@@ -18,11 +18,6 @@ import retrofit.Callback
 import retrofit.RetrofitError
 import retrofit.client.Response
 
-// get interests....
-// get some genres and artists from spotify
-// let the user select some interests
-// store the seeds in the user's profile..?
-
 class GetInterestsActivity : AppCompatActivity() {
     val TAG = "GetInterestActivity"
 
@@ -61,9 +56,17 @@ class GetInterestsActivity : AppCompatActivity() {
             }
             override fun failure(error: RetrofitError?) {
                 Log.d(TAG, "failed to get seed genres: " + error?.message)
+                Toast.makeText(this@GetInterestsActivity,
+                    "Failed to pull genres from Spotify api, " +
+                            "please restart the app and authorize your Spotify account.",
+                Toast.LENGTH_LONG).show()
+                // authorize here ?
+//                SpotifyAuthController(this@GetInterestsActivity).authorizeUser()
             }
         })
     }
+
+
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_get_interests, menu)

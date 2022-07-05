@@ -22,17 +22,13 @@ class SignUpActivity : AppCompatActivity() {
     val TAG = "SignUpActivity"
     val KEY_PHONE_NUMBER = "phoneNumber"
     val REQUEST_CODE_GET_INTERESTS = 1999
-
     val KEY_USER_PICKED_GENRES = "userPickedGenres"
-
     var mUsername : EditText? = null
     var mPassword : EditText? = null
     var mEmail : EditText? = null
     var mPhoneNumber : EditText? = null
     var mSignUpButton : Button? = null
-
     var accessToken: String? = null
-
     var user : ParseUser = ParseUser()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -92,10 +88,8 @@ class SignUpActivity : AppCompatActivity() {
                     else {
                         user.put("parsePlaylist", playlist)
                         user.saveInBackground()
-
                         Log.d(TAG, "wtf?")
-
-                        SignUpAuthorizationController().authorizeUser()
+                        SpotifyAuthController(this).authorizeUser()
                     }
                 }
             }
@@ -103,8 +97,7 @@ class SignUpActivity : AppCompatActivity() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode == SignUpAuthorizationController().AUTH_REQUEST_CODE) {
-            // get user interests
+        if (requestCode == SpotifyAuthController(this).AUTH_REQUEST_CODE) {
             val intent = Intent(this, GetInterestsActivity::class.java)
             intent.putExtra("user", Parcels.wrap(user))
             intent.putExtra("accessToken", accessToken)
@@ -114,7 +107,6 @@ class SignUpActivity : AppCompatActivity() {
             if (resultCode == RESULT_OK){
                 val genres : ArrayList<String>
                     = Parcels.unwrap(data?.getParcelableExtra("userPickedGenres"))
-                // add these interests to the parse database
                 val gson = Gson()
                 val pickedGenresJsonString = gson.toJson(genres)
                 user.put(KEY_USER_PICKED_GENRES, pickedGenresJsonString)
@@ -123,27 +115,11 @@ class SignUpActivity : AppCompatActivity() {
                         Log.d(TAG, "error saving user's genres: " + it.message)
                         return@saveInBackground
                     }
-                    finish() // go back
+                    finish()
                 }
             }
         }
         super.onActivityResult(requestCode, resultCode, data)
-    }
-
-    inner class SignUpAuthorizationController() : AuthorizationController {
-        override fun authorizeUser() {
-            val builder: AuthorizationRequest.Builder = AuthorizationRequest.Builder(
-            CLIENT_ID,
-            AuthorizationResponse.Type.TOKEN,
-            REDIRECT_URI
-        )
-        builder.setScopes(arrayOf("streaming", "user-top-read", "playlist-modify-public",
-            "playlist-read-private", "playlist-modify-private", "user-library-modify",
-            "user-library-read", "user-read-private"))
-        val request: AuthorizationRequest = builder.build()
-        AuthorizationClient.openLoginActivity(this@SignUpActivity,
-            AUTH_REQUEST_CODE, request)
-        }
     }
 
 }

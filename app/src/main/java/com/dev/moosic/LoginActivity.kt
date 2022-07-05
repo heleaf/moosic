@@ -15,10 +15,7 @@ import com.spotify.sdk.android.auth.AuthorizationRequest
 import com.spotify.sdk.android.auth.AuthorizationResponse
 
 class LoginActivity : AppCompatActivity() {
-//    val CLIENT_ID = "7b7fed9bf37945818d20992b055ac63b"
     val TAG = "LoginActivity"
-//    val REDIRECT_URI = "http://localhost:8080"
-//    private val SPOTIFY_AUTH_REQUEST_CODE = 1337
     private val LOGGED_OUT_REQUEST_CODE = 1338
 
     var mEtUsername : EditText? = null
@@ -64,29 +61,13 @@ class LoginActivity : AppCompatActivity() {
         super.onStart()
         if (ParseUser.getCurrentUser() != null){
             // authorize
-            LoginAuthorizationController().authorizeUser()
-        }
-    }
-
-    inner class LoginAuthorizationController() : AuthorizationController {
-        override fun authorizeUser() {
-            val builder: AuthorizationRequest.Builder = AuthorizationRequest.Builder(
-                CLIENT_ID,
-                AuthorizationResponse.Type.TOKEN,
-                REDIRECT_URI
-            )
-            builder.setScopes(arrayOf("streaming", "user-top-read", "playlist-modify-public",
-                "playlist-read-private", "playlist-modify-private", "user-library-modify",
-                "user-library-read", "user-read-private"))
-            val request: AuthorizationRequest = builder.build()
-            AuthorizationClient.openLoginActivity(this@LoginActivity,
-                AUTH_REQUEST_CODE, request)
+            SpotifyAuthController(this).authorizeUser()
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == LoginAuthorizationController().AUTH_REQUEST_CODE) {
+        if (requestCode == SpotifyAuthController(this).AUTH_REQUEST_CODE) {
         val response = AuthorizationClient.getResponse(resultCode, data)
             when (response.type) {
                 AuthorizationResponse.Type.TOKEN -> {
@@ -112,7 +93,7 @@ class LoginActivity : AppCompatActivity() {
                     Toast.LENGTH_LONG).show();
             }
             else {
-                LoginAuthorizationController().authorizeUser()
+                SpotifyAuthController(this).authorizeUser()
             }
         })
     }
