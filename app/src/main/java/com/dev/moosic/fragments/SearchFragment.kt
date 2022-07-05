@@ -16,8 +16,6 @@ import com.dev.moosic.adapters.TopTrackAdapter
 import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
 private const val ARG_PARAM1 = "searchedTracks"
 private const val ARG_PARAM2 = "userId"
 private const val ARG_PARAM3 = "playlistId"
@@ -62,14 +60,6 @@ class SearchFragment(controller: MainActivity.MainActivityController) : Fragment
     }
 
     companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @return A new instance of fragment SearchFragment.
-         */
-        // TODO: Rename and change types and number of parameters
         @JvmStatic
         fun newInstance(searchedTracks : ArrayList<Track>, userId : String,
         playlistId : String, controller : MainActivity.MainActivityController,

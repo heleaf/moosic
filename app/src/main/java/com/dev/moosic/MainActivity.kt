@@ -1,7 +1,12 @@
 package com.dev.moosic
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.database.Cursor
+import android.os.Build
 import android.os.Bundle
+import android.provider.ContactsContract
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -33,9 +38,11 @@ private const val KEY_DELETE_BUTTON = "delete"
 private const val KEY_HEART_BUTTON = "heart"
 
 class MainActivity : AppCompatActivity(){
+    val PERMISSIONS_REQUEST_READ_CONTACTS = 100
+
     val TAG = "MainActivity"
     val DEFAULT_ITEM_OFFSET = 0
-    val DEFAULT_NUMBER_ITEMS = 5
+    val DEFAULT_NUMBER_ITEMS = 10
 
     val CLIENT_ID = "7b7fed9bf37945818d20992b055ac63b"
     val REDIRECT_URI = "http://localhost:8080"
@@ -71,7 +78,7 @@ class MainActivity : AppCompatActivity(){
     val context = this
 
     var miniPlayerFragment: MiniPlayerFragment? = null
-    var showMiniPlayerFragment: Boolean = true
+    var showMiniPlayerFragment: Boolean = false
 
     var showMiniPlayerDetailFragment: Boolean = false
 
@@ -92,6 +99,9 @@ class MainActivity : AppCompatActivity(){
         }
         progressBar = findViewById(R.id.pbLoadingSearch)
         setUpCurrentUser()
+
+        Log.d(TAG, "fetching....")
+        testFetchContacts()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -721,6 +731,33 @@ class MainActivity : AppCompatActivity(){
             && miniPlayerFragment != null
         ) {
             fragmentManager.beginTransaction().remove(miniPlayerFragment!!).commit()
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>,
+                                            grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == PERMISSIONS_REQUEST_READ_CONTACTS) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                loadContacts()
+                Log.d(TAG, "permission granted?")
+            } else {
+                Log.d(TAG, "permission not granted?")
+                //  toast("Permission must be granted in order to display contacts information")
+            }
+        }
+    }
+
+    fun testFetchContacts(){
+        var builder = StringBuilder()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(
+                Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(Manifest.permission.READ_CONTACTS),
+                PERMISSIONS_REQUEST_READ_CONTACTS)
+            // callback onRequestPermissionsResult
+        } else {
+//            builder = getContacts()
+            Log.d(TAG, "hi")
         }
     }
 

@@ -13,6 +13,9 @@ import com.dev.moosic.models.Playlist
 import com.google.gson.Gson
 import com.parse.ParseObject
 import com.parse.ParseUser
+import com.spotify.sdk.android.auth.AuthorizationClient
+import com.spotify.sdk.android.auth.AuthorizationRequest
+import com.spotify.sdk.android.auth.AuthorizationResponse
 import org.parceler.Parcels
 
 class SignUpActivity : AppCompatActivity() {
@@ -92,16 +95,7 @@ class SignUpActivity : AppCompatActivity() {
 
                         Log.d(TAG, "wtf?")
 
-                        // get user interests
-                        val intent = Intent(this, GetInterestsActivity::class.java)
-                        intent.putExtra("user", Parcels.wrap(user))
-                        intent.putExtra("accessToken", accessToken)
-                        startActivityForResult(intent, REQUEST_CODE_GET_INTERESTS)
-
-                        mUsername?.setText("")
-                        mPassword?.setText("")
-                        mEmail?.setText("")
-                        mPhoneNumber?.setText("")
+                        SignUpAuthorizationController().authorizeUser()
                     }
                 }
             }
@@ -109,6 +103,13 @@ class SignUpActivity : AppCompatActivity() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == SignUpAuthorizationController().AUTH_REQUEST_CODE) {
+            // get user interests
+            val intent = Intent(this, GetInterestsActivity::class.java)
+            intent.putExtra("user", Parcels.wrap(user))
+            intent.putExtra("accessToken", accessToken)
+            startActivityForResult(intent, REQUEST_CODE_GET_INTERESTS)
+        }
         if (requestCode == REQUEST_CODE_GET_INTERESTS) {
             if (resultCode == RESULT_OK){
                 val genres : ArrayList<String>
@@ -128,4 +129,21 @@ class SignUpActivity : AppCompatActivity() {
         }
         super.onActivityResult(requestCode, resultCode, data)
     }
+
+    inner class SignUpAuthorizationController() : AuthorizationController {
+        override fun authorizeUser() {
+            val builder: AuthorizationRequest.Builder = AuthorizationRequest.Builder(
+            CLIENT_ID,
+            AuthorizationResponse.Type.TOKEN,
+            REDIRECT_URI
+        )
+        builder.setScopes(arrayOf("streaming", "user-top-read", "playlist-modify-public",
+            "playlist-read-private", "playlist-modify-private", "user-library-modify",
+            "user-library-read", "user-read-private"))
+        val request: AuthorizationRequest = builder.build()
+        AuthorizationClient.openLoginActivity(this@SignUpActivity,
+            AUTH_REQUEST_CODE, request)
+        }
+    }
+
 }
