@@ -51,6 +51,10 @@ class LoginActivity : AppCompatActivity() {
 
         mSignUpButton?.setOnClickListener(View.OnClickListener {
             val intent = Intent(this, SignUpActivity::class.java)
+            val usernameText = mEtUsername?.text.toString();
+            val passwordText = mEtPassword?.text.toString();
+            intent.putExtra("usernameText", usernameText)
+            intent.putExtra("passwordText", passwordText)
             intent.putExtra("accessToken", accessToken)
             startActivity(intent)
         })

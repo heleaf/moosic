@@ -58,6 +58,19 @@ class SignUpActivity : AppCompatActivity() {
         accessToken = intent.getStringExtra("accessToken")
         Log.d(TAG, "accesstoken: " + accessToken)
 
+        val usernameText = intent.getStringExtra("usernameText")
+        val passwordText = intent.getStringExtra("passwordText")
+
+        Log.d(TAG, "username: " + usernameText + " password: " + passwordText)
+
+        if (usernameText != null){
+            mUsername?.setText(usernameText)
+        }
+
+        if (passwordText != null){
+            mPassword?.setText(passwordText)
+        }
+
     }
 
     private fun signUp(username: String, password: String, email: String, phone: String) {
