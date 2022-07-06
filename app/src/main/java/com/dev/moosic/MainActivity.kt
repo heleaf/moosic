@@ -1,12 +1,9 @@
 package com.dev.moosic
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.database.Cursor
 import android.os.Build
 import android.os.Bundle
-import android.provider.ContactsContract
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -28,7 +25,6 @@ import com.spotify.protocol.client.Subscription
 import com.spotify.protocol.types.PlayerState
 import kaaes.spotify.webapi.android.SpotifyApi
 import kaaes.spotify.webapi.android.models.*
-import org.parceler.Parcels
 import retrofit.Callback
 import retrofit.RetrofitError
 import retrofit.client.Response
@@ -55,9 +51,10 @@ class MainActivity : AppCompatActivity(){
     var playerStateSubscription: Subscription<PlayerState>? = null
 
     var topTracks : ArrayList<kaaes.spotify.webapi.android.models.Track> = ArrayList()
+
+    var mostRecentSearchQuery: String? = null
     var searchedTracks : ArrayList<Track> = ArrayList()
 
-    var playlistTracks : ArrayList<kaaes.spotify.webapi.android.models.PlaylistTrack> = ArrayList()
     var parsePlaylistSongs : ArrayList<Song> = ArrayList()
 
     companion object {
@@ -72,8 +69,6 @@ class MainActivity : AppCompatActivity(){
     val fragmentManager = supportFragmentManager
 
     var searchMenuItem : MenuItem? = null
-    var likedSongsMenuItem : MenuItem? = null
-    var playlistMenuItem : MenuItem? = null
     var logOutMenuItem : MenuItem? = null
     var progressBar: ProgressBar? = null
 
@@ -113,18 +108,12 @@ class MainActivity : AppCompatActivity(){
         menuInflater.inflate(R.menu.main_menu, menu)
         searchMenuItem = menu?.findItem(R.id.searchMenuIcon)
         searchMenuItem?.setVisible(false)
-//        likedSongsMenuItem = menu?.findItem(R.id.likedSongsButton)
-//        playlistMenuItem = menu?.findItem(R.id.myPlaylistButton)
-//        likedSongsMenuItem?.setVisible(false)
-//        playlistMenuItem?.setVisible(false)
         logOutMenuItem = menu?.findItem(R.id.logOutButton)
         return super.onCreateOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-//            R.id.myPlaylistButton -> { setUpUserPlaylist(); return true }
-//            R.id.likedSongsButton -> { setUpLikedSongsFragment(); return true }
             R.id.logOutButton -> { ParseUser.logOut(); finish(); return true }
             else -> {
                 return super.onOptionsItemSelected(item)
@@ -134,7 +123,7 @@ class MainActivity : AppCompatActivity(){
 
     override fun onStart() {
         super.onStart()
-        MainActivityController().hideMiniPlayer()
+        MainActivityController().hideMiniPlayerPreview()
         showMiniPlayerFragment = false
 
         val connectionParams = ConnectionParams.Builder(CLIENT_ID)
@@ -151,7 +140,6 @@ class MainActivity : AppCompatActivity(){
 
                 override fun onFailure(throwable: Throwable) {
                     Log.e("MainActivity", throwable.message, throwable)
-                    // handle errors
                 }
             })
 
@@ -175,7 +163,7 @@ class MainActivity : AppCompatActivity(){
                                 currentTrack = t
                                 currentTrackIsPaused = playerState.isPaused
                                 if (!playerState.isPaused) {
-                                    MainActivityController().showMiniPlayer()
+                                    MainActivityController().showMiniPlayerPreview()
                                 }
 
                             }
@@ -193,11 +181,10 @@ class MainActivity : AppCompatActivity(){
                     currentTrackIsPaused = playerState.isPaused
                     fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
                         miniPlayerFragment!!).commit()
-//                    MainActivityController().showMiniPlayer()
+                    if (!playerState.isPaused) {
+                        MainActivityController().showMiniPlayerPreview()
+                    }
                 }
-            } else {
-                // track is null
-                // fragmentManager.beginTransaction().hide(R)
             }
         }
     }
@@ -237,17 +224,7 @@ class MainActivity : AppCompatActivity(){
                 }
                 playlistSongsRelation?.add(newSong)
                 if (showingLogoutButton) {
-//                    // insert the song before the end
-//                    // UGH
-
                     parsePlaylistSongs.add(parsePlaylistSongs.size - 1, newSong)
-
-//                    parsePlaylistSongs.removeAt(parsePlaylistSongs.size - 1) // remove dummy song
-//                    parsePlaylistSongs.add(newSong)
-//                    parsePlaylistSongs.add(Song())
-//                     parsePlaylistSongs.add(parsePlaylistSongs.size - 2, newSong)
-//                    parsePlaylistSongs.add(newSong)
-////
                 } // else just add it in
                 else parsePlaylistSongs.add(newSong)
 //                parsePlaylistSongs.add(newSong)
@@ -393,7 +370,7 @@ class MainActivity : AppCompatActivity(){
                         miniPlayerFragment = MiniPlayerFragment.newInstance(t, MainActivityController(), false)
                         fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
                             miniPlayerFragment!!).commit()
-                        showMiniPlayer()
+                        showMiniPlayerPreview()
                     }
                 }
                 override fun failure(error: RetrofitError?) {
@@ -433,7 +410,7 @@ class MainActivity : AppCompatActivity(){
             }
         }
 
-        fun showMiniPlayer(){
+        fun showMiniPlayerPreview(){
             val fragmentToShow = fragmentManager.findFragmentById(R.id.miniPlayerFlContainer)
             if (fragmentToShow != null) {
                 fragmentManager.beginTransaction().show(fragmentToShow).commit()
@@ -442,7 +419,7 @@ class MainActivity : AppCompatActivity(){
             }
         }
 
-        fun hideMiniPlayer(){
+        fun hideMiniPlayerPreview(){
             val fragmentToHide = fragmentManager.findFragmentById(R.id.miniPlayerFlContainer)
             if (fragmentToHide != null) {
                 fragmentManager.beginTransaction().hide(fragmentToHide).commit()
@@ -492,43 +469,8 @@ class MainActivity : AppCompatActivity(){
         setUpHomeFragment()
     }
 
-    private fun setUpLikedSongsFragment() {
-        searchMenuItem?.setVisible(false)
-//        likedSongsMenuItem?.setVisible(true)
-//        playlistMenuItem?.setVisible(true)
-        spotifyApi.service.getMySavedTracks(object: Callback<Pager<SavedTrack>> {
-            override fun success(t: Pager<SavedTrack>?, response: Response?) {
-                if (t != null){
-                    val savedTracks = ArrayList<Track>()
-                    savedTracks.addAll(t.items.map{it.track})
-//                    if (currentUserId != null && userPlaylistId != null){
-//                        val likedSongsFragment = PlaylistFragment.newInstance(savedTracks,
-//                            currentUserId!!, userPlaylistId!!, MainActivityController(),
-//                            false, false, true
-//                        )
-//                        fragmentManager.beginTransaction().replace(R.id.flContainer,
-//                            likedSongsFragment).commit()
-//                    } else {
-//                        Toast.makeText(this@MainActivity, "Setting up home page.. please refresh",
-//                            Toast.LENGTH_LONG).show()
-//                    }
-                }
-            }
-            override fun failure(error: RetrofitError?) {
-                TODO("Not yet implemented")
-            }
-        })
-    }
-
     private fun setUpPlaylistFragment() {
-//        showMiniPlayerPreview()
-
         searchMenuItem?.setVisible(false)
-//        likedSongsMenuItem?.setVisible(true)
-//        playlistMenuItem?.setVisible(true)
-//        Toast.makeText(this, "Profile", Toast.LENGTH_LONG).show()
-//        val playlistObject = ParseUser.getCurrentUser().getParseObject("parsePlaylist")
-
         val newFragment = ParsePlaylistFragment.newInstance(parsePlaylistSongs,
             MainActivityController(),
             if (showLogOutButtonOnProfilePage)
@@ -536,42 +478,11 @@ class MainActivity : AppCompatActivity(){
                 arrayListOf(KEY_DELETE_BUTTON)
         )
         fragmentManager.beginTransaction().replace(R.id.flContainer, newFragment).commit()
-
-//        val queryParams : Map<String, Any> = emptyMap()
-//        spotifyApi.service.getPlaylistTracks(currentUserId, userPlaylistId, queryParams,
-//        object: Callback<Pager<PlaylistTrack>> {
-//            override fun success(t: Pager<PlaylistTrack>?, response: Response?) {
-//                if (t != null) {
-//                    Log.d(TAG, "got playlist tracks back: " + t.items.size)
-//                    playlistTracks.clear()
-//                    playlistTracks.addAll(t.items)
-//                    val tracks = ArrayList<Track>()
-//                    tracks.addAll(playlistTracks.map{ it.track })
-//                    if (currentUserId != null && userPlaylistId != null){
-//                        val profileFragment =
-//                            PlaylistFragment.newInstance(tracks,
-//                            currentUserId!!, userPlaylistId!!, MainActivityController(),
-//                            false, true, true
-//                        )
-//                        fragmentManager.beginTransaction().replace(R.id.flContainer, profileFragment).commit()
-//                    } else {
-//                        Toast.makeText(this@MainActivity, "Setting up home page.. please refresh",
-//                            Toast.LENGTH_LONG).show()
-//                    }
-//                }
-//            }
-//            override fun failure(error: RetrofitError?) {
-//                Log.d(TAG, "error querying playlist songs: " + error?.message)
-//            }
-//        })
     }
 
     private fun setUpSearchFragment() {
-        Toast.makeText(this, "Search", Toast.LENGTH_LONG).show()
-//        likedSongsMenuItem?.setVisible(false)
-//        playlistMenuItem?.setVisible(false)
         searchMenuItem?.setVisible(true)
-        var searchView = (searchMenuItem?.actionView) as androidx.appcompat.widget.SearchView
+        val searchView = (searchMenuItem?.actionView) as androidx.appcompat.widget.SearchView
         searchView.onActionViewExpanded()
         searchView.requestFocus()
         searchView.setOnQueryTextListener(object
@@ -579,21 +490,21 @@ class MainActivity : AppCompatActivity(){
             override fun onQueryTextSubmit(query: String?): Boolean {
                 searchView.clearFocus()
                 if (query != null) {
-//                    showMiniPlayerPreview()
-                    if (showMiniPlayerFragment) MainActivityController().showMiniPlayer()
+                    if (showMiniPlayerFragment) MainActivityController().showMiniPlayerPreview()
+                    mostRecentSearchQuery = query
                     fetchQueryAndSendToFragment(query, DEFAULT_ITEM_OFFSET, DEFAULT_NUMBER_ITEMS)
                 }
                 return true
             }
             override fun onQueryTextChange(newText: String?): Boolean {
-                if (showMiniPlayerFragment) MainActivityController().showMiniPlayer()
+                if (showMiniPlayerFragment) MainActivityController().showMiniPlayerPreview()
                 return false
             }
         })
-        searchedTracks.clear()
         if (currentUserId != null && userPlaylistId != null){
             val searchFragment = SearchFragment.newInstance(searchedTracks,
-                currentUserId!!, userPlaylistId!!, MainActivityController(), ""
+                currentUserId!!, userPlaylistId!!, MainActivityController(),
+                (if (mostRecentSearchQuery == null) "" else mostRecentSearchQuery!!)
             )
             fragmentManager.beginTransaction().replace(R.id.flContainer, searchFragment)
                 .commit()
@@ -606,7 +517,6 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun fetchQueryAndSendToFragment(query: String, itemOffset: Int, numberItems: Int) {
-        // use my query to search the spotify api
         showProgressBar()
         val queryMap = mapOf("offset" to itemOffset, "limit" to numberItems)
         spotifyApi.service.searchTracks(query, queryMap, object: Callback<TracksPager> {
@@ -614,7 +524,6 @@ class MainActivity : AppCompatActivity(){
                 Log.d(TAG, "originally successfully queried " + query + " with offset " + itemOffset
                     + " and numItems " + t?.tracks?.items?.size)
                 if (t != null){
-                    // send the tracks to the search fragment to display
                     if (progressBar != null) {
                         progressBar!!.visibility = ProgressBar.INVISIBLE
                     }
@@ -636,7 +545,6 @@ class MainActivity : AppCompatActivity(){
                 }
                 hideProgressBar()
             }
-
             override fun failure(error: RetrofitError?) {
                 Log.d(TAG, "error querying " + query + ": " + error?.message)
                 hideProgressBar()
@@ -653,7 +561,6 @@ class MainActivity : AppCompatActivity(){
             override fun success(t: TracksPager?, response: Response?) {
                 Log.d(TAG, "successfully queried " + query)
                 if (t != null){
-//                    Log.d(TAG, "offset: " + itemOffset.toString())
                     Log.d(TAG, "loading from " + searchedTracks.size + " with " + t.tracks.items.size)
                     val prevSize = searchedTracks.size
                     if (clearItemList) searchedTracks.clear()
@@ -676,12 +583,7 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun setUpHomeFragment() {
-//        showMiniPlayerPreview()
-
         searchMenuItem?.setVisible(false)
-//        likedSongsMenuItem?.setVisible(false)
-//        playlistMenuItem?.setVisible(false)
-        // TODO: constants instead of magic nums
         showProgressBar()
         spotifyApi.service.getTopTracks(
             object : Callback<Pager<kaaes.spotify.webapi.android.models.Track>> {
@@ -765,26 +667,6 @@ class MainActivity : AppCompatActivity(){
         }
     }
 
-//    fun showMiniPlayerPreview(){
-//        showMiniPlayerFragment = true
-//        if (fragmentManager.findFragmentById(R.id.miniPlayerFlContainer) == null
-//            && miniPlayerFragment != null){
-//            // add it in
-//            fragmentManager.beginTransaction()
-//                .add(R.id.miniPlayerFlContainer, miniPlayerFragment!!)
-//                .commit()
-//        }
-//    }
-//
-//    fun hideMiniPlayerPreview() {
-//        showMiniPlayerFragment = false
-//        if (fragmentManager.findFragmentById(R.id.miniPlayerFlContainer) != null
-//            && miniPlayerFragment != null
-//        ) {
-//            fragmentManager.beginTransaction().remove(miniPlayerFragment!!).commit()
-//        }
-//    }
-
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>,
                                             grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -808,7 +690,6 @@ class MainActivity : AppCompatActivity(){
             // callback onRequestPermissionsResult
         } else {
 //            builder = getContacts()
-            Log.d(TAG, "hi")
         }
     }
 
