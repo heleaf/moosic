@@ -30,7 +30,14 @@
         app:layout_constraintEnd_toStartOf="@+id/miniPlayerPlayPauseButton"
         app:layout_constraintStart_toEndOf="@+id/miniPlayerAlbumCover"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="song title" />
+        tools:text="song title"
+
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:singleLine="true"
+        android:scrollHorizontally="true"
+        android:ellipsize="marquee"
+        android:marqueeRepeatLimit ="marquee_forever"/>
 
     <ImageView
         android:id="@+id/miniPlayerPlayPauseButton"

@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AnimationUtils
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -107,6 +108,8 @@ class MiniPlayerFragment(controller: MainActivity.MainActivityController) : Frag
         }
 
         trackTitle?.setText(currentTrack?.name)
+        trackTitle?.isSelected = true
+
         val artistNameText = currentTrack?.artists?.fold(
             ""
         ) { accumulator, artist ->
