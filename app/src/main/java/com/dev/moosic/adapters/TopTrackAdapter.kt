@@ -73,7 +73,7 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
 //            Log.d(TAG, gson.toJson(track).toString()) this works!
             itemView.setOnLongClickListener {
                 Log.d(TAG, "adding $track to playlist")
-                mainActivityController.addToParsePlaylist(track)
+                mainActivityController.addToParsePlaylist(track, false)
                 return@setOnLongClickListener true
             }
 

@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -21,6 +22,8 @@ private const val KEY_ADD_BUTTON = "add"
 private const val KEY_DELETE_BUTTON = "delete"
 private const val KEY_HEART_BUTTON = "heart"
 
+private const val KEY_LOGOUT_BUTTON = "logOut"
+
 private const val KEY_USER_SPOTIFYID = "userId"
 
 class SongAdapter(context: Context, songs: ArrayList<Song>,
@@ -34,6 +37,7 @@ controller: MainActivity.MainActivityController, buttonsToShow: List<String>)
     var mShowAddButton = false
     var mShowDeleteButton = false
     var mShowHeartButton = false
+    var mShowLogOutButton = false
 
     var mSpotifyUserId : String? = null
 
@@ -45,11 +49,16 @@ controller: MainActivity.MainActivityController, buttonsToShow: List<String>)
                 KEY_ADD_BUTTON -> mShowAddButton = true
                 KEY_DELETE_BUTTON -> mShowDeleteButton = true
                 KEY_HEART_BUTTON -> mShowHeartButton = true
+                KEY_LOGOUT_BUTTON -> mShowLogOutButton = true
                 else -> {}
             }
         }
         val currentParseUser = ParseUser.getCurrentUser()
         this.mSpotifyUserId = currentParseUser.getString(KEY_USER_SPOTIFYID)
+//        if (mShowLogOutButton) {
+//            // add a dummy item into songs
+////            this.mSongs.add(Song())
+//        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -77,6 +86,8 @@ controller: MainActivity.MainActivityController, buttonsToShow: List<String>)
         var addToPlaylistButton : ImageView? = null
         var deleteFromPlaylistButton : ImageView? = null
 
+        var logOutRvButton: Button? = null
+
         init {
             albumCover = itemView.findViewById(R.id.topTrackImg)
             songTitle = itemView.findViewById(R.id.trackTitle)
@@ -85,9 +96,18 @@ controller: MainActivity.MainActivityController, buttonsToShow: List<String>)
             heartButton = itemView.findViewById(R.id.heartButton)
             addToPlaylistButton = itemView.findViewById(R.id.addToPlaylistButton)
             deleteFromPlaylistButton = itemView.findViewById(R.id.deleteFromPlaylistButton)
+            logOutRvButton = itemView.findViewById(R.id.logOutRvButton)
         }
 
         fun bind(song: Song, position: Int) {
+//            if (mShowLogOutButton && position == mSongs.size - 1) {
+//                // display the logout button
+//                listOf(albumCover, songTitle, albumTitle, artistName, heartButton, addToPlaylistButton,
+//                deleteFromPlaylistButton).map{ item -> item?.visibility = View.GONE }
+//                logOutRvButton?.visibility = View.VISIBLE
+//                return
+//            }
+
             Log.d("SongAdapter", "song: " + song.getName())
             val jsonDataString = song.getJsonDataString()
             val gson = Gson()
@@ -133,7 +153,7 @@ controller: MainActivity.MainActivityController, buttonsToShow: List<String>)
             if (mShowAddButton) {
                 addToPlaylistButton?.visibility = View.VISIBLE
                 addToPlaylistButton?.setOnClickListener(View.OnClickListener {
-                    mainActivityController.addToParsePlaylist(track)
+                    mainActivityController.addToParsePlaylist(track, true)
                 })
             } else {
                 addToPlaylistButton?.visibility = View.GONE

@@ -26,15 +26,13 @@ class GetInterestsActivity : AppCompatActivity() {
     var adapter: InterestItemAdapter? = null
     val context = this
     var accessToken: String? = null
-
     var userPickedGenres : ArrayList<String> = ArrayList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_get_interests)
 
-        setTitle("What are your favorite genres?")
-
+        setTitle("Favorite Genres")
         rvGenres = findViewById(R.id.rvGenres)
 
         adapter = InterestItemAdapter(context, genreList, userPickedGenres)

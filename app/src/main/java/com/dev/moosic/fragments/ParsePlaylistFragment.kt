@@ -24,7 +24,6 @@ import org.parceler.Parcels
 
 private const val ARG_PARAM1 = "playlistSongs"
 private const val ARG_PARAM2 = "buttonsToShow"
-private const val ARG_PARAM3 = "playlistObject"
 
 /**
  * A simple [Fragment] subclass.
@@ -46,6 +45,8 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivityControlle
     var playlistDescription: TextView? = null
     var playlistAuthor: TextView? = null
 
+    var emptyPlaylistText: TextView? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
@@ -64,15 +65,14 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivityControlle
     }
 
     companion object {
-        // TODO: Rename and change types and number of parameters
         @JvmStatic
         fun newInstance(playlistSongs: ArrayList<Song>, controller: MainActivity.MainActivityController,
-                        buttonsToShow: ArrayList<String>/*, playlistObject: Playlist*/) =
+                        buttonsToShow: ArrayList<String>
+            /*, playlistObject: Playlist*/) =
             ParsePlaylistFragment(controller).apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_PARAM1, Parcels.wrap(playlistSongs))
                     putStringArrayList(ARG_PARAM2, buttonsToShow)
-//                    putParcelable(ARG_PARAM3, Parcels.wrap(playlistObject))
                 }
             }
     }
@@ -108,6 +108,11 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivityControlle
 //            playlistAuthor?.visibility = View.GONE
 //        }
 
+        // if songs.size == 0 then show something else
+        // otherwise get the adapter...
+
+        emptyPlaylistText = view.findViewById(R.id.emptyPlaylistText)
+
         rvPlaylistTracks = view.findViewById(R.id.rvPlaylistTracks)
 
         Log.d("ParsePlaylistFragment", "songs in parse playlist fragment: " + songs.size)
@@ -131,6 +136,14 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivityControlle
             android.R.color.holo_orange_light,
             android.R.color.holo_red_light
         )
+
+        // TODO: toggle this view when all songs are removed by the user
+        if (songs.size == 0) {
+            emptyPlaylistText?.visibility = View.VISIBLE
+        } else {
+            emptyPlaylistText?.visibility = View.GONE
+        }
+
 //        scrollListener = EndlessRecyclerViewScrollListener(linearLayoutManager, object: LoadMoreFunction {
 //            override fun onLoadMore(offset: Int, totalItemsCount: Int, view: RecyclerView?) {
 //                mainActivityController.loadMorePlaylistSongs(tracks.size, totalItemsCount, adapter!!)
@@ -138,8 +151,6 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivityControlle
 //        })
 //
 //        rvPlaylistTracks?.addOnScrollListener(scrollListener!!);
-
-
 
     }
 }

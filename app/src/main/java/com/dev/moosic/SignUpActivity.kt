@@ -111,10 +111,27 @@ class SignUpActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == SpotifyAuthController(this).AUTH_REQUEST_CODE) {
-            val intent = Intent(this, GetInterestsActivity::class.java)
-            intent.putExtra("user", Parcels.wrap(user))
-            intent.putExtra("accessToken", accessToken)
-            startActivityForResult(intent, REQUEST_CODE_GET_INTERESTS)
+            val response = AuthorizationClient.getResponse(resultCode, data)
+            when (response.type) {
+                AuthorizationResponse.Type.TOKEN -> {
+                    Log.d(TAG, "token: " + response.accessToken)
+                    accessToken = response.accessToken
+                    val intent = Intent(this, GetInterestsActivity::class.java)
+                    intent.putExtra("user", Parcels.wrap(user))
+                    intent.putExtra("accessToken", accessToken)
+                    startActivityForResult(intent, REQUEST_CODE_GET_INTERESTS)
+                }
+                AuthorizationResponse.Type.ERROR -> {
+                    Toast.makeText(this, "Failed to authorize spotify account: " + response.error,
+                        Toast.LENGTH_LONG).show()
+                    Log.d(TAG, "error: " + response.error)
+                }
+                else -> {
+                    Toast.makeText(this, "Failed to authorize spotify account, please restart the app to try again",
+                        Toast.LENGTH_LONG).show()
+                    Log.d(TAG, response.type.toString())
+                }
+            }
         }
         if (requestCode == REQUEST_CODE_GET_INTERESTS) {
             if (resultCode == RESULT_OK){

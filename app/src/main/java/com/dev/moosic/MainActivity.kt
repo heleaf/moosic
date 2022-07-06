@@ -214,7 +214,7 @@ class MainActivity : AppCompatActivity(){
                 })
         }
 
-        fun addToParsePlaylist(track: Track){
+        fun addToParsePlaylist(track: Track, showingLogoutButton: Boolean){
             Log.d(TAG, "adding " + track.name + " to parse playlist...")
             val user = ParseUser.getCurrentUser()
             val playlist = user.getParseObject("parsePlaylist")
@@ -226,6 +226,9 @@ class MainActivity : AppCompatActivity(){
                     return@saveInBackground
                 }
                 playlistSongsRelation?.add(newSong)
+                if (showingLogoutButton) {
+                    // insert the song before the end
+                } // else just add it in
                 parsePlaylistSongs.add(newSong)
                 playlist?.saveInBackground { e ->
                     if (e != null) Log.d(TAG, "error adding " + track.name +
@@ -240,7 +243,7 @@ class MainActivity : AppCompatActivity(){
         }
 
         override fun addToPlaylist(userId: String, playlistId: String, track: Track) {
-            addToParsePlaylist(track)
+            addToParsePlaylist(track, true)
         }
 
         fun removeFromSpotifyPlaylist(userId: String, playlistId: String, track: Track, position: Int) {
@@ -477,14 +480,11 @@ class MainActivity : AppCompatActivity(){
 //        likedSongsMenuItem?.setVisible(true)
 //        playlistMenuItem?.setVisible(true)
 //        Toast.makeText(this, "Profile", Toast.LENGTH_LONG).show()
-
 //        val playlistObject = ParseUser.getCurrentUser().getParseObject("parsePlaylist")
 
         val newFragment = ParsePlaylistFragment.newInstance(parsePlaylistSongs,
             MainActivityController(), arrayListOf(KEY_DELETE_BUTTON))
         fragmentManager.beginTransaction().replace(R.id.flContainer, newFragment).commit()
-
-        Log.d(TAG, "help me" + parsePlaylistSongs.size.toString())
 
 //        val queryParams : Map<String, Any> = emptyMap()
 //        spotifyApi.service.getPlaylistTracks(currentUserId, userPlaylistId, queryParams,
