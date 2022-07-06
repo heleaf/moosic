@@ -46,7 +46,7 @@
         android:layout_marginEnd="5dp"
         android:src="@android:drawable/ic_media_pause"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/closeMiniPlayerButton"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
@@ -60,5 +60,16 @@
         app:layout_constraintStart_toStartOf="@+id/miniPlayerSongTitle"
         app:layout_constraintTop_toBottomOf="@+id/miniPlayerSongTitle"
         tools:text="song artist" />
+
+    <ImageButton
+        android:id="@+id/closeMiniPlayerButton"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginEnd="5dp"
+        android:backgroundTint="#00673AB7"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

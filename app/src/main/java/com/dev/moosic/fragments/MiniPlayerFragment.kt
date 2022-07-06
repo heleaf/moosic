@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AnimationUtils
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -36,6 +37,8 @@ class MiniPlayerFragment(controller: MainActivity.MainActivityController) : Frag
     var trackAlbumCover: SimpleDraweeView? = null
     var playPauseButton: ImageView? = null
     var layout: ConstraintLayout? = null
+
+    var closeMiniPlayerButton: ImageButton? = null
 
     val mainActivityController = controller
 
@@ -89,6 +92,11 @@ class MiniPlayerFragment(controller: MainActivity.MainActivityController) : Frag
         trackAlbumCover = view.findViewById(R.id.miniPlayerAlbumCover)
         playPauseButton = view.findViewById(R.id.miniPlayerPlayPauseButton)
         layout = view.findViewById(R.id.miniPlayerConstraintLayout)
+        closeMiniPlayerButton = view.findViewById(R.id.closeMiniPlayerButton)
+
+        closeMiniPlayerButton?.setOnClickListener {
+            mainActivityController.hideMiniPlayer()
+        }
 
         if (isPaused){
             playPauseButton?.setImageResource(android.R.drawable.ic_media_play)
@@ -109,7 +117,6 @@ class MiniPlayerFragment(controller: MainActivity.MainActivityController) : Frag
 
         trackTitle?.setText(currentTrack?.name)
         trackTitle?.isSelected = true
-
         val artistNameText = currentTrack?.artists?.fold(
             ""
         ) { accumulator, artist ->

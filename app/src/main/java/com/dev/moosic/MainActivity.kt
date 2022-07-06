@@ -11,6 +11,7 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.FrameLayout
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -36,6 +37,7 @@ import retrofit.client.Response
 private const val KEY_ADD_BUTTON = "add"
 private const val KEY_DELETE_BUTTON = "delete"
 private const val KEY_HEART_BUTTON = "heart"
+private const val KEY_LOGOUT_BUTTON = "logOut"
 
 class MainActivity : AppCompatActivity(){
     val PERMISSIONS_REQUEST_READ_CONTACTS = 100
@@ -78,9 +80,12 @@ class MainActivity : AppCompatActivity(){
     val context = this
 
     var miniPlayerFragment: MiniPlayerFragment? = null
+    var miniPlayerFragmentContainer: FrameLayout? = null
     var showMiniPlayerFragment: Boolean = false
 
     var showMiniPlayerDetailFragment: Boolean = false
+
+    val showLogOutButtonOnProfilePage: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,8 +103,8 @@ class MainActivity : AppCompatActivity(){
             return@setOnItemSelectedListener true
         }
         progressBar = findViewById(R.id.pbLoadingSearch)
+        miniPlayerFragmentContainer = findViewById(R.id.miniPlayerFlContainer)
         setUpCurrentUser()
-
         Log.d(TAG, "fetching....")
         testFetchContacts()
     }
@@ -108,13 +113,10 @@ class MainActivity : AppCompatActivity(){
         menuInflater.inflate(R.menu.main_menu, menu)
         searchMenuItem = menu?.findItem(R.id.searchMenuIcon)
         searchMenuItem?.setVisible(false)
-
 //        likedSongsMenuItem = menu?.findItem(R.id.likedSongsButton)
 //        playlistMenuItem = menu?.findItem(R.id.myPlaylistButton)
-//
 //        likedSongsMenuItem?.setVisible(false)
 //        playlistMenuItem?.setVisible(false)
-
         logOutMenuItem = menu?.findItem(R.id.logOutButton)
         return super.onCreateOptionsMenu(menu)
     }
@@ -132,6 +134,9 @@ class MainActivity : AppCompatActivity(){
 
     override fun onStart() {
         super.onStart()
+        MainActivityController().hideMiniPlayer()
+        showMiniPlayerFragment = false
+
         val connectionParams = ConnectionParams.Builder(CLIENT_ID)
             .setRedirectUri(REDIRECT_URI)
             .showAuthView(true)
@@ -162,17 +167,18 @@ class MainActivity : AppCompatActivity(){
                     val id = track.uri.slice(IntRange(14, track.uri.length - 1))
                     spotifyApi.service.getTrack(id, object: Callback<Track> {
                         override fun success(t: Track?, response: Response?) {
-                            if (t != null && showMiniPlayerFragment) {
+                            if (t != null) {
                                 miniPlayerFragment = MiniPlayerFragment.newInstance(t, MainActivityController(),
                                 playerState.isPaused)
                                 fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
                                 miniPlayerFragment!!).commit()
                                 currentTrack = t
                                 currentTrackIsPaused = playerState.isPaused
+                                if (!playerState.isPaused) {
+                                    MainActivityController().showMiniPlayer()
+                                }
+
                             }
-
-//                            if (t != null) &&
-
                         }
                         override fun failure(error: RetrofitError?) {
                             Log.d(TAG, "failed to get track: " + error?.message)
@@ -181,13 +187,17 @@ class MainActivity : AppCompatActivity(){
                     })
 
                 }
-                else if (playerState.isPaused != currentTrackIsPaused && showMiniPlayerFragment) {
+                else if (playerState.isPaused != currentTrackIsPaused) {
                     miniPlayerFragment = MiniPlayerFragment.newInstance(currentTrack!!, MainActivityController(),
                         playerState.isPaused)
                     currentTrackIsPaused = playerState.isPaused
                     fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
                         miniPlayerFragment!!).commit()
+//                    MainActivityController().showMiniPlayer()
                 }
+            } else {
+                // track is null
+                // fragmentManager.beginTransaction().hide(R)
             }
         }
     }
@@ -227,9 +237,20 @@ class MainActivity : AppCompatActivity(){
                 }
                 playlistSongsRelation?.add(newSong)
                 if (showingLogoutButton) {
-                    // insert the song before the end
+//                    // insert the song before the end
+//                    // UGH
+
+                    parsePlaylistSongs.add(parsePlaylistSongs.size - 1, newSong)
+
+//                    parsePlaylistSongs.removeAt(parsePlaylistSongs.size - 1) // remove dummy song
+//                    parsePlaylistSongs.add(newSong)
+//                    parsePlaylistSongs.add(Song())
+//                     parsePlaylistSongs.add(parsePlaylistSongs.size - 2, newSong)
+//                    parsePlaylistSongs.add(newSong)
+////
                 } // else just add it in
-                parsePlaylistSongs.add(newSong)
+                else parsePlaylistSongs.add(newSong)
+//                parsePlaylistSongs.add(newSong)
                 playlist?.saveInBackground { e ->
                     if (e != null) Log.d(TAG, "error adding " + track.name +
                             " to parse playlist: " + e.message)
@@ -243,7 +264,7 @@ class MainActivity : AppCompatActivity(){
         }
 
         override fun addToPlaylist(userId: String, playlistId: String, track: Track) {
-            addToParsePlaylist(track, true)
+            addToParsePlaylist(track, showLogOutButtonOnProfilePage)
         }
 
         fun removeFromSpotifyPlaylist(userId: String, playlistId: String, track: Track, position: Int) {
@@ -275,7 +296,13 @@ class MainActivity : AppCompatActivity(){
             val user = ParseUser.getCurrentUser()
             val playlist = user.getParseObject("parsePlaylist")
             val playlistSongsRelation = playlist?.getRelation<Song>("playlistSongs")
+            if (parsePlaylistSongs.size <= position) {
+                Log.d(TAG, "position " + position + " out of bounds?")
+                Log.d(TAG, "parse playlist song size: " + parsePlaylistSongs.size)
+                return
+            }
             val songToDelete = parsePlaylistSongs.get(position)
+            parsePlaylistSongs.removeAt(position)
             playlistSongsRelation?.remove(songToDelete)
             playlist?.saveInBackground {
                 if (it != null) {
@@ -366,7 +393,7 @@ class MainActivity : AppCompatActivity(){
                         miniPlayerFragment = MiniPlayerFragment.newInstance(t, MainActivityController(), false)
                         fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
                             miniPlayerFragment!!).commit()
-                        showMiniPlayerFragment = true
+                        showMiniPlayer()
                     }
                 }
                 override fun failure(error: RetrofitError?) {
@@ -405,6 +432,25 @@ class MainActivity : AppCompatActivity(){
                 showMiniPlayerDetailFragment = false
             }
         }
+
+        fun showMiniPlayer(){
+            val fragmentToShow = fragmentManager.findFragmentById(R.id.miniPlayerFlContainer)
+            if (fragmentToShow != null) {
+                fragmentManager.beginTransaction().show(fragmentToShow).commit()
+                miniPlayerFragmentContainer?.visibility = View.VISIBLE
+                showMiniPlayerFragment = true
+            }
+        }
+
+        fun hideMiniPlayer(){
+            val fragmentToHide = fragmentManager.findFragmentById(R.id.miniPlayerFlContainer)
+            if (fragmentToHide != null) {
+                fragmentManager.beginTransaction().hide(fragmentToHide).commit()
+                miniPlayerFragmentContainer?.visibility = View.GONE
+                pauseSongOnSpotify()
+                showMiniPlayerFragment = false
+            }
+        }
     }
 
     private fun setUpCurrentUser() {
@@ -416,7 +462,7 @@ class MainActivity : AppCompatActivity(){
                         currentUserId = t.id
                         currentParseUser.put("userId", t.id)
                         currentParseUser.saveInBackground()
-                        setUpUserPlaylist()
+                        setUpUserPlaylist(showLogOutButtonOnProfilePage)
                     }
                 }
                 override fun failure(error: RetrofitError?) {
@@ -426,11 +472,11 @@ class MainActivity : AppCompatActivity(){
 
         } else {
             currentUserId = currentParseUser.getString("userId")
-            setUpUserPlaylist()
+            setUpUserPlaylist(showLogOutButtonOnProfilePage)
         }
     }
 
-    private fun setUpUserPlaylist() {
+    private fun setUpUserPlaylist(showingLogoutButton: Boolean) {
         val currentParseUser = ParseUser.getCurrentUser()
         userPlaylistId = "0" // placeholder
         // get the playlist from parse
@@ -441,6 +487,7 @@ class MainActivity : AppCompatActivity(){
         val songs = query?.find()
         if (songs != null) {
             parsePlaylistSongs.addAll(songs)
+            if (showingLogoutButton) parsePlaylistSongs.add(Song()) // dummy song
         }
         setUpHomeFragment()
     }
@@ -474,7 +521,7 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun setUpPlaylistFragment() {
-        showMiniPlayerPreview()
+//        showMiniPlayerPreview()
 
         searchMenuItem?.setVisible(false)
 //        likedSongsMenuItem?.setVisible(true)
@@ -483,7 +530,11 @@ class MainActivity : AppCompatActivity(){
 //        val playlistObject = ParseUser.getCurrentUser().getParseObject("parsePlaylist")
 
         val newFragment = ParsePlaylistFragment.newInstance(parsePlaylistSongs,
-            MainActivityController(), arrayListOf(KEY_DELETE_BUTTON))
+            MainActivityController(),
+            if (showLogOutButtonOnProfilePage)
+            arrayListOf(KEY_DELETE_BUTTON, KEY_LOGOUT_BUTTON) else
+                arrayListOf(KEY_DELETE_BUTTON)
+        )
         fragmentManager.beginTransaction().replace(R.id.flContainer, newFragment).commit()
 
 //        val queryParams : Map<String, Any> = emptyMap()
@@ -516,7 +567,6 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun setUpSearchFragment() {
-        hideMiniPlayerPreview()
         Toast.makeText(this, "Search", Toast.LENGTH_LONG).show()
 //        likedSongsMenuItem?.setVisible(false)
 //        playlistMenuItem?.setVisible(false)
@@ -529,13 +579,14 @@ class MainActivity : AppCompatActivity(){
             override fun onQueryTextSubmit(query: String?): Boolean {
                 searchView.clearFocus()
                 if (query != null) {
-                    showMiniPlayerPreview()
+//                    showMiniPlayerPreview()
+                    if (showMiniPlayerFragment) MainActivityController().showMiniPlayer()
                     fetchQueryAndSendToFragment(query, DEFAULT_ITEM_OFFSET, DEFAULT_NUMBER_ITEMS)
                 }
                 return true
             }
             override fun onQueryTextChange(newText: String?): Boolean {
-                hideMiniPlayerPreview()
+                if (showMiniPlayerFragment) MainActivityController().showMiniPlayer()
                 return false
             }
         })
@@ -625,7 +676,7 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun setUpHomeFragment() {
-        showMiniPlayerPreview()
+//        showMiniPlayerPreview()
 
         searchMenuItem?.setVisible(false)
 //        likedSongsMenuItem?.setVisible(false)
@@ -714,25 +765,25 @@ class MainActivity : AppCompatActivity(){
         }
     }
 
-    fun showMiniPlayerPreview(){
-        showMiniPlayerFragment = true
-        if (fragmentManager.findFragmentById(R.id.miniPlayerFlContainer) == null
-            && miniPlayerFragment != null){
-            // add it in
-            fragmentManager.beginTransaction()
-                .add(R.id.miniPlayerFlContainer, miniPlayerFragment!!)
-                .commit()
-        }
-    }
-
-    fun hideMiniPlayerPreview() {
-        showMiniPlayerFragment = false
-        if (fragmentManager.findFragmentById(R.id.miniPlayerFlContainer) != null
-            && miniPlayerFragment != null
-        ) {
-            fragmentManager.beginTransaction().remove(miniPlayerFragment!!).commit()
-        }
-    }
+//    fun showMiniPlayerPreview(){
+//        showMiniPlayerFragment = true
+//        if (fragmentManager.findFragmentById(R.id.miniPlayerFlContainer) == null
+//            && miniPlayerFragment != null){
+//            // add it in
+//            fragmentManager.beginTransaction()
+//                .add(R.id.miniPlayerFlContainer, miniPlayerFragment!!)
+//                .commit()
+//        }
+//    }
+//
+//    fun hideMiniPlayerPreview() {
+//        showMiniPlayerFragment = false
+//        if (fragmentManager.findFragmentById(R.id.miniPlayerFlContainer) != null
+//            && miniPlayerFragment != null
+//        ) {
+//            fragmentManager.beginTransaction().remove(miniPlayerFragment!!).commit()
+//        }
+//    }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>,
                                             grantResults: IntArray) {
