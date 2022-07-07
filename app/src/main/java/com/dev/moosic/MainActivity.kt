@@ -165,7 +165,6 @@ class MainActivity : AppCompatActivity(){
                                 if (!playerState.isPaused) {
                                     MainActivityController().showMiniPlayerPreview()
                                 }
-
                             }
                         }
                         override fun failure(error: RetrofitError?) {
@@ -383,6 +382,7 @@ class MainActivity : AppCompatActivity(){
             mSpotifyAppRemote?.getPlayerApi()?.resume()
         }
 
+        // TODO: move these to a separate controller interface?
         override fun goToMiniPlayerDetailView() {
             if (currentTrack != null && currentTrackIsPaused != null){
                 val miniPlayerDetailFragment
@@ -439,7 +439,7 @@ class MainActivity : AppCompatActivity(){
                     }
                 }
                 override fun failure(error: RetrofitError?) {
-                    TODO("Not yet implemented")
+                    Log.e(TAG, "error: " + error?.message)
                 }
             })
 
@@ -451,7 +451,7 @@ class MainActivity : AppCompatActivity(){
 
     private fun setUpUserPlaylist(showingLogoutButton: Boolean) {
         val currentParseUser = ParseUser.getCurrentUser()
-        userPlaylistId = "0" // placeholder
+        userPlaylistId = "0" // TODO: replace this placeholder
         // get the playlist from parse
         val playlistObj = currentParseUser.getParseObject("parsePlaylist")
         val playlistSongsRelation = playlistObj?.getRelation<Song>("playlistSongs")
@@ -460,7 +460,7 @@ class MainActivity : AppCompatActivity(){
         val songs = query?.find()
         if (songs != null) {
             parsePlaylistSongs.addAll(songs)
-            if (showingLogoutButton) parsePlaylistSongs.add(Song()) // dummy song
+            if (showingLogoutButton) parsePlaylistSongs.add(Song()) //dummy song (TODO: remove)
         }
         setUpHomeFragment()
     }

@@ -27,7 +27,6 @@ private const val ARG_PARAM4 = "searchedQuery"
  * create an instance of this fragment.
  */
 class SearchFragment(controller: MainActivity.MainActivityController) : Fragment() {
-    // TODO: Rename and change types of parameters
     private var searchedTracks: ArrayList<Track> = ArrayList()
     private var userId : String? = null
     private var playlistId : String? = null

@@ -10,7 +10,6 @@ import com.dev.moosic.R
 
 class InterestItemAdapter(context: Context, items: ArrayList<String>,
 checkedItems: ArrayList<String>) : RecyclerView.Adapter<InterestItemAdapter.ViewHolder>() {
-
     var context: Context? = null
     var items: ArrayList<String> = ArrayList()
     var checkedItems: ArrayList<String> = ArrayList()
@@ -41,7 +40,7 @@ checkedItems: ArrayList<String>) : RecyclerView.Adapter<InterestItemAdapter.View
             checkListItem = itemView.findViewById(R.id.interestItemCheckbox)
         }
         fun bind(item: String, position: Int) {
-            checkListItem?.setText(item) // set the text of the checklist
+            checkListItem?.setText(item)
             checkListItem?.isChecked = item in checkedItems
             checkListItem?.setOnClickListener {
                 if (item in checkedItems) {

@@ -73,11 +73,6 @@ class SongAdapter(
         this.emptyPlaylistText?.visibility = View.VISIBLE
     }
 
-    override fun getItemViewType(position: Int): Int {
-//        return (position == itemCount) ?
-        return super.getItemViewType(position)
-    }
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(this.mContext).inflate(
             R.layout.single_track_item, parent, false)
@@ -118,8 +113,8 @@ class SongAdapter(
         }
 
         fun bind(song: Song, position: Int) {
+            // TODO: remove the mShowLogOutButton functionality, as it is buggy
             if (mShowLogOutButton && song.getName() == null) {
-                // display the logout button
                 Log.d("SongAdapter", "displaying logout: " + position + " numItems: " + itemCount)
                 listOf(albumCover, songTitle, albumTitle, artistName, heartButton, addToPlaylistButton,
                 deleteFromPlaylistButton).map{ item -> item?.visibility = View.GONE }
@@ -127,14 +122,10 @@ class SongAdapter(
                 return
             }
 
-            Log.d("SongAdapter", "song: " + song.getName())
             val jsonDataString = song.getJsonDataString()
             val gson = Gson()
             val track = gson.fromJson(jsonDataString, Track::class.java)
             if (jsonDataString != null) {
-                Log.d("SongAdapter", jsonDataString)
-                Log.d("SongAdapter", track.toString())
-
                 albumTitle?.setText(track.album.name)
                 val artistNameText = track.artists.fold(
                     ""
@@ -146,7 +137,6 @@ class SongAdapter(
             }
 
             songTitle?.setText(song.getName())
-//
 
             try {
                 val albumCoverImgUri = song.getImageUri()
@@ -162,7 +152,6 @@ class SongAdapter(
             if (mShowHeartButton) {
                 heartButton?.visibility = View.VISIBLE
                 heartButton?.setOnClickListener(View.OnClickListener {
-//                val isLiked = mainActivityController.tracksAreSaved(listOf(track))
                     mainActivityController.addToSavedTracks(track.id)
                 })
             } else {
@@ -173,8 +162,6 @@ class SongAdapter(
                 addToPlaylistButton?.visibility = View.VISIBLE
                 addToPlaylistButton?.setOnClickListener(View.OnClickListener {
                     mainActivityController.addToParsePlaylist(track, mShowLogOutButton)
-//                    this@SongAdapter.notifyItemInserted(mSongs.size - 1)
-//                    this@SongAdapter.notifyItemRangeChanged(mSongs.size - 2, 2)
                 })
             } else {
                 addToPlaylistButton?.visibility = View.GONE
@@ -185,15 +172,8 @@ class SongAdapter(
                 deleteButton.visibility = View.VISIBLE
                 deleteButton.setOnClickListener(View.OnClickListener {
                     mainActivityController.removeFromParsePlaylist(track, position)
-//                    mSongs.removeAt(position)
-//                    this@SongAdapter.notifyDataSetChanged()
                     this@SongAdapter.notifyItemRemoved(position)
-//                    this@SongAdapter.notifyItemRangeRemoved(position, 1)
                     this@SongAdapter.notifyItemRangeChanged(position, mSongs.size)
-//                    this@SongAdapter.notifyItemRangeChanged()
-
-                    // this@SongAdapter.notifyItemRangeRemoved(position + 1, 1)
-
                     if (mSongs.size == 0 || (mSongs.size == 1 && mShowLogOutButton)) {
                         showEmptyPlaylistText()
                     }

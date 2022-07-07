@@ -68,9 +68,6 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
             addToPlaylistButton = itemView.findViewById(R.id.addToPlaylistButton)
         }
         fun bind(track: Track, position: Int) {
-
-//            val gson = Gson()
-//            Log.d(TAG, gson.toJson(track).toString()) this works!
             itemView.setOnLongClickListener {
                 Log.d(TAG, "adding $track to playlist")
                 mainActivityController.addToParsePlaylist(track, false)
@@ -104,14 +101,12 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
             heartButton?.visibility = View.GONE
             heartButton?.setOnClickListener(View.OnClickListener {
                 updateTrackLikedStatus(track, heartButton!!)
-//                val isLiked = mainActivityController.tracksAreSaved(listOf(track))
                 mainActivityController.addToSavedTracks(track.id)
             })
 
             if (mShowAddButton) {
                 addToPlaylistButton?.visibility = View.VISIBLE
                 addToPlaylistButton?.setOnClickListener(View.OnClickListener {
-//                    addTrackToPlaylist(track)
                     mainActivityController.addToPlaylist(this@TopTrackAdapter.mUserId!!,
                         this@TopTrackAdapter.mPlaylistId!!, track)
                 })
@@ -126,7 +121,6 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
                     Log.d(TAG, "deleting " + track.name + " from playlist")
                      mainActivityController.removeFromPlaylist(this@TopTrackAdapter.mUserId!!,
                          this@TopTrackAdapter.mPlaylistId!!, track, position)
-                    // mTracks.remove(track) // i shouldn't need to do this...
                     mTracks.removeAt(position)
                     this@TopTrackAdapter.notifyItemRemoved(position)
                     this@TopTrackAdapter.notifyItemRangeChanged(position, mTracks.size);
@@ -136,10 +130,9 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
             }
         }
 
+        // TODO
         private fun updateTrackLikedStatus(track: Track, heartButton: ImageView) {
             Log.d(TAG, "updating liked status of " + track.name)
-            // if it is liked, mSpotifyApi.service.addToMySavedTracks()
-            // if it is not liked, mSpotifyApi.service.removeFromMySavedTracks()
         }
 
     }

@@ -16,8 +16,8 @@ import com.dev.moosic.adapters.TopTrackAdapter
 import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
+// currently not in use
+
 private const val ARG_PARAM1 = "playlistTracks"
 private const val ARG_PARAM2 = "currentUserId"
 private const val ARG_PARAM3 = "userPlaylistId"
@@ -31,10 +31,8 @@ private const val ARG_PARAM6 = "showHeartButton"
  * create an instance of this fragment.
  */
 open class PlaylistFragment(controller : MainActivity.MainActivityController) : Fragment() {
-    // TODO: Rename and change types of parameters
     val TAG = "PlaylistFragment"
 
-    // private var playlistTracks: ArrayList<PlaylistTrack> = ArrayList()
     private var tracks: ArrayList<Track> = ArrayList()
     private var currentUserId: String? = null
     private var userPlaylistId: String? = null
@@ -52,7 +50,6 @@ open class PlaylistFragment(controller : MainActivity.MainActivityController) : 
         arguments?.let {
             tracks.clear()
             tracks = Parcels.unwrap(it.getParcelable(ARG_PARAM1))
-//            tracks = playlistTracks.map{ playlistTrack -> playlistTrack.track }
             currentUserId = it.getString(ARG_PARAM2)
             userPlaylistId = it.getString(ARG_PARAM3)
             showAddButton = it.getBoolean(ARG_PARAM4)
@@ -70,7 +67,6 @@ open class PlaylistFragment(controller : MainActivity.MainActivityController) : 
     }
 
     companion object {
-        // TODO: Rename and change types and number of parameters
         @JvmStatic
         fun newInstance(playlistTracks: ArrayList<Track>, userId: String, playlistId: String,
                         controller: MainActivity.MainActivityController,
@@ -101,7 +97,6 @@ open class PlaylistFragment(controller : MainActivity.MainActivityController) : 
             tracks,
             currentUserId!!, userPlaylistId!!, mainActivityController,
             showAddButton!!, showDeleteButton!!)
-        // one of these things is null....?
         rvPlaylistTracks?.adapter = adapter
         val linearLayoutManager = LinearLayoutManager(context)
         rvPlaylistTracks?.setLayoutManager(linearLayoutManager)

@@ -90,6 +90,4 @@ class EndlessRecyclerViewScrollListener(layoutManager: LinearLayoutManager, load
         previousTotalItemCount = 0
         loading = true
     }
-
-//    abstract fun onLoadMore(page: Int, totalItemsCount: Int, view: RecyclerView?)
-}
+    }

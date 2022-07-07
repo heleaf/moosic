@@ -17,8 +17,6 @@ import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
 import java.lang.Exception
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
 private const val ARG_PARAM1 = "currentTrack"
 private const val ARG_PARAM2 = "isPaused"
 
@@ -57,7 +55,6 @@ class MiniPlayerDetailFragment(controller: MainActivity.MainActivityController) 
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_mini_player_detail, container, false)
     }
 

@@ -26,7 +26,6 @@ private const val ARG_PARAM3 = "userPlaylist"
  * create an instance of this fragment.
  */
 open class HomeFeedFragment(controller : MainActivity.MainActivityController) : Fragment() {
-    // TODO: Rename and change types of parameters
     var topTracks: ArrayList<Track> = ArrayList()
     private var currentUserId : String? = null
     private var userPlaylistId : String? = null
@@ -57,7 +56,6 @@ open class HomeFeedFragment(controller : MainActivity.MainActivityController) : 
     }
 
     companion object {
-        // TODO: Rename and change types and number of parameters
         @JvmStatic
         fun newInstance(tracks: ArrayList<Track>, userId: String, playlistId: String,
         controller : MainActivity.MainActivityController) =
@@ -66,7 +64,6 @@ open class HomeFeedFragment(controller : MainActivity.MainActivityController) : 
                     putParcelable(ARG_PARAM1, Parcels.wrap(tracks))
                     putString(ARG_PARAM2, userId)
                     putString(ARG_PARAM3, playlistId)
-//                    putParcelable(ARG_PARAM4, Parcels.wrap(controller))
                 }
             }
     }

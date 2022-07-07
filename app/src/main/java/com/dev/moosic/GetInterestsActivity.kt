@@ -58,8 +58,8 @@ class GetInterestsActivity : AppCompatActivity() {
                     "Failed to pull genres from Spotify api, " +
                             "please restart the app and authorize your Spotify account.",
                 Toast.LENGTH_LONG).show()
-                // authorize here ?
-//                SpotifyAuthController(this@GetInterestsActivity).authorizeUser()
+//                TODO: authorize here?
+            //    SpotifyAuthController(this@GetInterestsActivity).authorizeUser()
             }
         })
     }
@@ -79,8 +79,6 @@ class GetInterestsActivity : AppCompatActivity() {
                     Toast.LENGTH_LONG).show()
                     return true
                 }
-                // finish
-                // send list of user's favorite genres back
                 val data = Intent()
                 data.putExtra("userPickedGenres", Parcels.wrap(userPickedGenres))
                 setResult(RESULT_OK, data)

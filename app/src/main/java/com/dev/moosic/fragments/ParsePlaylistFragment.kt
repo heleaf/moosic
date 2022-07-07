@@ -1,7 +1,6 @@
 package com.dev.moosic.fragments
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -80,7 +79,6 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivityControlle
 
         rvPlaylistTracks = view.findViewById(R.id.rvPlaylistTracks)
 
-        Log.d("ParsePlaylistFragment", "songs in parse playlist fragment: " + songs.size)
         adapter = SongAdapter(view.context,
             songs, mainActivityController, buttonsToShow, emptyPlaylistText)
 
@@ -121,12 +119,12 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivityControlle
 
     inner class DecorationSectionCallback(songs: ArrayList<Song>) : RecyclerItemDecoration.SectionCallback {
         override fun isHeader(position: Int): Boolean {
-            // return pos == 0 || yes if the category of current ! = category of previous
-            return position == 0 || position == 4 // TODO
+            // TODO: return pos == 0 || true if the category of current ! = category of previous
+            return position == 0 || position == 4
         }
 
         override fun getSectionHeaderName(position: Int): String {
-            // index in at the position and grab the name
+            // TODO: index in at the position and grab the name
             return "testing"
         }
     }
