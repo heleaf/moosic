@@ -4,17 +4,10 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.adapters.TrackAdapter
 import kaaes.spotify.webapi.android.models.Track
 
-
-interface PlaylistController {
+interface SongController {
     fun addToPlaylist(userId: String, playlistId: String, track : Track) : Unit
 
     fun removeFromPlaylist(userId: String, playlistId: String, track : Track, position : Int) : Unit
-
-    fun addToSavedTracks(trackId: String) : Unit
-
-    fun removeFromSavedTracks(trackId: String) : Unit
-
-    fun tracksAreSaved(tracks: List<Track>) : Array<out Boolean>?
 
     fun loadMoreTopSongs(offset: Int, numberItemsToLoad: Int, clearItems: Boolean, adapter: TrackAdapter,
                          swipeContainer: SwipeRefreshLayout)
@@ -33,7 +26,7 @@ interface PlaylistController {
 
     fun exitMiniPlayerDetailView()
 
-    fun logOut()
+    fun logOutFromParse()
 
-    fun exitSettings()
+    fun exitSettingsTab()
 }

@@ -118,7 +118,7 @@ class MainActivity : AppCompatActivity(){
         when (item.itemId) {
             R.id.settingsMenuIcon -> { launchSettingsFragment(); return true }
             R.id.backMenuIcon -> { Log.d(TAG, "exiting settings");
-                MainActivityController().exitSettings();
+                MainActivityController().exitSettingsTab();
                 backMenuItem?.isVisible = false
                 settingsMenuItem?.isVisible = true
                 return true
@@ -131,8 +131,7 @@ class MainActivity : AppCompatActivity(){
 
     override fun onStart() {
         super.onStart()
-        MainActivityController().hideMiniPlayerPreview()
-        showMiniPlayerFragment = false
+        Log.d(TAG, "starting...")
 
         val connectionParams = ConnectionParams.Builder(CLIENT_ID)
             .setRedirectUri(REDIRECT_URI)
@@ -151,6 +150,16 @@ class MainActivity : AppCompatActivity(){
                 }
             })
 
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        Log.d(TAG, "restarting..")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d(TAG, "resuming...")
     }
 
     fun connected() {
@@ -201,7 +210,7 @@ class MainActivity : AppCompatActivity(){
         SpotifyAppRemote.disconnect(mSpotifyAppRemote);
     }
 
-    inner class MainActivityController() : PlaylistController{
+    inner class MainActivityController() : SongController{
         val TAG = "MainActivityController"
 
         fun addToSpotifyPlaylist(userId: String, playlistId: String, track: Track){
@@ -297,7 +306,7 @@ class MainActivity : AppCompatActivity(){
             removeFromParsePlaylist(track, position)
         }
 
-        override fun addToSavedTracks(trackId: String) {
+       fun addToSavedTracks(trackId: String) {
             spotifyApi.service.addToMySavedTracks(trackId, object: Callback<Any> {
                 override fun success(t: Any?, response: Response?) {
                     Log.d(TAG, "added track " + trackId + " to saved tracks")
@@ -309,7 +318,7 @@ class MainActivity : AppCompatActivity(){
             });
         }
 
-        override fun removeFromSavedTracks(trackId: String) {
+        fun removeFromSavedTracks(trackId: String) {
             spotifyApi.service.removeFromMySavedTracks(trackId, object: Callback<Any> {
                 override fun success(t: Any?, response: Response?) {
                     Log.d(TAG, "removed track " + trackId + " from saved tracks")
@@ -323,7 +332,7 @@ class MainActivity : AppCompatActivity(){
         }
 
         // TODO: synchronous calls don't work for me?
-        override fun tracksAreSaved(tracks: List<Track>): Array<out Boolean>? {
+        fun tracksAreSaved(tracks: List<Track>): Array<out Boolean>? {
             val commaSeparatedIds = tracks.fold(
                 ""
             ) { acc: String, track: Track ->
@@ -431,12 +440,12 @@ class MainActivity : AppCompatActivity(){
             }
         }
 
-        override fun logOut(){
+        override fun logOutFromParse(){
             ParseUser.logOut()
             finish()
         }
 
-        override fun exitSettings() {
+        override fun exitSettingsTab() {
             val fragment = fragmentManager.findFragmentById(R.id.flContainer)
             if (fragment != null) {
                 fragmentManager.beginTransaction().remove(fragment).commit() // help?

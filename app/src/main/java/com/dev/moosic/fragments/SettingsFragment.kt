@@ -7,9 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
-import com.dev.moosic.AuthorizationController
-import com.dev.moosic.MainActivity
-import com.dev.moosic.PlaylistController
+import com.dev.moosic.SongController
 import com.dev.moosic.R
 import com.parse.ParseUser
 
@@ -18,7 +16,7 @@ import com.parse.ParseUser
  * Use the [SettingsFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class SettingsFragment(controller: PlaylistController) : Fragment() {
+class SettingsFragment(controller: SongController) : Fragment() {
     // TODO: Rename and change types of parameters
     private var settingsController = controller
 
@@ -52,7 +50,7 @@ class SettingsFragment(controller: PlaylistController) : Fragment() {
          * @return A new instance of fragment SettingsFragment.
          */
         @JvmStatic
-        fun newInstance(controller: PlaylistController) =
+        fun newInstance(controller: SongController) =
             SettingsFragment(controller).apply {
                 arguments = Bundle().apply {
 //                    putString(ARG_PARAM1, param1)
@@ -81,7 +79,7 @@ class SettingsFragment(controller: PlaylistController) : Fragment() {
         phoneNumber?.setText(phoneNumberText)
 
         logOutButton?.setOnClickListener {
-            settingsController.logOut()
+            settingsController.logOutFromParse()
         }
 
     }
