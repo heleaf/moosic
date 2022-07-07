@@ -57,7 +57,9 @@ isSticky: Boolean, callback: SectionCallback) : RecyclerView.ItemDecoration() {
             val child = parent.getChildAt(i)
             val childPos = parent.getChildAdapterPosition(child)
             val titleText = sectionCallback.getSectionHeaderName(childPos)
-            if (!prevTitle.equals(titleText, ignoreCase = true) || sectionCallback.isHeader(childPos)){
+            if (!prevTitle.equals(titleText, ignoreCase = true)
+                || sectionCallback.isHeader(childPos)){
+                title?.setText(titleText)
                 drawHeader(c, child, headerView!!)
                 prevTitle = titleText
             }
@@ -80,20 +82,27 @@ isSticky: Boolean, callback: SectionCallback) : RecyclerView.ItemDecoration() {
     }
 
     fun inflateHeader(recyclerView: RecyclerView): View {
-        val view = LayoutInflater.from(this.context).inflate(R.layout.test_header, recyclerView, false)
+        val view = LayoutInflater.from(this.context)
+            .inflate(R.layout.test_header,
+            recyclerView, false)
         return view
     }
 
     fun fixLayoutSize(headerView: View, parent: ViewGroup): Unit {
-        val widthSpec = View.MeasureSpec.makeMeasureSpec(parent.width, View.MeasureSpec.EXACTLY)
-        val heightSpec = View.MeasureSpec.makeMeasureSpec(parent.height, View.MeasureSpec.UNSPECIFIED)
+        val widthSpec = View.MeasureSpec.makeMeasureSpec(parent.width,
+            View.MeasureSpec.EXACTLY)
+        val heightSpec = View.MeasureSpec.makeMeasureSpec(parent.height,
+            View.MeasureSpec.UNSPECIFIED)
 
-        val childWidth = ViewGroup.getChildMeasureSpec(widthSpec, parent.paddingLeft + parent.paddingRight,
+        val childWidth = ViewGroup.getChildMeasureSpec(widthSpec,
+            parent.paddingLeft + parent.paddingRight,
         headerView.layoutParams.width)
-        val childHeight = ViewGroup.getChildMeasureSpec(heightSpec, parent.paddingTop + parent.paddingBottom,
+        val childHeight = ViewGroup.getChildMeasureSpec(heightSpec,
+            parent.paddingTop + parent.paddingBottom,
         headerView.layoutParams.height)
 
         headerView.measure(childWidth, childHeight);
-        headerView.layout(0, 0, headerView.measuredWidth, headerView.measuredHeight)
+        headerView.layout(0, 0, headerView.measuredWidth,
+            headerView.measuredHeight)
     }
 }
