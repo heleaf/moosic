@@ -2,25 +2,19 @@ package com.dev.moosic.fragments
 
 import android.os.Bundle
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.dev.moosic.EndlessRecyclerViewScrollListener
-import com.dev.moosic.MainActivity
-import com.dev.moosic.R
+import com.dev.moosic.*
 import com.dev.moosic.adapters.SongAdapter
-import com.dev.moosic.adapters.TopTrackAdapter
-import com.dev.moosic.models.Playlist
 import com.dev.moosic.models.Song
-import com.parse.ParseObject
-import com.parse.ParseUser
-import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
+
 
 private const val ARG_PARAM1 = "playlistSongs"
 private const val ARG_PARAM2 = "buttonsToShow"
@@ -34,7 +28,6 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivityControlle
     private var songs: ArrayList<Song> = ArrayList()
     private var mainActivityController = controller
     private var buttonsToShow: List<String> = ArrayList()
-//    private var playlistObject: ParseObject? = null
 
     var rvPlaylistTracks : RecyclerView? = null
     var adapter : SongAdapter? = null
@@ -50,10 +43,8 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivityControlle
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-//            songs.clear()
             songs = Parcels.unwrap(it.getParcelable(ARG_PARAM1))
             buttonsToShow = it.getStringArrayList(ARG_PARAM2)!!
-//            playlistObject = Parcels.unwrap(it.getParcelable(ARG_PARAM3))
         }
     }
 
@@ -67,8 +58,7 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivityControlle
     companion object {
         @JvmStatic
         fun newInstance(playlistSongs: ArrayList<Song>, controller: MainActivity.MainActivityController,
-                        buttonsToShow: ArrayList<String>
-            /*, playlistObject: Playlist*/) =
+                        buttonsToShow: ArrayList<String>) =
             ParsePlaylistFragment(controller).apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_PARAM1, Parcels.wrap(playlistSongs))
@@ -79,37 +69,12 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivityControlle
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        // Hide for now
+
+        // TODO: Hide playlist title elements for now
         playlistTitle = view.findViewById(R.id.playlistTitle)
         playlistAuthor = view.findViewById(R.id.playlistAuthor)
         playlistDescription = view.findViewById(R.id.playlistDescription)
         listOf(playlistTitle, playlistAuthor, playlistDescription).map{ tv -> tv?.visibility = View.GONE }
-
-//        val titleText = playlistObject?.getName()
-//        val descriptionText = playlistObject?.getDescription()
-//        val author : ParseUser? = playlistObject?.getAuthor()
-//        val authorText = author?.username
-//
-//        if (titleText != null){
-//            playlistTitle?.setText(titleText)
-//        } else {
-//            playlistTitle?.setText("Add a title to this playlist")
-//        }
-//
-//        if (descriptionText != null){
-//            playlistDescription?.setText(descriptionText)
-//        } else {
-//            playlistDescription?.visibility = View.GONE
-//        }
-//
-//        if (authorText != null){
-//            playlistAuthor?.setText(authorText)
-//        } else {
-//            playlistAuthor?.visibility = View.GONE
-//        }
-
-        // if songs.size == 0 then show something else
-        // otherwise get the adapter...
 
         emptyPlaylistText = view.findViewById(R.id.emptyPlaylistText)
 
@@ -117,9 +82,16 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivityControlle
 
         Log.d("ParsePlaylistFragment", "songs in parse playlist fragment: " + songs.size)
         adapter = SongAdapter(view.context,
-            songs, mainActivityController, buttonsToShow) // TODO: replace w list..
+            songs, mainActivityController, buttonsToShow, emptyPlaylistText)
 
         rvPlaylistTracks?.adapter = adapter
+
+        // TODO sticky headers
+        val recyclerItemDecoration : RecyclerItemDecoration
+        = RecyclerItemDecoration(requireContext(), resources.getDimensionPixelSize(R.dimen.header_height),
+        false, getSectionCallback(songs))
+
+        rvPlaylistTracks?.addItemDecoration(recyclerItemDecoration)
         val linearLayoutManager = LinearLayoutManager(context)
         rvPlaylistTracks?.setLayoutManager(linearLayoutManager)
 
@@ -137,20 +109,29 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivityControlle
             android.R.color.holo_red_light
         )
 
-        // TODO: toggle this view when all songs are removed by the user
-        if (songs.size == 0) {
-            emptyPlaylistText?.visibility = View.VISIBLE
-        } else {
-            emptyPlaylistText?.visibility = View.GONE
-        }
-
+        // TODO: add infinite pagination
 //        scrollListener = EndlessRecyclerViewScrollListener(linearLayoutManager, object: LoadMoreFunction {
 //            override fun onLoadMore(offset: Int, totalItemsCount: Int, view: RecyclerView?) {
 //                mainActivityController.loadMorePlaylistSongs(tracks.size, totalItemsCount, adapter!!)
 //            }
 //        })
-//
 //        rvPlaylistTracks?.addOnScrollListener(scrollListener!!);
 
+    }
+
+    inner class DecorationSectionCallback(songs: ArrayList<Song>) : RecyclerItemDecoration.SectionCallback {
+        override fun isHeader(position: Int): Boolean {
+            // return pos == 0 || yes if the category of current ! = category of previous
+            return position == 0 || position == 4 // TODO
+        }
+
+        override fun getSectionHeaderName(position: Int): String {
+            // index in at the position and grab the name
+            return "testing"
+        }
+    }
+
+    fun getSectionCallback(songs : ArrayList<Song>) : RecyclerItemDecoration.SectionCallback {
+        return DecorationSectionCallback(songs)
     }
 }

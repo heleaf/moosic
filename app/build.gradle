@@ -59,9 +59,15 @@ dependencies {
 
     implementation 'com.facebook.fresco:fresco:2.6.0'
 
-    implementation "androidx.paging:paging-runtime:2.1.2"
-    implementation "androidx.lifecycle:lifecycle-livedata:2.3.0"
+    implementation "androidx.paging:paging-runtime:3.1.1"
+    implementation "androidx.lifecycle:lifecycle-livedata:2.5.0"
 
     // swipe to refresh
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+
+//    implementation 'com.github.smhdk:KM-Recyclerview-Sticky-Header:v1.0.0'
+
+    implementation 'com.jakewharton:butterknife:10.0.0'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:10.0.0'
+    implementation 'com.google.android.material:material:1.7.0-alpha02'
 }

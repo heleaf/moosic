@@ -225,9 +225,7 @@ class MainActivity : AppCompatActivity(){
                 playlistSongsRelation?.add(newSong)
                 if (showingLogoutButton) {
                     parsePlaylistSongs.add(parsePlaylistSongs.size - 1, newSong)
-                } // else just add it in
-                else parsePlaylistSongs.add(newSong)
-//                parsePlaylistSongs.add(newSong)
+                } else parsePlaylistSongs.add(newSong)
                 playlist?.saveInBackground { e ->
                     if (e != null) Log.d(TAG, "error adding " + track.name +
                             " to parse playlist: " + e.message)
@@ -286,8 +284,6 @@ class MainActivity : AppCompatActivity(){
                     Log.d(TAG, "error removing " + track.name + " from playlist")
                     return@saveInBackground
                 }
-//                Toast.makeText(this@MainActivity, "removed " + track.name + " from playlist",
-//                    Toast.LENGTH_SHORT).show()
                 songToDelete.deleteInBackground()
             }
         }
@@ -566,7 +562,6 @@ class MainActivity : AppCompatActivity(){
                     if (clearItemList) searchedTracks.clear()
                     searchedTracks.addAll(t.tracks.items)
                     adapter.notifyItemRangeInserted(prevSize, t.tracks.items.size)
-//                    adapter.notifyDataSetChanged()
                     } else {
                         Toast.makeText(
                             this@MainActivity,

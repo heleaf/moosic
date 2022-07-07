@@ -1,12 +1,10 @@
 package com.dev.moosic.fragments
 
-import android.content.res.Resources
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.AnimationUtils
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
@@ -95,7 +93,7 @@ class MiniPlayerFragment(controller: MainActivity.MainActivityController) : Frag
         closeMiniPlayerButton = view.findViewById(R.id.closeMiniPlayerButton)
 
         closeMiniPlayerButton?.setOnClickListener {
-            mainActivityController.hideMiniPlayer()
+            mainActivityController.hideMiniPlayerPreview()
         }
 
         if (isPaused){

@@ -26,9 +26,14 @@ private const val KEY_LOGOUT_BUTTON = "logOut"
 
 private const val KEY_USER_SPOTIFYID = "userId"
 
-class SongAdapter(context: Context, songs: ArrayList<Song>,
-controller: MainActivity.MainActivityController, buttonsToShow: List<String>)
-    : RecyclerView.Adapter<SongAdapter.ViewHolder>() {
+class SongAdapter(
+    context: Context,
+    songs: ArrayList<Song>,
+    controller: MainActivity.MainActivityController,
+    buttonsToShow: List<String>,
+    emptyPlaylistText: TextView?
+)
+    : RecyclerView.Adapter<SongAdapter.ViewHolder>(){
 
     var mContext: Context? = null
     var mSongs: ArrayList<Song> = ArrayList()
@@ -40,6 +45,8 @@ controller: MainActivity.MainActivityController, buttonsToShow: List<String>)
     var mShowLogOutButton = false
 
     var mSpotifyUserId : String? = null
+
+    var emptyPlaylistText: TextView? = null
 
     init {
         this.mContext = context
@@ -55,14 +62,25 @@ controller: MainActivity.MainActivityController, buttonsToShow: List<String>)
         }
         val currentParseUser = ParseUser.getCurrentUser()
         this.mSpotifyUserId = currentParseUser.getString(KEY_USER_SPOTIFYID)
-//        if (mShowLogOutButton) {
-//            // add a dummy item into songs
-////            this.mSongs.add(Song())
-//        }
+        this.emptyPlaylistText = emptyPlaylistText
+
+        if (this.mSongs.size == 0 || (this.mSongs.size == 1 && mShowLogOutButton)) {
+            showEmptyPlaylistText()
+        }
+    }
+
+    fun showEmptyPlaylistText(){
+        this.emptyPlaylistText?.visibility = View.VISIBLE
+    }
+
+    override fun getItemViewType(position: Int): Int {
+//        return (position == itemCount) ?
+        return super.getItemViewType(position)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(this.mContext).inflate(R.layout.single_track_item, parent, false)
+        val view = LayoutInflater.from(this.mContext).inflate(
+            R.layout.single_track_item, parent, false)
         return ViewHolder(view)
     }
 
@@ -100,13 +118,14 @@ controller: MainActivity.MainActivityController, buttonsToShow: List<String>)
         }
 
         fun bind(song: Song, position: Int) {
-//            if (mShowLogOutButton && position == mSongs.size - 1) {
-//                // display the logout button
-//                listOf(albumCover, songTitle, albumTitle, artistName, heartButton, addToPlaylistButton,
-//                deleteFromPlaylistButton).map{ item -> item?.visibility = View.GONE }
-//                logOutRvButton?.visibility = View.VISIBLE
-//                return
-//            }
+            if (mShowLogOutButton && song.getName() == null) {
+                // display the logout button
+                Log.d("SongAdapter", "displaying logout: " + position + " numItems: " + itemCount)
+                listOf(albumCover, songTitle, albumTitle, artistName, heartButton, addToPlaylistButton,
+                deleteFromPlaylistButton).map{ item -> item?.visibility = View.GONE }
+                logOutRvButton?.visibility = View.VISIBLE
+                return
+            }
 
             Log.d("SongAdapter", "song: " + song.getName())
             val jsonDataString = song.getJsonDataString()
@@ -153,7 +172,9 @@ controller: MainActivity.MainActivityController, buttonsToShow: List<String>)
             if (mShowAddButton) {
                 addToPlaylistButton?.visibility = View.VISIBLE
                 addToPlaylistButton?.setOnClickListener(View.OnClickListener {
-                    mainActivityController.addToParsePlaylist(track, true)
+                    mainActivityController.addToParsePlaylist(track, mShowLogOutButton)
+//                    this@SongAdapter.notifyItemInserted(mSongs.size - 1)
+//                    this@SongAdapter.notifyItemRangeChanged(mSongs.size - 2, 2)
                 })
             } else {
                 addToPlaylistButton?.visibility = View.GONE
@@ -164,9 +185,18 @@ controller: MainActivity.MainActivityController, buttonsToShow: List<String>)
                 deleteButton.visibility = View.VISIBLE
                 deleteButton.setOnClickListener(View.OnClickListener {
                     mainActivityController.removeFromParsePlaylist(track, position)
-                    mSongs.removeAt(position)
+//                    mSongs.removeAt(position)
+//                    this@SongAdapter.notifyDataSetChanged()
                     this@SongAdapter.notifyItemRemoved(position)
+//                    this@SongAdapter.notifyItemRangeRemoved(position, 1)
                     this@SongAdapter.notifyItemRangeChanged(position, mSongs.size)
+//                    this@SongAdapter.notifyItemRangeChanged()
+
+                    // this@SongAdapter.notifyItemRangeRemoved(position + 1, 1)
+
+                    if (mSongs.size == 0 || (mSongs.size == 1 && mShowLogOutButton)) {
+                        showEmptyPlaylistText()
+                    }
                 })
             } else {
                 deleteButton.visibility = View.GONE
