@@ -114,6 +114,7 @@ class MiniPlayerFragment(controller: MainActivity.MainActivityController) : Frag
                 accumulator + ", " + artist.name
         }
         trackArtist?.setText(artistNameText)
+        trackArtist?.isSelected = true
 
         try {
             val albumCoverImgUri = currentTrack?.album?.images?.get(0)?.url

@@ -7,13 +7,14 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@color/purple_500"
+    android:padding="10dp"
     tools:context=".fragments.MiniPlayerFragment">
 
 
     <com.facebook.drawee.view.SimpleDraweeView
         android:id="@+id/miniPlayerAlbumCover"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -24,20 +25,20 @@
         android:layout_marginStart="10dp"
         android:layout_marginTop="5dp"
         android:layout_marginEnd="10dp"
+        android:ellipsize="marquee"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:marqueeRepeatLimit="marquee_forever"
+        android:scrollHorizontally="true"
+        android:singleLine="true"
         android:textColor="#FFFFFF"
+
         android:textSize="18sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toStartOf="@+id/miniPlayerPlayPauseButton"
         app:layout_constraintStart_toEndOf="@+id/miniPlayerAlbumCover"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="song title"
-
-        android:focusable="true"
-        android:focusableInTouchMode="true"
-        android:singleLine="true"
-        android:scrollHorizontally="true"
-        android:ellipsize="marquee"
-        android:marqueeRepeatLimit ="marquee_forever"/>
+        tools:text="song title" />
 
     <ImageView
         android:id="@+id/miniPlayerPlayPauseButton"
@@ -59,7 +60,14 @@
         app:layout_constraintEnd_toStartOf="@+id/miniPlayerPlayPauseButton"
         app:layout_constraintStart_toStartOf="@+id/miniPlayerSongTitle"
         app:layout_constraintTop_toBottomOf="@+id/miniPlayerSongTitle"
-        tools:text="song artist" />
+        tools:text="song artist"
+        android:ellipsize="marquee"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:marqueeRepeatLimit="marquee_forever"
+        android:scrollHorizontally="true"
+        android:singleLine="true"
+        />
 
     <ImageButton
         android:id="@+id/closeMiniPlayerButton"

@@ -36,4 +36,7 @@ interface PlaylistController {
 
     fun exitMiniPlayerDetailView()
 
+    fun logOut()
+
+    fun exitSettings()
 }

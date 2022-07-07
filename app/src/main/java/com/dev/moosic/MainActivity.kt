@@ -70,6 +70,8 @@ class MainActivity : AppCompatActivity(){
 
     var searchMenuItem : MenuItem? = null
     var logOutMenuItem : MenuItem? = null
+    var settingsMenuItem : MenuItem? = null
+    var backMenuItem : MenuItem? = null
     var progressBar: ProgressBar? = null
 
     val context = this
@@ -107,14 +109,26 @@ class MainActivity : AppCompatActivity(){
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
         searchMenuItem = menu?.findItem(R.id.searchMenuIcon)
-        searchMenuItem?.setVisible(false)
+        searchMenuItem?.isVisible = false
         logOutMenuItem = menu?.findItem(R.id.logOutButton)
+        logOutMenuItem?.isVisible = false
+        settingsMenuItem = menu?.findItem(R.id.settingsMenuIcon)
+        settingsMenuItem?.isVisible = false
+        backMenuItem = menu?.findItem(R.id.backMenuIcon)
+        backMenuItem?.isVisible = false
         return super.onCreateOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.logOutButton -> { ParseUser.logOut(); finish(); return true }
+            R.id.settingsMenuIcon -> { launchSettingsFragment(); return true }
+            R.id.backMenuIcon -> { Log.d(TAG, "exiting settings");
+                MainActivityController().exitSettings();
+                backMenuItem?.isVisible = false
+                settingsMenuItem?.isVisible = true
+                return true
+            }
             else -> {
                 return super.onOptionsItemSelected(item)
             }
@@ -424,6 +438,18 @@ class MainActivity : AppCompatActivity(){
                 showMiniPlayerFragment = false
             }
         }
+
+        override fun logOut(){
+            ParseUser.logOut()
+            finish()
+        }
+
+        override fun exitSettings() {
+            val fragment = fragmentManager.findFragmentById(R.id.flContainer)
+            if (fragment != null) {
+                fragmentManager.beginTransaction().remove(fragment).commit() // help?
+            }
+        }
     }
 
     private fun setUpCurrentUser() {
@@ -466,7 +492,9 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun setUpPlaylistFragment() {
-        searchMenuItem?.setVisible(false)
+        searchMenuItem?.isVisible = false
+        settingsMenuItem?.isVisible = true
+        backMenuItem?.isVisible = false
         val newFragment = ParsePlaylistFragment.newInstance(parsePlaylistSongs,
             MainActivityController(),
             if (showLogOutButtonOnProfilePage)
@@ -476,8 +504,23 @@ class MainActivity : AppCompatActivity(){
         fragmentManager.beginTransaction().replace(R.id.flContainer, newFragment).commit()
     }
 
+
+    private fun launchSettingsFragment() {
+        searchMenuItem?.isVisible = false
+        settingsMenuItem?.isVisible = false
+        backMenuItem?.isVisible = true
+        val settingsFragment = SettingsFragment.newInstance(MainActivityController())
+        fragmentManager.beginTransaction().add(R.id.flContainer, settingsFragment).commit()
+    }
+
+    private fun exitSettingsFragment() {
+        fragmentManager.popBackStack()
+    }
+
     private fun setUpSearchFragment() {
-        searchMenuItem?.setVisible(true)
+        searchMenuItem?.isVisible = true
+        settingsMenuItem?.isVisible = false
+        backMenuItem?.isVisible = false
         val searchView = (searchMenuItem?.actionView) as androidx.appcompat.widget.SearchView
         searchView.onActionViewExpanded()
         searchView.requestFocus()
@@ -485,6 +528,7 @@ class MainActivity : AppCompatActivity(){
             : androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 searchView.clearFocus()
+                searchMenuItem?.isVisible = true
                 if (query != null) {
                     if (showMiniPlayerFragment) MainActivityController().showMiniPlayerPreview()
                     mostRecentSearchQuery = query
@@ -578,7 +622,9 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun setUpHomeFragment() {
-        searchMenuItem?.setVisible(false)
+        searchMenuItem?.isVisible = false
+        settingsMenuItem?.isVisible = false
+        backMenuItem?.isVisible = false
         showProgressBar()
         spotifyApi.service.getTopTracks(
             object : Callback<Pager<kaaes.spotify.webapi.android.models.Track>> {
@@ -650,7 +696,7 @@ class MainActivity : AppCompatActivity(){
             })
     }
 
-    fun showProgressBar(){
+    private fun showProgressBar(){
         if (progressBar != null){
             progressBar!!.visibility = ProgressBar.VISIBLE
         }
