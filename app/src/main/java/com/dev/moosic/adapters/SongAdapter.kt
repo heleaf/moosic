@@ -42,7 +42,6 @@ class SongAdapter(
     var mShowAddButton = false
     var mShowDeleteButton = false
     var mShowHeartButton = false
-    var mShowLogOutButton = false
 
     var mSpotifyUserId : String? = null
 
@@ -56,7 +55,6 @@ class SongAdapter(
                 KEY_ADD_BUTTON -> mShowAddButton = true
                 KEY_DELETE_BUTTON -> mShowDeleteButton = true
                 KEY_HEART_BUTTON -> mShowHeartButton = true
-                KEY_LOGOUT_BUTTON -> mShowLogOutButton = true
                 else -> {}
             }
         }
@@ -64,7 +62,7 @@ class SongAdapter(
         this.mSpotifyUserId = currentParseUser.getString(KEY_USER_SPOTIFYID)
         this.emptyPlaylistText = emptyPlaylistText
 
-        if (this.mSongs.size == 0 || (this.mSongs.size == 1 && mShowLogOutButton)) {
+        if (this.mSongs.size == 0) {
             showEmptyPlaylistText()
         }
     }
@@ -113,15 +111,6 @@ class SongAdapter(
         }
 
         fun bind(song: Song, position: Int) {
-            // TODO: remove the mShowLogOutButton functionality, as it is buggy
-            if (mShowLogOutButton && song.getName() == null) {
-                Log.d("SongAdapter", "displaying logout: " + position + " numItems: " + itemCount)
-                listOf(albumCover, songTitle, albumTitle, artistName, heartButton, addToPlaylistButton,
-                deleteFromPlaylistButton).map{ item -> item?.visibility = View.GONE }
-                logOutRvButton?.visibility = View.VISIBLE
-                return
-            }
-
             val jsonDataString = song.getJsonDataString()
             val gson = Gson()
             val track = gson.fromJson(jsonDataString, Track::class.java)
@@ -138,13 +127,22 @@ class SongAdapter(
 
             songTitle?.setText(song.getName())
 
+            itemView.setOnClickListener {
+                val id = song.getSpotifyId()
+                if (id != null){
+                    song.getSpotifyUri()
+                        ?.let { uri ->
+                            mainActivityController.playSongOnSpotify(
+                                uri,
+                                id
+                            )
+                        }
+                }
+            }
+
             try {
                 val albumCoverImgUri = song.getImageUri()
                 albumCover?.setImageURI(albumCoverImgUri);
-                albumCover?.setOnClickListener {
-                    song.getSpotifyUri()
-                        ?.let { uri -> mainActivityController.playSongOnSpotify(uri, song.getSpotifyId()!!) }
-                }
             } catch (e : Exception) {
                 Log.e("SongAdapter", "error: " + e.message)
             }
@@ -161,7 +159,7 @@ class SongAdapter(
             if (mShowAddButton) {
                 addToPlaylistButton?.visibility = View.VISIBLE
                 addToPlaylistButton?.setOnClickListener(View.OnClickListener {
-                    mainActivityController.addToParsePlaylist(track, mShowLogOutButton)
+                    mainActivityController.addToParsePlaylist(track)
                 })
             } else {
                 addToPlaylistButton?.visibility = View.GONE
@@ -174,7 +172,7 @@ class SongAdapter(
                     mainActivityController.removeFromParsePlaylist(track, position)
                     this@SongAdapter.notifyItemRemoved(position)
                     this@SongAdapter.notifyItemRangeChanged(position, mSongs.size)
-                    if (mSongs.size == 0 || (mSongs.size == 1 && mShowLogOutButton)) {
+                    if (mSongs.size == 0) {
                         showEmptyPlaylistText()
                     }
                 })

@@ -1,6 +1,5 @@
 package com.dev.moosic.fragments
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -13,7 +12,7 @@ import com.dev.moosic.EndlessRecyclerViewScrollListener
 import com.dev.moosic.LoadMoreFunction
 import com.dev.moosic.MainActivity
 import com.dev.moosic.R
-import com.dev.moosic.adapters.TopTrackAdapter
+import com.dev.moosic.adapters.TrackAdapter
 import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
 
@@ -36,7 +35,7 @@ open class HomeFeedFragment(controller : MainActivity.MainActivityController) : 
     val TAG = "HomeFeedFragment"
 
     var rvTopTracks : RecyclerView? = null
-    var adapter : TopTrackAdapter? = null
+    var adapter : TrackAdapter? = null
     var scrollListener: EndlessRecyclerViewScrollListener? = null
     var swipeContainer: SwipeRefreshLayout? = null
 
@@ -74,34 +73,35 @@ open class HomeFeedFragment(controller : MainActivity.MainActivityController) : 
         super.onViewCreated(view, savedInstanceState)
         rvTopTracks = view.findViewById(R.id.rvTopTracks)
 
-        adapter = TopTrackAdapter(view.context, topTracks, currentUserId!!, userPlaylistId!!,
-        mainActivityController, true, false)
+        if (currentUserId != null) {
+            adapter = TrackAdapter(view.context, topTracks, currentUserId!!, userPlaylistId!!,
+                mainActivityController, true, false)
 
-        rvTopTracks?.adapter = adapter
-        val linearLayoutManager = LinearLayoutManager(context)
-        rvTopTracks?.setLayoutManager(linearLayoutManager)
+            rvTopTracks?.adapter = adapter
+            val linearLayoutManager = LinearLayoutManager(context)
+            rvTopTracks?.setLayoutManager(linearLayoutManager)
 
-        scrollListener = EndlessRecyclerViewScrollListener(linearLayoutManager, object: LoadMoreFunction {
-            override fun onLoadMore(offset: Int, totalItemsCount: Int, view: RecyclerView?) {
-                mainActivityController.loadMoreTopSongs(topTracks.size, totalItemsCount, false, adapter!!, swipeContainer!!)
+            scrollListener = EndlessRecyclerViewScrollListener(linearLayoutManager, object: LoadMoreFunction {
+                override fun onLoadMore(offset: Int, totalItemsCount: Int, view: RecyclerView?) {
+                    mainActivityController.loadMoreTopSongs(topTracks.size, totalItemsCount, false, adapter!!, swipeContainer!!)
+                }
+            })
+
+            rvTopTracks?.addOnScrollListener(scrollListener!!);
+
+            swipeContainer = view.findViewById(R.id.homeFeedSwipeContainer)
+            swipeContainer?.setOnRefreshListener {
+                mainActivityController.loadMoreTopSongs(0, 20, true, adapter!!,
+                    swipeContainer!!)
+                scrollListener?.resetState()
             }
-        })
 
-        rvTopTracks?.addOnScrollListener(scrollListener!!);
-
-        swipeContainer = view.findViewById(R.id.homeFeedSwipeContainer)
-        swipeContainer?.setOnRefreshListener {
-            mainActivityController.loadMoreTopSongs(0, 20, true, adapter!!,
-                swipeContainer!!)
-            scrollListener?.resetState()
+            swipeContainer?.setColorSchemeResources(
+                android.R.color.holo_blue_bright,
+                android.R.color.holo_green_light,
+                android.R.color.holo_orange_light,
+                android.R.color.holo_red_light
+            )
         }
-
-        swipeContainer?.setColorSchemeResources(
-            android.R.color.holo_blue_bright,
-            android.R.color.holo_green_light,
-            android.R.color.holo_orange_light,
-            android.R.color.holo_red_light
-        )
-
     }
 }

@@ -12,7 +12,7 @@ import com.dev.moosic.EndlessRecyclerViewScrollListener
 import com.dev.moosic.LoadMoreFunction
 import com.dev.moosic.MainActivity
 import com.dev.moosic.R
-import com.dev.moosic.adapters.TopTrackAdapter
+import com.dev.moosic.adapters.TrackAdapter
 import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
 
@@ -34,7 +34,7 @@ class SearchFragment(controller: MainActivity.MainActivityController) : Fragment
     private var currentQuery : String? = null
 
     var rvSearchedTracks : RecyclerView? = null
-    var adapter : TopTrackAdapter? = null // TODO: switch to a custom adapter
+    var adapter : TrackAdapter? = null // TODO: switch to a custom adapter
     var scrollListener : EndlessRecyclerViewScrollListener? = null
 
     var swipeContainer : SwipeRefreshLayout? = null
@@ -76,7 +76,7 @@ class SearchFragment(controller: MainActivity.MainActivityController) : Fragment
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         rvSearchedTracks = view.findViewById(R.id.rvSearchedTracks)
-        adapter = TopTrackAdapter(view.context, searchedTracks,
+        adapter = TrackAdapter(view.context, searchedTracks,
             userId!!, playlistId!!, mainActivityController, true, false)
 
         rvSearchedTracks?.adapter = adapter

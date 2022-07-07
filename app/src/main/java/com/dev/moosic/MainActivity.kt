@@ -4,8 +4,6 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.os.Parcel
-import android.os.Parcelable
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -15,7 +13,7 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.dev.moosic.adapters.TopTrackAdapter
+import com.dev.moosic.adapters.TrackAdapter
 import com.dev.moosic.fragments.*
 import com.dev.moosic.models.Song
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -27,7 +25,6 @@ import com.spotify.protocol.client.Subscription
 import com.spotify.protocol.types.PlayerState
 import kaaes.spotify.webapi.android.SpotifyApi
 import kaaes.spotify.webapi.android.models.*
-import org.parceler.ParcelClass
 import retrofit.Callback
 import retrofit.RetrofitError
 import retrofit.client.Response
@@ -83,8 +80,6 @@ class MainActivity : AppCompatActivity(){
     var showMiniPlayerFragment: Boolean = false
 
     var showMiniPlayerDetailFragment: Boolean = false
-
-    val showLogOutButtonOnProfilePage: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -223,7 +218,7 @@ class MainActivity : AppCompatActivity(){
                 })
         }
 
-        fun addToParsePlaylist(track: Track, showingLogoutButton: Boolean){
+        fun addToParsePlaylist(track: Track){
             Log.d(TAG, "adding " + track.name + " to parse playlist...")
             val user = ParseUser.getCurrentUser()
             val playlist = user.getParseObject("parsePlaylist")
@@ -235,9 +230,7 @@ class MainActivity : AppCompatActivity(){
                     return@saveInBackground
                 }
                 playlistSongsRelation?.add(newSong)
-                if (showingLogoutButton) {
-                    parsePlaylistSongs.add(parsePlaylistSongs.size - 1, newSong)
-                } else parsePlaylistSongs.add(newSong)
+                parsePlaylistSongs.add(newSong)
                 playlist?.saveInBackground { e ->
                     if (e != null) Log.d(TAG, "error adding " + track.name +
                             " to parse playlist: " + e.message)
@@ -251,7 +244,7 @@ class MainActivity : AppCompatActivity(){
         }
 
         override fun addToPlaylist(userId: String, playlistId: String, track: Track) {
-            addToParsePlaylist(track, showLogOutButtonOnProfilePage)
+            addToParsePlaylist(track)
         }
 
         fun removeFromSpotifyPlaylist(userId: String, playlistId: String, track: Track, position: Int) {
@@ -341,12 +334,12 @@ class MainActivity : AppCompatActivity(){
         }
 
         override fun loadMoreTopSongs(offset: Int, numberItemsToLoad: Int, clearItemList: Boolean,
-            adapter: TopTrackAdapter, swipeContainer: SwipeRefreshLayout) {
+                                      adapter: TrackAdapter, swipeContainer: SwipeRefreshLayout) {
             loadUserTopTracks(offset, numberItemsToLoad, clearItemList, adapter, swipeContainer)
         }
 
         override fun loadMoreSearchTracks(query: String, offset: Int, numberItemsToLoad: Int,
-                                          adapter: TopTrackAdapter
+                                          adapter: TrackAdapter
         ) {
              loadMoreQueryTracks(query, offset, numberItemsToLoad, false, adapter)
         }
@@ -453,7 +446,7 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun setUpCurrentUser() {
-        var currentParseUser : ParseUser = ParseUser.getCurrentUser()
+        val currentParseUser : ParseUser = ParseUser.getCurrentUser()
         if (currentParseUser.getString("userId") == null){
             spotifyApi.service.getMe(object: Callback<UserPrivate> {
                 override fun success(t: UserPrivate?, response: Response?) {
@@ -461,21 +454,24 @@ class MainActivity : AppCompatActivity(){
                         currentUserId = t.id
                         currentParseUser.put("userId", t.id)
                         currentParseUser.saveInBackground()
-                        setUpUserPlaylist(showLogOutButtonOnProfilePage)
+                        setUpUserPlaylist()
                     }
                 }
                 override fun failure(error: RetrofitError?) {
                     Log.e(TAG, "error: " + error?.message)
+                    Toast.makeText(this@MainActivity,
+                    "failed to retrieve the linked spotify account, please quit the app and restart",
+                    Toast.LENGTH_LONG).show()
                 }
             })
 
         } else {
             currentUserId = currentParseUser.getString("userId")
-            setUpUserPlaylist(showLogOutButtonOnProfilePage)
+            setUpUserPlaylist()
         }
     }
 
-    private fun setUpUserPlaylist(showingLogoutButton: Boolean) {
+    private fun setUpUserPlaylist() {
         val currentParseUser = ParseUser.getCurrentUser()
         userPlaylistId = "0" // TODO: replace this placeholder
         // get the playlist from parse
@@ -486,7 +482,6 @@ class MainActivity : AppCompatActivity(){
         val songs = query?.find()
         if (songs != null) {
             parsePlaylistSongs.addAll(songs)
-            if (showingLogoutButton) parsePlaylistSongs.add(Song()) //dummy song (TODO: remove)
         }
         setUpHomeFragment()
     }
@@ -497,9 +492,7 @@ class MainActivity : AppCompatActivity(){
         backMenuItem?.isVisible = false
         val newFragment = ParsePlaylistFragment.newInstance(parsePlaylistSongs,
             MainActivityController(),
-            if (showLogOutButtonOnProfilePage)
-            arrayListOf(KEY_DELETE_BUTTON, KEY_LOGOUT_BUTTON) else
-                arrayListOf(KEY_DELETE_BUTTON)
+            arrayListOf(KEY_DELETE_BUTTON)
         )
         fragmentManager.beginTransaction().replace(R.id.flContainer, newFragment).commit()
     }
@@ -594,7 +587,7 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun loadMoreQueryTracks(query: String, itemOffset: Int, numberItems: Int,
-        clearItemList: Boolean, adapter: TopTrackAdapter) {
+        clearItemList: Boolean, adapter: TrackAdapter) {
         Log.d(TAG, "query: " + query + " itemOffset: " + itemOffset + " numitems: " + numberItems)
         val queryMap = mapOf("offset" to itemOffset, "limit" to numberItems)
         spotifyApi.service.searchTracks(query, queryMap, object: Callback<TracksPager> {
@@ -666,7 +659,7 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun loadUserTopTracks(itemOffset: Int, numberItems: Int,
-        clearItemList: Boolean, adapter: TopTrackAdapter, swipeContainer: SwipeRefreshLayout) {
+                                  clearItemList: Boolean, adapter: TrackAdapter, swipeContainer: SwipeRefreshLayout) {
         val queryMap = mapOf("limit" to numberItems, "offset" to itemOffset)
         spotifyApi.service.getTopTracks(
             queryMap,

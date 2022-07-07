@@ -12,7 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.EndlessRecyclerViewScrollListener
 import com.dev.moosic.MainActivity
 import com.dev.moosic.R
-import com.dev.moosic.adapters.TopTrackAdapter
+import com.dev.moosic.adapters.TrackAdapter
 import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
 
@@ -42,7 +42,7 @@ open class PlaylistFragment(controller : MainActivity.MainActivityController) : 
     private var showHeartButton: Boolean? = null
 
     var rvPlaylistTracks : RecyclerView? = null
-    var adapter : TopTrackAdapter? = null // TODO: switch to a different track adapter
+    var adapter : TrackAdapter? = null // TODO: switch to a different track adapter
     var scrollListener : EndlessRecyclerViewScrollListener? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -93,7 +93,7 @@ open class PlaylistFragment(controller : MainActivity.MainActivityController) : 
         rvPlaylistTracks = view.findViewById(R.id.rvPlaylistTracks)
         Log.d(TAG, "curent user id: " + currentUserId)
         Log.d(TAG, "user playlist id: " + userPlaylistId)
-        adapter = TopTrackAdapter(view.context,
+        adapter = TrackAdapter(view.context,
             tracks,
             currentUserId!!, userPlaylistId!!, mainActivityController,
             showAddButton!!, showDeleteButton!!)

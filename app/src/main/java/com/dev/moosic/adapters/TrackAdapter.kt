@@ -9,13 +9,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.MainActivity
 import com.dev.moosic.R
 import com.facebook.drawee.view.SimpleDraweeView
-import com.google.gson.Gson
 import kaaes.spotify.webapi.android.models.Track
 import java.lang.Exception
 
-class TopTrackAdapter(context : Context, tracks : ArrayList<Track>, userId : String, playlistId : String,
-controller : MainActivity.MainActivityController, showAddButton : Boolean, showDeleteButton : Boolean)
-    : RecyclerView.Adapter<TopTrackAdapter.ViewHolder>() {
+class TrackAdapter(context : Context, tracks : ArrayList<Track>, userId : String, playlistId : String,
+                   controller : MainActivity.MainActivityController, showAddButton : Boolean, showDeleteButton : Boolean)
+    : RecyclerView.Adapter<TrackAdapter.ViewHolder>() {
     val TAG = "TopTrackAdapter"
     var mContext : Context? = null
     var mTracks : ArrayList<Track> = ArrayList()
@@ -34,12 +33,12 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
 
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TopTrackAdapter.ViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TrackAdapter.ViewHolder {
         val view = LayoutInflater.from(this.mContext).inflate(R.layout.single_track_item, parent, false)
         return ViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: TopTrackAdapter.ViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: TrackAdapter.ViewHolder, position: Int) {
         val track = this.mTracks.get(position)
         holder.bind(track, position)
     }
@@ -70,8 +69,12 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
         fun bind(track: Track, position: Int) {
             itemView.setOnLongClickListener {
                 Log.d(TAG, "adding $track to playlist")
-                mainActivityController.addToParsePlaylist(track, false)
+                mainActivityController.addToParsePlaylist(track)
                 return@setOnLongClickListener true
+            }
+
+            itemView.setOnClickListener {
+                mainActivityController.playSongOnSpotify(track.uri, track.id)
             }
 
             val trackTitleText = track.name
@@ -91,9 +94,6 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
             try {
                 val albumCoverImgUri = track.album.images.get(0).url
                 albumCover?.setImageURI(albumCoverImgUri);
-                albumCover?.setOnClickListener {
-                    mainActivityController.playSongOnSpotify(track.uri, track.id)
-                }
             } catch (e : Exception) {
                 Log.e(TAG, "error: " + e.message)
             }
@@ -107,8 +107,8 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
             if (mShowAddButton) {
                 addToPlaylistButton?.visibility = View.VISIBLE
                 addToPlaylistButton?.setOnClickListener(View.OnClickListener {
-                    mainActivityController.addToPlaylist(this@TopTrackAdapter.mUserId!!,
-                        this@TopTrackAdapter.mPlaylistId!!, track)
+                    mainActivityController.addToPlaylist(this@TrackAdapter.mUserId!!,
+                        this@TrackAdapter.mPlaylistId!!, track)
                 })
             } else {
                 addToPlaylistButton?.visibility = View.GONE
@@ -119,11 +119,11 @@ controller : MainActivity.MainActivityController, showAddButton : Boolean, showD
                 deleteButton.visibility = View.VISIBLE
                 deleteButton.setOnClickListener(View.OnClickListener {
                     Log.d(TAG, "deleting " + track.name + " from playlist")
-                     mainActivityController.removeFromPlaylist(this@TopTrackAdapter.mUserId!!,
-                         this@TopTrackAdapter.mPlaylistId!!, track, position)
+                     mainActivityController.removeFromPlaylist(this@TrackAdapter.mUserId!!,
+                         this@TrackAdapter.mPlaylistId!!, track, position)
                     mTracks.removeAt(position)
-                    this@TopTrackAdapter.notifyItemRemoved(position)
-                    this@TopTrackAdapter.notifyItemRangeChanged(position, mTracks.size);
+                    this@TrackAdapter.notifyItemRemoved(position)
+                    this@TrackAdapter.notifyItemRangeChanged(position, mTracks.size);
                 })
             } else {
                 deleteButton.visibility = View.GONE
