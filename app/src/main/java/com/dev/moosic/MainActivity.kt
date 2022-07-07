@@ -16,6 +16,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.adapters.TrackAdapter
 import com.dev.moosic.fragments.*
 import com.dev.moosic.models.Song
+import com.dev.moosic.models.SongFeatures
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.parse.ParseUser
 import com.spotify.android.appremote.api.ConnectionParams
@@ -36,6 +37,7 @@ private const val KEY_HEART_BUTTON = "heart"
 private const val KEY_LOGOUT_BUTTON = "logOut"
 
 class MainActivity : AppCompatActivity(){
+    val WEIGHT_ADDED_SONG_TO_PLAYLIST = 2
     val PERMISSIONS_REQUEST_READ_CONTACTS = 100
 
     val TAG = "MainActivity"
@@ -167,6 +169,11 @@ class MainActivity : AppCompatActivity(){
         playerStateSubscription?.setEventCallback { playerState: PlayerState ->
             val track: com.spotify.protocol.types.Track? = playerState.track
             if (track != null) {
+//                if ((playerState.playbackPosition / playerState.track.duration) > FRACTION_OF_SONG_PLAYED_THRESHOLD) {
+//                    // TODO: fix this so i don't add the track multiple times
+//                    val id = track.uri.slice(IntRange(14, track.uri.length - 1))
+//                    MainActivityController().logTrackInModel(id, PLAYED_SONG_BEYOND_THRESHOLD_WEIGHT)
+//                }
                 Log.d(TAG, track.name + ": " + playerState.track.duration + " " + playerState.playbackPosition)
                 if (track.name != currentTrack?.name) {
                     val id = track.uri.slice(IntRange(14, track.uri.length - 1))
@@ -212,6 +219,19 @@ class MainActivity : AppCompatActivity(){
 
     inner class MainActivityController() : SongController{
         val TAG = "MainActivityController"
+        override fun logTrackInModel(trackId: String, weight: Int) {
+            spotifyApi.service.getTrackAudioFeatures(trackId, object: Callback<AudioFeaturesTrack> {
+                override fun success(t: AudioFeaturesTrack?, response: Response?) {
+                    if (t != null) {
+                        val featuresEntry = SongFeatures.fromAudioFeaturesTrack(t, weight)
+                        featuresEntry.saveInBackground()
+                    }
+                }
+                override fun failure(error: RetrofitError?) {
+                    Log.d(TAG, "failed to get track's audio features: " + error?.message)
+                }
+            })
+        }
 
         fun addToSpotifyPlaylist(userId: String, playlistId: String, track: Track){
             val queryParams : Map<String, Any> = mapOf("uris" to track.uri)
@@ -250,6 +270,7 @@ class MainActivity : AppCompatActivity(){
                     }
                 }
             }
+            logTrackInModel(track.id, WEIGHT_ADDED_SONG_TO_PLAYLIST)
         }
 
         override fun addToPlaylist(userId: String, playlistId: String, track: Track) {
@@ -637,6 +658,34 @@ class MainActivity : AppCompatActivity(){
                 hideProgressBar()
                 if (t != null){
                     Log.d(TAG, "success: " + t.toString() + " size: " + t.items.size)
+
+                    // test with first item
+                    /*
+                    if (t.items.size != 0) {
+                        val testTrack = t.items.get(0)
+                        spotifyApi.service.getTrackAudioFeatures(testTrack.id, object: Callback<AudioFeaturesTrack> {
+                            override fun success(tt: AudioFeaturesTrack?, response: Response?) {
+                                if (tt != null) {
+                                    val obj = SongFeatures.fromAudioFeaturesTrack(tt, 1)
+                                    obj.saveInBackground {
+                                        if (it != null) {
+                                            Log.d(TAG, "failure to save feature obj: " + it.message)
+                                        }
+                                        else {
+                                            Log.d(TAG, "successy")
+                                            val user = obj.getUserWhoLogged()
+                                            Log.d(TAG, "user who logged: " + user.username)
+                                        }
+                                    }
+                                }
+                            }
+
+                            override fun failure(error: RetrofitError?) {
+                                Log.d(TAG, "failure to get test track audio features: " + error?.message)
+                            }
+                        })
+                    } */
+
                     topTracks.clear()
                     topTracks.addAll(t.items)
 

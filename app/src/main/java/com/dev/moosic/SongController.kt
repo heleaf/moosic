@@ -5,6 +5,8 @@ import com.dev.moosic.adapters.TrackAdapter
 import kaaes.spotify.webapi.android.models.Track
 
 interface SongController {
+    fun logTrackInModel(trackId: String, weight: Int) : Unit
+
     fun addToPlaylist(userId: String, playlistId: String, track : Track) : Unit
 
     fun removeFromPlaylist(userId: String, playlistId: String, track : Track, position : Int) : Unit

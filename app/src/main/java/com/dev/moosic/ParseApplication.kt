@@ -3,6 +3,7 @@ package com.dev.moosic
 import android.app.Application
 import com.dev.moosic.models.Playlist
 import com.dev.moosic.models.Song
+import com.dev.moosic.models.SongFeatures
 import com.facebook.drawee.backends.pipeline.Fresco
 import com.parse.Parse
 import com.parse.ParseObject
@@ -20,6 +21,8 @@ class ParseApplication : Application() {
 
         ParseObject.registerSubclass(Playlist::class.java)
         ParseObject.registerSubclass(Song::class.java)
+        ParseObject.registerSubclass(SongFeatures::class.java)
+
         Parse.initialize(
             Parse.Configuration.Builder(this)
                 .applicationId("OcxXVntOKmUYQP34WgKbwvF0YXCJUj1d2vkBiLr6")
