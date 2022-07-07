@@ -1,12 +1,15 @@
 package com.dev.moosic
 
 import android.content.Context
+import android.os.Parcelable
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.adapters.TopTrackAdapter
 import kaaes.spotify.webapi.android.models.Track
+import org.parceler.Parcel
+
 
 interface PlaylistController {
     fun addToPlaylist(userId: String, playlistId: String, track : Track) : Unit

@@ -13,10 +13,7 @@
         android:title="Back"
         android:visible="false"
         app:showAsAction="always" />
-    <item
-        android:id="@+id/logOutButton"
-        android:title="Log out"
-        app:showAsAction="always" />
+
     <item
         android:id="@+id/searchMenuIcon"
         android:icon="?android:attr/actionModeWebSearchDrawable"

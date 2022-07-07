@@ -1,5 +1,6 @@
 package com.dev.moosic.fragments
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -25,6 +26,7 @@ private const val ARG_PARAM3 = "userPlaylist"
  * Use the [HomeFeedFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
+
 open class HomeFeedFragment(controller : MainActivity.MainActivityController) : Fragment() {
     var topTracks: ArrayList<Track> = ArrayList()
     private var currentUserId : String? = null

@@ -42,6 +42,7 @@
         android:id="@+id/etLoginPassword"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:allowUndo="false"
         android:ems="10"
         android:hint="Password"
         android:inputType="textPassword"

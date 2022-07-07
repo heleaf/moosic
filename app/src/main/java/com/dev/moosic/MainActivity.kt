@@ -4,6 +4,8 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Parcel
+import android.os.Parcelable
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -25,6 +27,7 @@ import com.spotify.protocol.client.Subscription
 import com.spotify.protocol.types.PlayerState
 import kaaes.spotify.webapi.android.SpotifyApi
 import kaaes.spotify.webapi.android.models.*
+import org.parceler.ParcelClass
 import retrofit.Callback
 import retrofit.RetrofitError
 import retrofit.client.Response
@@ -69,7 +72,6 @@ class MainActivity : AppCompatActivity(){
     val fragmentManager = supportFragmentManager
 
     var searchMenuItem : MenuItem? = null
-    var logOutMenuItem : MenuItem? = null
     var settingsMenuItem : MenuItem? = null
     var backMenuItem : MenuItem? = null
     var progressBar: ProgressBar? = null
@@ -110,8 +112,6 @@ class MainActivity : AppCompatActivity(){
         menuInflater.inflate(R.menu.main_menu, menu)
         searchMenuItem = menu?.findItem(R.id.searchMenuIcon)
         searchMenuItem?.isVisible = false
-        logOutMenuItem = menu?.findItem(R.id.logOutButton)
-        logOutMenuItem?.isVisible = false
         settingsMenuItem = menu?.findItem(R.id.settingsMenuIcon)
         settingsMenuItem?.isVisible = false
         backMenuItem = menu?.findItem(R.id.backMenuIcon)
@@ -121,7 +121,6 @@ class MainActivity : AppCompatActivity(){
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.logOutButton -> { ParseUser.logOut(); finish(); return true }
             R.id.settingsMenuIcon -> { launchSettingsFragment(); return true }
             R.id.backMenuIcon -> { Log.d(TAG, "exiting settings");
                 MainActivityController().exitSettings();
@@ -207,7 +206,7 @@ class MainActivity : AppCompatActivity(){
         SpotifyAppRemote.disconnect(mSpotifyAppRemote);
     }
 
-    inner class MainActivityController() : PlaylistController {
+    inner class MainActivityController() : PlaylistController{
         val TAG = "MainActivityController"
 
         fun addToSpotifyPlaylist(userId: String, playlistId: String, track: Track){
@@ -450,6 +449,7 @@ class MainActivity : AppCompatActivity(){
                 fragmentManager.beginTransaction().remove(fragment).commit() // help?
             }
         }
+
     }
 
     private fun setUpCurrentUser() {

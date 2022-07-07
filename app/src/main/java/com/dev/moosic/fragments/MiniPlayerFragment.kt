@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import com.dev.moosic.MainActivity
+import com.dev.moosic.PlaylistController
 import com.dev.moosic.R
 import com.facebook.drawee.view.SimpleDraweeView
 import kaaes.spotify.webapi.android.models.Track
@@ -18,6 +19,7 @@ import org.parceler.Parcels
 
 private const val ARG_PARAM1 = "currentSong"
 private const val ARG_PARAM2 = "isPaused"
+private const val ARG_PARAM3 = "controller"
 
 /**
  * A simple [Fragment] subclass.
@@ -28,6 +30,17 @@ class MiniPlayerFragment(controller: MainActivity.MainActivityController) : Frag
     val TAG = "MiniPlayerFragment"
     private var currentTrack: Track? = null
 
+//    lateinit var mainActivityController : MainActivity.MainActivityController
+////
+//    constructor(controller: MainActivity.MainActivityController) : this() {
+//        mainActivityController = controller
+//    }
+
+    val mainActivityController = controller
+//    constructor() : this() {
+//        mainActivityController = null
+//    }
+
     var trackTitle: TextView? = null
     var trackArtist: TextView? = null
     var trackAlbumCover: SimpleDraweeView? = null
@@ -35,8 +48,6 @@ class MiniPlayerFragment(controller: MainActivity.MainActivityController) : Frag
     var layout: ConstraintLayout? = null
 
     var closeMiniPlayerButton: ImageButton? = null
-
-    val mainActivityController = controller
 
     var isPaused: Boolean = false
 
@@ -71,6 +82,8 @@ class MiniPlayerFragment(controller: MainActivity.MainActivityController) : Frag
                 arguments = Bundle().apply {
                     putParcelable(ARG_PARAM1, Parcels.wrap(currentTrack))
                     putBoolean(ARG_PARAM2, isPaused)
+//                    putParcelable(ARG_PARAM3, Parcels.wrap(controller))
+
                 }
             }
     }

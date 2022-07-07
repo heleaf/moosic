@@ -85,11 +85,12 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivityControlle
         rvPlaylistTracks?.adapter = adapter
 
         // TODO sticky headers
-        val recyclerItemDecoration : RecyclerItemDecoration
-        = RecyclerItemDecoration(requireContext(), resources.getDimensionPixelSize(R.dimen.header_height),
-        false, getSectionCallback(songs))
+//        val recyclerItemDecoration : RecyclerItemDecoration
+//        = RecyclerItemDecoration(requireContext(), resources.getDimensionPixelSize(R.dimen.header_height),
+//        false, getSectionCallback(songs))
+//
+//        rvPlaylistTracks?.addItemDecoration(recyclerItemDecoration)
 
-        rvPlaylistTracks?.addItemDecoration(recyclerItemDecoration)
         val linearLayoutManager = LinearLayoutManager(context)
         rvPlaylistTracks?.setLayoutManager(linearLayoutManager)
 
