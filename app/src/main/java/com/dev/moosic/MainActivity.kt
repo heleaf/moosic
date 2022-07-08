@@ -525,6 +525,8 @@ class MainActivity : AppCompatActivity(){
             arrayListOf(KEY_DELETE_BUTTON)
         )
         fragmentManager.beginTransaction().replace(R.id.flContainer, newFragment).commit()
+        val map = SongFeatures.getUserPlaylistFeatureMap()
+        Log.d(TAG, map.toString())
     }
 
 

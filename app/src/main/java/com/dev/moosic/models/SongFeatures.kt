@@ -1,22 +1,22 @@
 package com.dev.moosic.models
 
+import android.util.Log
 import com.google.gson.Gson
+import com.google.gson.JsonObject
 import com.parse.ParseClassName
 import com.parse.ParseObject
+import com.parse.ParseQuery
 import com.parse.ParseUser
 import kaaes.spotify.webapi.android.models.AudioFeaturesTrack
+import retrofit.Callback
+import retrofit.RetrofitError
 
 @ParseClassName("SongFeatures")
 class SongFeatures() : ParseObject() {
-    val KEY_USER_WHO_LOGGED = "loggedBy"
-    val KEY_LOGGED_WEIGHT = "loggedWeight"
-    val KEY_FEATURE_JSON_STRING_DATA = "jsonStringData"
-
-    // idk if this will work..
     fun getUserWhoLogged(): ParseUser {
-        // getParseObject?
         return getParseObject(KEY_USER_WHO_LOGGED) as ParseUser
     }
+
     fun putUserWhoLogged(user: ParseUser){
         put(KEY_USER_WHO_LOGGED, user)
     }
@@ -40,6 +40,16 @@ class SongFeatures() : ParseObject() {
     }
 
     companion object Factory {
+        val TAG = "SongFeatures"
+        val KEY_USER_WHO_LOGGED = "loggedBy"
+        val KEY_LOGGED_WEIGHT = "loggedWeight"
+        val KEY_FEATURE_JSON_STRING_DATA = "jsonStringData"
+
+        val FEATURE_KEYS_ARRAY = listOf(
+            "acousticness", "danceability", "energy", "instrumentalness",
+            "liveness", "speechiness", "valence"
+        )
+
         fun fromAudioFeaturesTrack(audioFeatures: AudioFeaturesTrack, weight: Int):
                 SongFeatures {
             val features = SongFeatures()
@@ -47,6 +57,46 @@ class SongFeatures() : ParseObject() {
             features.putLoggedWeight(weight)
             features.putJsonStringData(audioFeatures)
             return features
+        }
+
+        // todo: make asynchronous
+        fun getUserPlaylistFeatureMap(/*callback: Callback<Map<String,Number>>*/): Map<String, Double> {
+            val query = ParseQuery.getQuery(SongFeatures::class.java)
+            query.include(SongFeatures.KEY_LOGGED_WEIGHT)
+            query.include(SongFeatures.KEY_FEATURE_JSON_STRING_DATA)
+            query.whereEqualTo(SongFeatures.KEY_USER_WHO_LOGGED, ParseUser.getCurrentUser())
+            val songFeatures = query.find()
+            Log.d(TAG, "song features: " + songFeatures.size)
+            val map : MutableMap<String, Double> = mutableMapOf()
+            var totalWeight = 0.0
+            val gson = Gson()
+            for (songFeature in songFeatures) {
+                val loggedWeight = songFeature.getLoggedWeight()
+//                Log.d(TAG, "logged weight for song: " + loggedWeight?.toDouble().toString())
+                if (loggedWeight != null) {
+                    totalWeight += loggedWeight.toDouble()
+                }
+                val songFeatureJsonStrData = songFeature.getJsonStringData()
+                if (songFeatureJsonStrData != null) {
+//                    Log.d(TAG, "not null song feature json str data")
+                    val jsonObject = gson.fromJson(songFeatureJsonStrData, JsonObject::class.java)
+                    for (feature in FEATURE_KEYS_ARRAY) {
+                        val featureValue = jsonObject.get(feature).asNumber
+//                        Log.d(TAG, "feature: " + feature + " value: " + featureValue.toString())
+                        val weightedFeatureValue =
+                            (if (loggedWeight == null) featureValue.toDouble() else
+                                (featureValue.toDouble() * loggedWeight.toDouble()))
+//                        Log.d(TAG, "feature: " + feature + " weighted value: " + weightedFeatureValue)
+                        map.put(feature, map.getOrDefault(feature, 0.0) + weightedFeatureValue)
+                    }
+                }
+            }
+//            Log.d(TAG, "total weight: " + totalWeight)
+            // normalize by the total weight
+            for (feature in FEATURE_KEYS_ARRAY) {
+                map.put(feature, map.getOrDefault(feature, 0.0) / totalWeight)
+            }
+            return map.toMap()
         }
     }
 }
