@@ -54,10 +54,10 @@ class MiniPlayerFragment(controller: MainActivity.MainActivityController) : Frag
         super.onCreate(savedInstanceState)
         arguments?.let {
             currentTrack = Parcels.unwrap(it.getParcelable(ARG_PARAM1))
-            Log.d(TAG, "got current track: " + currentTrack?.name)
+//            Log.d(TAG, "got current track: " + currentTrack?.name)
             val id = currentTrack?.uri?.slice(IntRange(14, currentTrack!!.uri.length - 1))
-            Log.d(TAG, "uri: " + currentTrack?.uri)
-            Log.d(TAG, "id: " + id)
+//            Log.d(TAG, "uri: " + currentTrack?.uri)
+//            Log.d(TAG, "id: " + id)
             isPaused = it.getBoolean(ARG_PARAM2)
         }
     }

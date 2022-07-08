@@ -135,5 +135,21 @@ class SongFeatures() : ParseObject() {
             }
             return map.toMap()
         }
+
+        fun featureMapToRecommendationQueryMap(featureMap: Map<String, Double>,
+            seedArtists: String, seedGenres: String, seedTracks: String): Map<String, Any> {
+            val queryMap : MutableMap<String, Any> = mutableMapOf()
+            queryMap.put("seed_artists", seedArtists)
+            queryMap.put("seed_genres", seedGenres)
+            queryMap.put("seed_tracks", seedTracks)
+            for (feature in featureMap.keys) {
+                queryMap.put(String.format("target_%s", feature),
+                    featureMap.getOrDefault(feature, 0.0) as Number)
+            }
+            return queryMap.toMap()
+        }
+
     }
+
+
 }

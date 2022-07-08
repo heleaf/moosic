@@ -37,10 +37,15 @@ private const val KEY_HEART_BUTTON = "heart"
 private const val KEY_LOGOUT_BUTTON = "logOut"
 
 class MainActivity : AppCompatActivity(){
-    val WEIGHT_ADDED_SONG_TO_PLAYLIST = 2
-    val PERMISSIONS_REQUEST_READ_CONTACTS = 100
-
     val TAG = "MainActivity"
+
+    val WEIGHT_ADDED_SONG_TO_PLAYLIST = 2
+    val FRACTION_OF_SONG_PLAYED_THRESHOLD = 0.2f
+    val WEIGHT_PLAYED_SONG = 1
+
+    val URI_PREFIX_LENGTH = 14
+
+    val PERMISSIONS_REQUEST_READ_CONTACTS = 100
     val DEFAULT_ITEM_OFFSET = 0
     val DEFAULT_NUMBER_ITEMS = 10
 
@@ -48,8 +53,20 @@ class MainActivity : AppCompatActivity(){
     val REDIRECT_URI = "http://localhost:8080"
     var mSpotifyAppRemote : SpotifyAppRemote? = null
 
+    companion object {
+        val spotifyApi = SpotifyApi()
+    }
+
+    val mainActivityController = MainActivityController()
+
+    var spotifyApiAuthToken : String? = null
+    var currentUserId : String? = null
+    var userPlaylistId : String? = null
+
     var currentTrack : Track? = null
     var currentTrackIsPaused : Boolean? = null
+    var currentTrackIsLoggedInModel : Boolean? = null
+
     var playerStateSubscription: Subscription<PlayerState>? = null
 
     var topTracks : ArrayList<kaaes.spotify.webapi.android.models.Track> = ArrayList()
@@ -58,14 +75,6 @@ class MainActivity : AppCompatActivity(){
     var searchedTracks : ArrayList<Track> = ArrayList()
 
     var parsePlaylistSongs : ArrayList<Song> = ArrayList()
-
-    companion object {
-        val spotifyApi = SpotifyApi()
-    }
-    var spotifyApiAuthToken : String? = null
-
-    var currentUserId : String? = null
-    var userPlaylistId : String? = null
 
     var bottomNavigationView : BottomNavigationView? = null
     val fragmentManager = supportFragmentManager
@@ -120,7 +129,7 @@ class MainActivity : AppCompatActivity(){
         when (item.itemId) {
             R.id.settingsMenuIcon -> { launchSettingsFragment(); return true }
             R.id.backMenuIcon -> { Log.d(TAG, "exiting settings");
-                MainActivityController().exitSettingsTab();
+                mainActivityController.exitSettingsTab();
                 backMenuItem?.isVisible = false
                 settingsMenuItem?.isVisible = true
                 return true
@@ -144,7 +153,7 @@ class MainActivity : AppCompatActivity(){
             object : Connector.ConnectionListener {
                 override fun onConnected(spotifyAppRemote: SpotifyAppRemote) {
                     mSpotifyAppRemote = spotifyAppRemote
-                    connected()
+                    connectToPlayerState()
                 }
 
                 override fun onFailure(throwable: Throwable) {
@@ -164,30 +173,43 @@ class MainActivity : AppCompatActivity(){
         Log.d(TAG, "resuming...")
     }
 
-    fun connected() {
+    fun getSpotifyIdFromUri(uri: String) : String {
+        if (uri.length < URI_PREFIX_LENGTH) { return "" }
+        return uri.slice(IntRange(URI_PREFIX_LENGTH, uri.length - 1))
+    }
+
+    fun connectToPlayerState() {
         playerStateSubscription = mSpotifyAppRemote!!.playerApi.subscribeToPlayerState()
+        playerStateSubscription?.setLifecycleCallback(object: Subscription.LifecycleCallback {
+            override fun onStart() {
+                Log.d(TAG, "starting player subscription?")
+            }
+            override fun onStop() {
+                Log.d(TAG, "stopping player subscription?")
+            }
+        })
+
         playerStateSubscription?.setEventCallback { playerState: PlayerState ->
             val track: com.spotify.protocol.types.Track? = playerState.track
             if (track != null) {
-//                if ((playerState.playbackPosition / playerState.track.duration) > FRACTION_OF_SONG_PLAYED_THRESHOLD) {
-//                    // TODO: fix this so i don't add the track multiple times
-//                    val id = track.uri.slice(IntRange(14, track.uri.length - 1))
-//                    MainActivityController().logTrackInModel(id, PLAYED_SONG_BEYOND_THRESHOLD_WEIGHT)
-//                }
-                Log.d(TAG, track.name + ": " + playerState.track.duration + " " + playerState.playbackPosition)
+                val id = getSpotifyIdFromUri(track.uri)
+                // track.uri.slice(IntRange(URI_PREFIX_LENGTH, track.uri.length - 1))
+                if (track.name != currentTrack?.name && currentTrack != null) {
+                    mainActivityController.logTrackInModel(id, WEIGHT_PLAYED_SONG)
+                    Log.d(TAG, "logged " + track.name + " in model")
+                }
                 if (track.name != currentTrack?.name) {
-                    val id = track.uri.slice(IntRange(14, track.uri.length - 1))
                     spotifyApi.service.getTrack(id, object: Callback<Track> {
                         override fun success(t: Track?, response: Response?) {
                             if (t != null) {
-                                miniPlayerFragment = MiniPlayerFragment.newInstance(t, MainActivityController(),
+                                miniPlayerFragment = MiniPlayerFragment.newInstance(t, mainActivityController,
                                 playerState.isPaused)
                                 fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
                                 miniPlayerFragment!!).commit()
                                 currentTrack = t
                                 currentTrackIsPaused = playerState.isPaused
                                 if (!playerState.isPaused) {
-                                    MainActivityController().showMiniPlayerPreview()
+                                    mainActivityController.showMiniPlayerPreview()
                                 }
                             }
                         }
@@ -199,15 +221,27 @@ class MainActivity : AppCompatActivity(){
 
                 }
                 else if (playerState.isPaused != currentTrackIsPaused) {
-                    miniPlayerFragment = MiniPlayerFragment.newInstance(currentTrack!!, MainActivityController(),
+                    miniPlayerFragment = MiniPlayerFragment.newInstance(currentTrack!!, mainActivityController,
                         playerState.isPaused)
                     currentTrackIsPaused = playerState.isPaused
                     fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
                         miniPlayerFragment!!).commit()
                     if (!playerState.isPaused) {
-                        MainActivityController().showMiniPlayerPreview()
+                       mainActivityController.showMiniPlayerPreview()
                     }
                 }
+
+                /*
+                Log.d(TAG, "is logged in model: " + currentTrackIsLoggedInModel)
+                Log.d(TAG, "threshold: " + FRACTION_OF_SONG_PLAYED_THRESHOLD + " current: " + playerState.playbackPosition.toFloat() / playerState.track.duration.toFloat())
+                if (currentTrackIsLoggedInModel == false && (playerState.playbackPosition.toFloat() / playerState.track.duration.toFloat()) >= FRACTION_OF_SONG_PLAYED_THRESHOLD) {
+                    // TODO: fix this so i don't add the track multiple times
+                    val id = track.uri.slice(IntRange(URI_ENDPOINT_LENGTH, track.uri.length - 1))
+                    MainActivityController().logTrackInModel(id, PLAYED_SONG_BEYOND_THRESHOLD_WEIGHT)
+                    currentTrackIsLoggedInModel = true
+                    Log.d(TAG, "logged " + track.name + " in model")
+                } */
+                Log.d(TAG, track.name + ": " + playerState.track.duration + " " + playerState.playbackPosition)
             }
         }
     }
@@ -225,6 +259,7 @@ class MainActivity : AppCompatActivity(){
                     if (t != null) {
                         val featuresEntry = SongFeatures.fromAudioFeaturesTrack(t, weight)
                         featuresEntry.saveInBackground()
+                        Log.d(TAG, "logged " + trackId + " in model")
                     }
                 }
                 override fun failure(error: RetrofitError?) {
@@ -264,7 +299,8 @@ class MainActivity : AppCompatActivity(){
                     if (e != null) Log.d(TAG, "error adding " + track.name +
                             " to parse playlist: " + e.message)
                     else {
-                        Log.d(TAG, "adding " + track.name + " to spotify playlist...")
+                        Log.d(TAG, "saving " + track.name + " to parse" +
+                                " playlist...")
                         Toast.makeText(this@MainActivity, "added " + track.name + " to playlist",
                         Toast.LENGTH_SHORT).show()
                     }
@@ -394,11 +430,12 @@ class MainActivity : AppCompatActivity(){
 
         override fun playSongOnSpotify(uri: String, spotifyId: String) {
             mSpotifyAppRemote?.getPlayerApi()?.play(uri);
+            logTrackInModel(spotifyId, WEIGHT_PLAYED_SONG)
             spotifyApi.service.getTrack(spotifyId, object: Callback<Track> {
                 override fun success(t: Track?, response: Response?) {
                     if (t != null) {
                         currentTrack = t
-                        miniPlayerFragment = MiniPlayerFragment.newInstance(t, MainActivityController(), false)
+                        miniPlayerFragment = MiniPlayerFragment.newInstance(t, this@MainActivityController, false)
                         fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
                             miniPlayerFragment!!).commit()
                         showMiniPlayerPreview()
@@ -423,7 +460,7 @@ class MainActivity : AppCompatActivity(){
             if (currentTrack != null && currentTrackIsPaused != null){
                 val miniPlayerDetailFragment
                         = MiniPlayerDetailFragment.newInstance(currentTrack!!,
-                    MainActivityController(),
+                    this,
                     currentTrackIsPaused!!)
                 fragmentManager.beginTransaction().replace(R.id.miniPlayerDetailFlContainer, miniPlayerDetailFragment).commit()
                 bottomNavigationView?.visibility = View.GONE
@@ -521,21 +558,41 @@ class MainActivity : AppCompatActivity(){
         settingsMenuItem?.isVisible = true
         backMenuItem?.isVisible = false
         val newFragment = ParsePlaylistFragment.newInstance(parsePlaylistSongs,
-            MainActivityController(),
+            mainActivityController,
             arrayListOf(KEY_DELETE_BUTTON)
         )
         fragmentManager.beginTransaction().replace(R.id.flContainer, newFragment).commit()
-        
+
 //        val map = SongFeatures.syncGetUserPlaylistFeatureMap()
 //        Log.d(TAG, map.toString())
-//        SongFeatures.asyncGetUserPlaylistFeatureMap(object: Callback<Map<String, Double>> {
-//            override fun success(t: Map<String, Double>?, response: Response?) {
-//                Log.d(TAG, "onSuccess: " + t.toString())
-//            }
-//            override fun failure(error: RetrofitError?) {
-//                Log.d(TAG, "onFailure: " + error?.message)
-//            }
-//        })
+
+        // testing
+        SongFeatures.asyncGetUserPlaylistFeatureMap(object: Callback<Map<String, Double>> {
+            override fun success(t: Map<String, Double>?, response: Response?) {
+                Log.d(TAG, "onSuccess pulling interest vector: " + t.toString())
+//                if (t != null) {
+////                    val seedGenres = ParseUser.getCurrentUser().getString("seedGenres")
+//                    val queryMap = SongFeatures.featureMapToRecommendationQueryMap(t, "", "", "")
+//                    spotifyApi.service.getRecommendations(
+//                        queryMap, object: Callback<Recommendations> {
+//                            override fun success(t: Recommendations?, response: Response?) {
+//                                Log.d(TAG, "onSuccess getting recommendations: " + t?.tracks.toString())
+//                            }
+//                            override fun failure(error: RetrofitError?) {
+//                                Log.d(TAG, "onFailure getting recommendations: " + error?.message + " "
+//                                    + error?.cause + " " + error?.localizedMessage + " "
+//                                    + error?.response?.reason +
+//                                    " " + ((error?.response?.body) as TypedByteArray).bytes.toString() )
+//                            }
+//
+//                        }
+//                    )
+//                }
+            }
+            override fun failure(error: RetrofitError?) {
+                Log.d(TAG, "onFailure pulling interest vector: " + error?.message)
+            }
+        })
 
     }
 
@@ -544,7 +601,7 @@ class MainActivity : AppCompatActivity(){
         searchMenuItem?.isVisible = false
         settingsMenuItem?.isVisible = false
         backMenuItem?.isVisible = true
-        val settingsFragment = SettingsFragment.newInstance(MainActivityController())
+        val settingsFragment = SettingsFragment.newInstance(mainActivityController)
         fragmentManager.beginTransaction().add(R.id.flContainer, settingsFragment).commit()
     }
 
@@ -565,20 +622,20 @@ class MainActivity : AppCompatActivity(){
                 searchView.clearFocus()
                 searchMenuItem?.isVisible = true
                 if (query != null) {
-                    if (showMiniPlayerFragment) MainActivityController().showMiniPlayerPreview()
+                    if (showMiniPlayerFragment) mainActivityController.showMiniPlayerPreview()
                     mostRecentSearchQuery = query
                     fetchQueryAndSendToFragment(query, DEFAULT_ITEM_OFFSET, DEFAULT_NUMBER_ITEMS)
                 }
                 return true
             }
             override fun onQueryTextChange(newText: String?): Boolean {
-                if (showMiniPlayerFragment) MainActivityController().showMiniPlayerPreview()
+                if (showMiniPlayerFragment) mainActivityController.showMiniPlayerPreview()
                 return false
             }
         })
         if (currentUserId != null && userPlaylistId != null){
             val searchFragment = SearchFragment.newInstance(searchedTracks,
-                currentUserId!!, userPlaylistId!!, MainActivityController(),
+                currentUserId!!, userPlaylistId!!, mainActivityController,
                 (if (mostRecentSearchQuery == null) "" else mostRecentSearchQuery!!)
             )
             fragmentManager.beginTransaction().replace(R.id.flContainer, searchFragment)
@@ -606,7 +663,7 @@ class MainActivity : AppCompatActivity(){
                     searchedTracks.addAll(t.tracks.items)
                     if (currentUserId != null && userPlaylistId != null){
                         val searchFragment = SearchFragment.newInstance(searchedTracks,
-                            currentUserId!!, userPlaylistId!!, MainActivityController(),
+                            currentUserId!!, userPlaylistId!!, mainActivityController,
                             query
                         )
                         fragmentManager.beginTransaction().replace(R.id.flContainer, searchFragment)
@@ -703,7 +760,7 @@ class MainActivity : AppCompatActivity(){
 
                     if (currentUserId != null && userPlaylistId != null){
                         val homeFragment = HomeFeedFragment.newInstance(topTracks,
-                            currentUserId!!, userPlaylistId!!, MainActivityController()
+                            currentUserId!!, userPlaylistId!!, mainActivityController
                         )
                         fragmentManager.beginTransaction()
                             .replace(R.id.flContainer, homeFragment).commit()
