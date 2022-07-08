@@ -25,7 +25,7 @@ private const val ARG_PARAM3 = "controller"
  * Use the [MiniPlayerFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class MiniPlayerFragment(controller: MainActivity.MainActivityController) : Fragment() {
+class MiniPlayerFragment(controller: MainActivity.MainActivitySongController) : Fragment() {
     val TAG = "MiniPlayerFragment"
     private var currentTrack: Track? = null
 
@@ -75,8 +75,8 @@ class MiniPlayerFragment(controller: MainActivity.MainActivityController) : Frag
          * this fragment using the provided parameters.
          */
         @JvmStatic
-        fun newInstance(currentTrack: Track, controller: MainActivity.MainActivityController,
-        isPaused: Boolean) =
+        fun newInstance(currentTrack: Track, controller: MainActivity.MainActivitySongController,
+                        isPaused: Boolean) =
             MiniPlayerFragment(controller).apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_PARAM1, Parcels.wrap(currentTrack))

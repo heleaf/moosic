@@ -29,7 +29,7 @@ private const val KEY_USER_SPOTIFYID = "userId"
 class SongAdapter(
     context: Context,
     songs: ArrayList<Song>,
-    controller: MainActivity.MainActivityController,
+    controller: MainActivity.MainActivitySongController,
     buttonsToShow: List<String>,
     emptyPlaylistText: TextView?
 )
@@ -37,7 +37,7 @@ class SongAdapter(
 
     var mContext: Context? = null
     var mSongs: ArrayList<Song> = ArrayList()
-    val mainActivityController : MainActivity.MainActivityController = controller
+    val mainActivitySongController : MainActivity.MainActivitySongController = controller
 
     var mShowAddButton = false
     var mShowDeleteButton = false
@@ -132,7 +132,7 @@ class SongAdapter(
                 if (id != null){
                     song.getSpotifyUri()
                         ?.let { uri ->
-                            mainActivityController.playSongOnSpotify(
+                            mainActivitySongController.playSongOnSpotify(
                                 uri,
                                 id
                             )
@@ -150,7 +150,7 @@ class SongAdapter(
             if (mShowHeartButton) {
                 heartButton?.visibility = View.VISIBLE
                 heartButton?.setOnClickListener(View.OnClickListener {
-                    mainActivityController.addToSavedTracks(track.id)
+                    mainActivitySongController.addToSavedTracks(track.id)
                 })
             } else {
                 heartButton?.visibility = View.GONE
@@ -159,7 +159,7 @@ class SongAdapter(
             if (mShowAddButton) {
                 addToPlaylistButton?.visibility = View.VISIBLE
                 addToPlaylistButton?.setOnClickListener(View.OnClickListener {
-                    mainActivityController.addToParsePlaylist(track)
+                    mainActivitySongController.addToParsePlaylist(track)
                 })
             } else {
                 addToPlaylistButton?.visibility = View.GONE
@@ -169,7 +169,7 @@ class SongAdapter(
             if (mShowDeleteButton){
                 deleteButton.visibility = View.VISIBLE
                 deleteButton.setOnClickListener(View.OnClickListener {
-                    mainActivityController.removeFromParsePlaylist(track, position)
+                    mainActivitySongController.removeFromParsePlaylist(track, position)
                     this@SongAdapter.notifyItemRemoved(position)
                     this@SongAdapter.notifyItemRangeChanged(position, mSongs.size)
                     if (mSongs.size == 0) {

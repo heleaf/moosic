@@ -23,7 +23,7 @@ private const val ARG_PARAM2 = "buttonsToShow"
  * Use the [ParsePlaylistFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-open class ParsePlaylistFragment(controller : MainActivity.MainActivityController) : Fragment() {
+open class ParsePlaylistFragment(controller : MainActivity.MainActivitySongController) : Fragment() {
     private var songs: ArrayList<Song> = ArrayList()
     private var mainActivityController = controller
     private var buttonsToShow: List<String> = ArrayList()
@@ -56,7 +56,7 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivityControlle
 
     companion object {
         @JvmStatic
-        fun newInstance(playlistSongs: ArrayList<Song>, controller: MainActivity.MainActivityController,
+        fun newInstance(playlistSongs: ArrayList<Song>, controller: MainActivity.MainActivitySongController,
                         buttonsToShow: ArrayList<String>) =
             ParsePlaylistFragment(controller).apply {
                 arguments = Bundle().apply {

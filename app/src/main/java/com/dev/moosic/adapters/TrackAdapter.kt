@@ -13,14 +13,14 @@ import kaaes.spotify.webapi.android.models.Track
 import java.lang.Exception
 
 class TrackAdapter(context : Context, tracks : ArrayList<Track>, userId : String, playlistId : String,
-                   controller : MainActivity.MainActivityController, showAddButton : Boolean, showDeleteButton : Boolean)
+                   controller : MainActivity.MainActivitySongController, showAddButton : Boolean, showDeleteButton : Boolean)
     : RecyclerView.Adapter<TrackAdapter.ViewHolder>() {
     val TAG = "TopTrackAdapter"
     var mContext : Context? = null
     var mTracks : ArrayList<Track> = ArrayList()
     var mUserId : String? = null
     var mPlaylistId : String? = null
-    val mainActivityController : MainActivity.MainActivityController = controller
+    val mainActivitySongController : MainActivity.MainActivitySongController = controller
 
     var mShowDeleteButton = showDeleteButton
     var mShowAddButton = showAddButton
@@ -69,12 +69,12 @@ class TrackAdapter(context : Context, tracks : ArrayList<Track>, userId : String
         fun bind(track: Track, position: Int) {
             itemView.setOnLongClickListener {
                 Log.d(TAG, "adding $track to playlist")
-                mainActivityController.addToParsePlaylist(track)
+                mainActivitySongController.addToParsePlaylist(track)
                 return@setOnLongClickListener true
             }
 
             itemView.setOnClickListener {
-                mainActivityController.playSongOnSpotify(track.uri, track.id)
+                mainActivitySongController.playSongOnSpotify(track.uri, track.id)
             }
 
             val trackTitleText = track.name
@@ -101,13 +101,13 @@ class TrackAdapter(context : Context, tracks : ArrayList<Track>, userId : String
             heartButton?.visibility = View.GONE
             heartButton?.setOnClickListener(View.OnClickListener {
                 updateTrackLikedStatus(track, heartButton!!)
-                mainActivityController.addToSavedTracks(track.id)
+                mainActivitySongController.addToSavedTracks(track.id)
             })
 
             if (mShowAddButton) {
                 addToPlaylistButton?.visibility = View.VISIBLE
                 addToPlaylistButton?.setOnClickListener(View.OnClickListener {
-                    mainActivityController.addToPlaylist(this@TrackAdapter.mUserId!!,
+                    mainActivitySongController.addToPlaylist(this@TrackAdapter.mUserId!!,
                         this@TrackAdapter.mPlaylistId!!, track)
                 })
             } else {
@@ -119,7 +119,7 @@ class TrackAdapter(context : Context, tracks : ArrayList<Track>, userId : String
                 deleteButton.visibility = View.VISIBLE
                 deleteButton.setOnClickListener(View.OnClickListener {
                     Log.d(TAG, "deleting " + track.name + " from playlist")
-                     mainActivityController.removeFromPlaylist(this@TrackAdapter.mUserId!!,
+                     mainActivitySongController.removeFromPlaylist(this@TrackAdapter.mUserId!!,
                          this@TrackAdapter.mPlaylistId!!, track, position)
                     mTracks.removeAt(position)
                     this@TrackAdapter.notifyItemRemoved(position)

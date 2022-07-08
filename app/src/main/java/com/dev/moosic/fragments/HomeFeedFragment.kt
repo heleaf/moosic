@@ -26,11 +26,11 @@ private const val ARG_PARAM3 = "userPlaylist"
  * create an instance of this fragment.
  */
 
-open class HomeFeedFragment(controller : MainActivity.MainActivityController) : Fragment() {
+open class HomeFeedFragment(controller : MainActivity.MainActivitySongController) : Fragment() {
     var topTracks: ArrayList<Track> = ArrayList()
     private var currentUserId : String? = null
     private var userPlaylistId : String? = null
-    private var mainActivityController : MainActivity.MainActivityController = controller
+    private var mainActivitySongController : MainActivity.MainActivitySongController = controller
 
     val TAG = "HomeFeedFragment"
 
@@ -59,7 +59,7 @@ open class HomeFeedFragment(controller : MainActivity.MainActivityController) : 
     companion object {
         @JvmStatic
         fun newInstance(tracks: ArrayList<Track>, userId: String, playlistId: String,
-        controller : MainActivity.MainActivityController) =
+        controller : MainActivity.MainActivitySongController) =
             HomeFeedFragment(controller).apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_PARAM1, Parcels.wrap(tracks))
@@ -75,7 +75,7 @@ open class HomeFeedFragment(controller : MainActivity.MainActivityController) : 
 
         if (currentUserId != null) {
             adapter = TrackAdapter(view.context, topTracks, currentUserId!!, userPlaylistId!!,
-                mainActivityController, true, false)
+                mainActivitySongController, true, false)
 
             rvTopTracks?.adapter = adapter
             val linearLayoutManager = LinearLayoutManager(context)
@@ -83,7 +83,7 @@ open class HomeFeedFragment(controller : MainActivity.MainActivityController) : 
 
             scrollListener = EndlessRecyclerViewScrollListener(linearLayoutManager, object: LoadMoreFunction {
                 override fun onLoadMore(offset: Int, totalItemsCount: Int, view: RecyclerView?) {
-                    mainActivityController.loadMoreTopSongs(topTracks.size, totalItemsCount, false, adapter!!, swipeContainer!!)
+                    mainActivitySongController.loadMoreTopSongs(topTracks.size, totalItemsCount, false, adapter!!, swipeContainer!!)
                 }
             })
 
@@ -91,7 +91,7 @@ open class HomeFeedFragment(controller : MainActivity.MainActivityController) : 
 
             swipeContainer = view.findViewById(R.id.homeFeedSwipeContainer)
             swipeContainer?.setOnRefreshListener {
-                mainActivityController.loadMoreTopSongs(0, 20, true, adapter!!,
+                mainActivitySongController.loadMoreTopSongs(0, 20, true, adapter!!,
                     swipeContainer!!)
                 scrollListener?.resetState()
             }

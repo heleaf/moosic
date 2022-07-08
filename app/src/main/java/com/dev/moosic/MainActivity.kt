@@ -1,9 +1,10 @@
 package com.dev.moosic
 
 import android.Manifest
+import android.content.ContentResolver
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
+import android.provider.ContactsContract
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -57,7 +58,7 @@ class MainActivity : AppCompatActivity(){
         val spotifyApi = SpotifyApi()
     }
 
-    val mainActivityController = MainActivityController()
+    val mainActivitySongController = MainActivitySongController()
 
     var spotifyApiAuthToken : String? = null
     var currentUserId : String? = null
@@ -100,15 +101,17 @@ class MainActivity : AppCompatActivity(){
         bottomNavigationView = findViewById(R.id.bottomNavBar)
         bottomNavigationView?.setOnItemSelectedListener { menuItem : MenuItem ->
             when (menuItem.itemId) {
-                R.id.actionHome -> setUpHomeFragment()
-                R.id.actionSearch -> setUpSearchFragment()
-                R.id.actionProfile -> setUpPlaylistFragment()
+                R.id.actionHome -> goToHomeFragment()
+                R.id.actionSearch -> goToSearchFragment()
+                R.id.actionProfile -> goToProfilePlaylistFragment()
+                R.id.actionFriends -> goToFriendsFragment()
                 else -> {}
             }
             return@setOnItemSelectedListener true
         }
         progressBar = findViewById(R.id.pbLoadingSearch)
         miniPlayerFragmentContainer = findViewById(R.id.miniPlayerFlContainer)
+        mainActivitySongController.hideMiniPlayerPreview()
         setUpCurrentUser()
         Log.d(TAG, "fetching....")
         testFetchContacts()
@@ -129,7 +132,7 @@ class MainActivity : AppCompatActivity(){
         when (item.itemId) {
             R.id.settingsMenuIcon -> { launchSettingsFragment(); return true }
             R.id.backMenuIcon -> { Log.d(TAG, "exiting settings");
-                mainActivityController.exitSettingsTab();
+                mainActivitySongController.exitSettingsTab();
                 backMenuItem?.isVisible = false
                 settingsMenuItem?.isVisible = true
                 return true
@@ -195,21 +198,21 @@ class MainActivity : AppCompatActivity(){
                 val id = getSpotifyIdFromUri(track.uri)
                 // track.uri.slice(IntRange(URI_PREFIX_LENGTH, track.uri.length - 1))
                 if (track.name != currentTrack?.name && currentTrack != null) {
-                    mainActivityController.logTrackInModel(id, WEIGHT_PLAYED_SONG)
+                    mainActivitySongController.logTrackInModel(id, WEIGHT_PLAYED_SONG)
                     Log.d(TAG, "logged " + track.name + " in model")
                 }
                 if (track.name != currentTrack?.name) {
                     spotifyApi.service.getTrack(id, object: Callback<Track> {
                         override fun success(t: Track?, response: Response?) {
                             if (t != null) {
-                                miniPlayerFragment = MiniPlayerFragment.newInstance(t, mainActivityController,
+                                miniPlayerFragment = MiniPlayerFragment.newInstance(t, mainActivitySongController,
                                 playerState.isPaused)
                                 fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
                                 miniPlayerFragment!!).commit()
                                 currentTrack = t
                                 currentTrackIsPaused = playerState.isPaused
                                 if (!playerState.isPaused) {
-                                    mainActivityController.showMiniPlayerPreview()
+                                    mainActivitySongController.showMiniPlayerPreview()
                                 }
                             }
                         }
@@ -221,13 +224,13 @@ class MainActivity : AppCompatActivity(){
 
                 }
                 else if (playerState.isPaused != currentTrackIsPaused) {
-                    miniPlayerFragment = MiniPlayerFragment.newInstance(currentTrack!!, mainActivityController,
+                    miniPlayerFragment = MiniPlayerFragment.newInstance(currentTrack!!, mainActivitySongController,
                         playerState.isPaused)
                     currentTrackIsPaused = playerState.isPaused
                     fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
                         miniPlayerFragment!!).commit()
                     if (!playerState.isPaused) {
-                       mainActivityController.showMiniPlayerPreview()
+                       mainActivitySongController.showMiniPlayerPreview()
                     }
                 }
 
@@ -251,7 +254,7 @@ class MainActivity : AppCompatActivity(){
         SpotifyAppRemote.disconnect(mSpotifyAppRemote);
     }
 
-    inner class MainActivityController() : SongController{
+    inner class MainActivitySongController() : SongController{
         val TAG = "MainActivityController"
         override fun logTrackInModel(trackId: String, weight: Int) {
             spotifyApi.service.getTrackAudioFeatures(trackId, object: Callback<AudioFeaturesTrack> {
@@ -435,7 +438,7 @@ class MainActivity : AppCompatActivity(){
                 override fun success(t: Track?, response: Response?) {
                     if (t != null) {
                         currentTrack = t
-                        miniPlayerFragment = MiniPlayerFragment.newInstance(t, this@MainActivityController, false)
+                        miniPlayerFragment = MiniPlayerFragment.newInstance(t, this@MainActivitySongController, false)
                         fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
                             miniPlayerFragment!!).commit()
                         showMiniPlayerPreview()
@@ -550,15 +553,15 @@ class MainActivity : AppCompatActivity(){
         if (songs != null) {
             parsePlaylistSongs.addAll(songs)
         }
-        setUpHomeFragment()
+        goToHomeFragment()
     }
 
-    private fun setUpPlaylistFragment() {
+    private fun goToProfilePlaylistFragment() {
         searchMenuItem?.isVisible = false
         settingsMenuItem?.isVisible = true
         backMenuItem?.isVisible = false
         val newFragment = ParsePlaylistFragment.newInstance(parsePlaylistSongs,
-            mainActivityController,
+            mainActivitySongController,
             arrayListOf(KEY_DELETE_BUTTON)
         )
         fragmentManager.beginTransaction().replace(R.id.flContainer, newFragment).commit()
@@ -597,19 +600,16 @@ class MainActivity : AppCompatActivity(){
     }
 
 
-    private fun launchSettingsFragment() {
+    private fun goToFriendsFragment() {
         searchMenuItem?.isVisible = false
         settingsMenuItem?.isVisible = false
-        backMenuItem?.isVisible = true
-        val settingsFragment = SettingsFragment.newInstance(mainActivityController)
-        fragmentManager.beginTransaction().add(R.id.flContainer, settingsFragment).commit()
+        backMenuItem?.isVisible = false
+        val newFragment = FriendsFragment.newInstance()
+        fragmentManager.beginTransaction().replace(R.id.flContainer, newFragment).commit()
     }
 
-    private fun exitSettingsFragment() {
-        fragmentManager.popBackStack()
-    }
 
-    private fun setUpSearchFragment() {
+    private fun goToSearchFragment() {
         searchMenuItem?.isVisible = true
         settingsMenuItem?.isVisible = false
         backMenuItem?.isVisible = false
@@ -622,20 +622,20 @@ class MainActivity : AppCompatActivity(){
                 searchView.clearFocus()
                 searchMenuItem?.isVisible = true
                 if (query != null) {
-                    if (showMiniPlayerFragment) mainActivityController.showMiniPlayerPreview()
+                    if (showMiniPlayerFragment) mainActivitySongController.showMiniPlayerPreview()
                     mostRecentSearchQuery = query
                     fetchQueryAndSendToFragment(query, DEFAULT_ITEM_OFFSET, DEFAULT_NUMBER_ITEMS)
                 }
                 return true
             }
             override fun onQueryTextChange(newText: String?): Boolean {
-                if (showMiniPlayerFragment) mainActivityController.showMiniPlayerPreview()
+                if (showMiniPlayerFragment) mainActivitySongController.showMiniPlayerPreview()
                 return false
             }
         })
         if (currentUserId != null && userPlaylistId != null){
             val searchFragment = SearchFragment.newInstance(searchedTracks,
-                currentUserId!!, userPlaylistId!!, mainActivityController,
+                currentUserId!!, userPlaylistId!!, mainActivitySongController,
                 (if (mostRecentSearchQuery == null) "" else mostRecentSearchQuery!!)
             )
             fragmentManager.beginTransaction().replace(R.id.flContainer, searchFragment)
@@ -663,7 +663,7 @@ class MainActivity : AppCompatActivity(){
                     searchedTracks.addAll(t.tracks.items)
                     if (currentUserId != null && userPlaylistId != null){
                         val searchFragment = SearchFragment.newInstance(searchedTracks,
-                            currentUserId!!, userPlaylistId!!, mainActivityController,
+                            currentUserId!!, userPlaylistId!!, mainActivitySongController,
                             query
                         )
                         fragmentManager.beginTransaction().replace(R.id.flContainer, searchFragment)
@@ -713,7 +713,7 @@ class MainActivity : AppCompatActivity(){
         })
     }
 
-    private fun setUpHomeFragment() {
+    private fun goToHomeFragment() {
         searchMenuItem?.isVisible = false
         settingsMenuItem?.isVisible = false
         backMenuItem?.isVisible = false
@@ -726,41 +726,12 @@ class MainActivity : AppCompatActivity(){
             ) {
                 hideProgressBar()
                 if (t != null){
-                    Log.d(TAG, "success: " + t.toString() + " size: " + t.items.size)
-
-                    // test with first item
-                    /*
-                    if (t.items.size != 0) {
-                        val testTrack = t.items.get(0)
-                        spotifyApi.service.getTrackAudioFeatures(testTrack.id, object: Callback<AudioFeaturesTrack> {
-                            override fun success(tt: AudioFeaturesTrack?, response: Response?) {
-                                if (tt != null) {
-                                    val obj = SongFeatures.fromAudioFeaturesTrack(tt, 1)
-                                    obj.saveInBackground {
-                                        if (it != null) {
-                                            Log.d(TAG, "failure to save feature obj: " + it.message)
-                                        }
-                                        else {
-                                            Log.d(TAG, "successy")
-                                            val user = obj.getUserWhoLogged()
-                                            Log.d(TAG, "user who logged: " + user.username)
-                                        }
-                                    }
-                                }
-                            }
-
-                            override fun failure(error: RetrofitError?) {
-                                Log.d(TAG, "failure to get test track audio features: " + error?.message)
-                            }
-                        })
-                    } */
-
+//                    Log.d(TAG, "success: " + t.toString() + " size: " + t.items.size)
                     topTracks.clear()
                     topTracks.addAll(t.items)
-
                     if (currentUserId != null && userPlaylistId != null){
                         val homeFragment = HomeFeedFragment.newInstance(topTracks,
-                            currentUserId!!, userPlaylistId!!, mainActivityController
+                            currentUserId!!, userPlaylistId!!, mainActivitySongController
                         )
                         fragmentManager.beginTransaction()
                             .replace(R.id.flContainer, homeFragment).commit()
@@ -774,7 +745,6 @@ class MainActivity : AppCompatActivity(){
                     Log.d(TAG, "success: " + response.body)
                 }
             }
-
             override fun failure(error: RetrofitError?) {
                 Log.d(TAG, "Top tracks failure: " +  error.toString())
                 hideProgressBar()
@@ -783,6 +753,14 @@ class MainActivity : AppCompatActivity(){
 
         })
 
+    }
+
+    private fun launchSettingsFragment() {
+        searchMenuItem?.isVisible = false
+        settingsMenuItem?.isVisible = false
+        backMenuItem?.isVisible = true
+        val settingsFragment = SettingsFragment.newInstance(mainActivitySongController)
+        fragmentManager.beginTransaction().add(R.id.flContainer, settingsFragment).commit()
     }
 
     private fun loadUserTopTracks(itemOffset: Int, numberItems: Int,
@@ -822,7 +800,7 @@ class MainActivity : AppCompatActivity(){
         }
     }
 
-    fun hideProgressBar(){
+    private fun hideProgressBar(){
         if (progressBar != null){
             progressBar!!.visibility = ProgressBar.GONE
         }
@@ -843,15 +821,70 @@ class MainActivity : AppCompatActivity(){
     }
 
     fun testFetchContacts(){
-        var builder = StringBuilder()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(
-                Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+//        var builder = StringBuilder()
+        if (checkSelfPermission(Manifest.permission.READ_CONTACTS)
+            != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(arrayOf(Manifest.permission.READ_CONTACTS),
                 PERMISSIONS_REQUEST_READ_CONTACTS)
             // callback onRequestPermissionsResult
         } else {
-//            builder = getContacts()
+            Log.d(TAG, "fetching contacts now...")
+            getContacts()
+//            val tmpText = builder.toString()
+//            Log.d(TAG, "...? " + tmpText)
         }
     }
 
+    private fun getContacts() {
+//        val builder = StringBuilder()
+        val resolver: ContentResolver = contentResolver;
+        val cursor = resolver.query(
+            ContactsContract.Contacts.CONTENT_URI, null, null, null,
+            null)
+        if (cursor!!.count > 0) {
+            while (cursor.moveToNext()) {
+                val idIdx = cursor.getColumnIndex(ContactsContract.Contacts._ID)
+                val nameIdx = cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME)
+                val hasPhoneNumberIdx = cursor.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER)
+
+                val id = cursor.getString(idIdx)
+                val name = cursor.getString(nameIdx)
+                val phoneNumber = (cursor.getString(hasPhoneNumberIdx)).toInt()
+
+                if (phoneNumber > 0) {
+                    val cursorPhone = contentResolver.query(
+                        ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                        null, ContactsContract.CommonDataKinds.Phone.CONTACT_ID + "=?", arrayOf(id), null)
+
+                    if(cursorPhone!!.count > 0) {
+                        while (cursorPhone.moveToNext()) {
+                            val phoneIdx = cursorPhone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+                            val phoneNumValue = cursorPhone.getString(phoneIdx)
+//                            builder.append("Contact: ").append(name).append(", Phone Number: ").append(
+//                                phoneNumValue).append("\n\n")
+                            Log.e("Name ===>",phoneNumValue);
+                            Log.d(TAG, "name: " + name + " phone number: " + phoneNumValue)
+                        }
+                    }
+                    cursorPhone!!.close()
+                }
+
+                val emailCursor = contentResolver.query(ContactsContract.CommonDataKinds.Email.CONTENT_URI, null, ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = ?", arrayOf(id), null)
+                if (emailCursor != null) {
+                    while (emailCursor.moveToNext()) {
+                        val emailIdx = emailCursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.ADDRESS)
+                        val email = emailCursor.getString(emailIdx)
+                        Log.d(TAG, "email extracted: " + email)
+                    }
+                    //contact contains all the emails of a particular contact
+                    emailCursor.close()
+                }
+            }
+        } else {
+            //   toast("No contacts available!")
+        }
+        cursor.close()
+//        return builder
+    }
 }
+

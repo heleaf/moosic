@@ -26,7 +26,7 @@ private const val ARG_PARAM4 = "searchedQuery"
  * Use the [SearchFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class SearchFragment(controller: MainActivity.MainActivityController) : Fragment() {
+class SearchFragment(controller: MainActivity.MainActivitySongController) : Fragment() {
     private var searchedTracks: ArrayList<Track> = ArrayList()
     private var userId : String? = null
     private var playlistId : String? = null
@@ -61,8 +61,8 @@ class SearchFragment(controller: MainActivity.MainActivityController) : Fragment
     companion object {
         @JvmStatic
         fun newInstance(searchedTracks : ArrayList<Track>, userId : String,
-        playlistId : String, controller : MainActivity.MainActivityController,
-        searchedQuery: String) =
+                        playlistId : String, controller : MainActivity.MainActivitySongController,
+                        searchedQuery: String) =
             SearchFragment(controller).apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_PARAM1, Parcels.wrap(searchedTracks))
