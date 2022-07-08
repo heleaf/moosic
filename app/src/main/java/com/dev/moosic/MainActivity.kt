@@ -525,8 +525,18 @@ class MainActivity : AppCompatActivity(){
             arrayListOf(KEY_DELETE_BUTTON)
         )
         fragmentManager.beginTransaction().replace(R.id.flContainer, newFragment).commit()
-        val map = SongFeatures.getUserPlaylistFeatureMap()
-        Log.d(TAG, map.toString())
+        
+//        val map = SongFeatures.syncGetUserPlaylistFeatureMap()
+//        Log.d(TAG, map.toString())
+//        SongFeatures.asyncGetUserPlaylistFeatureMap(object: Callback<Map<String, Double>> {
+//            override fun success(t: Map<String, Double>?, response: Response?) {
+//                Log.d(TAG, "onSuccess: " + t.toString())
+//            }
+//            override fun failure(error: RetrofitError?) {
+//                Log.d(TAG, "onFailure: " + error?.message)
+//            }
+//        })
+
     }
 
 

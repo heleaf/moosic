@@ -10,6 +10,10 @@ import com.parse.ParseUser
 import kaaes.spotify.webapi.android.models.AudioFeaturesTrack
 import retrofit.Callback
 import retrofit.RetrofitError
+import retrofit.client.Response
+import retrofit.mime.TypedInput
+import retrofit.mime.TypedString
+import java.io.IOException
 
 @ParseClassName("SongFeatures")
 class SongFeatures() : ParseObject() {
@@ -59,14 +63,47 @@ class SongFeatures() : ParseObject() {
             return features
         }
 
-        // todo: make asynchronous
-        fun getUserPlaylistFeatureMap(/*callback: Callback<Map<String,Number>>*/): Map<String, Double> {
+        fun asyncGetUserPlaylistFeatureMap(callback: Callback<Map<String, Double>>){
+            val query = ParseQuery.getQuery(SongFeatures::class.java)
+            query.include(SongFeatures.KEY_LOGGED_WEIGHT)
+            query.include(SongFeatures.KEY_FEATURE_JSON_STRING_DATA)
+            query.whereEqualTo(SongFeatures.KEY_USER_WHO_LOGGED, ParseUser.getCurrentUser())
+            val songFeatures = query.findInBackground { objects, e ->
+                if (e != null) {
+                    // TODO: shouldn't pass in the message for the url parameter
+                    val error = retrofit.RetrofitError.unexpectedError(
+                        e.message, e.cause
+                    )
+                    callback.failure(error)
+                } else if (objects == null) {
+                    // TODO: shouldn't pass in the message for the url parameter
+                    val throwable = Throwable("objects are null")
+                    val error = retrofit.RetrofitError.unexpectedError(
+                        "no url", throwable
+                    )
+                    callback.failure(error)
+                } else {
+                    // TODO: create actual valid response
+                    val response =  Response(
+                        "url", 200,
+                        "reason", emptyList(),
+                        TypedString("string")
+                    )
+                    callback.success(featureListToMap(objects), response)
+                }
+            }
+        }
+
+        fun syncGetUserPlaylistFeatureMap(/*callback: Callback<Map<String,Number>>*/): Map<String, Double> {
             val query = ParseQuery.getQuery(SongFeatures::class.java)
             query.include(SongFeatures.KEY_LOGGED_WEIGHT)
             query.include(SongFeatures.KEY_FEATURE_JSON_STRING_DATA)
             query.whereEqualTo(SongFeatures.KEY_USER_WHO_LOGGED, ParseUser.getCurrentUser())
             val songFeatures = query.find()
-            Log.d(TAG, "song features: " + songFeatures.size)
+            return featureListToMap(songFeatures)
+        }
+
+        fun featureListToMap(songFeatures: List<SongFeatures>): Map<String, Double> {
             val map : MutableMap<String, Double> = mutableMapOf()
             var totalWeight = 0.0
             val gson = Gson()
