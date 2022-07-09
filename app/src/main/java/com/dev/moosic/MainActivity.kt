@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.adapters.TrackAdapter
 import com.dev.moosic.fragments.*
+import com.dev.moosic.models.Contact
 import com.dev.moosic.models.Song
 import com.dev.moosic.models.SongFeatures
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -71,6 +72,8 @@ class MainActivity : AppCompatActivity(){
     var playerStateSubscription: Subscription<PlayerState>? = null
 
     var topTracks : ArrayList<kaaes.spotify.webapi.android.models.Track> = ArrayList()
+
+    var contactList : ArrayList<Contact> = ArrayList()
 
     var mostRecentSearchQuery: String? = null
     var searchedTracks : ArrayList<Track> = ArrayList()
@@ -604,7 +607,7 @@ class MainActivity : AppCompatActivity(){
         searchMenuItem?.isVisible = false
         settingsMenuItem?.isVisible = false
         backMenuItem?.isVisible = false
-        val newFragment = FriendsFragment.newInstance()
+        val newFragment = FriendsFragment.newInstance(contactList)
         fragmentManager.beginTransaction().replace(R.id.flContainer, newFragment).commit()
     }
 
@@ -843,6 +846,8 @@ class MainActivity : AppCompatActivity(){
             null)
         if (cursor!!.count > 0) {
             while (cursor.moveToNext()) {
+                val contact = Contact()
+
                 val idIdx = cursor.getColumnIndex(ContactsContract.Contacts._ID)
                 val nameIdx = cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME)
                 val hasPhoneNumberIdx = cursor.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER)
@@ -864,6 +869,8 @@ class MainActivity : AppCompatActivity(){
 //                                phoneNumValue).append("\n\n")
                             Log.e("Name ===>",phoneNumValue);
                             Log.d(TAG, "name: " + name + " phone number: " + phoneNumValue)
+                            contact.name = name
+                            contact.phoneNumber = phoneNumValue
                         }
                     }
                     cursorPhone!!.close()
@@ -875,10 +882,13 @@ class MainActivity : AppCompatActivity(){
                         val emailIdx = emailCursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.ADDRESS)
                         val email = emailCursor.getString(emailIdx)
                         Log.d(TAG, "email extracted: " + email)
+                        contact.email = email
                     }
                     //contact contains all the emails of a particular contact
                     emailCursor.close()
                 }
+
+                contactList.add(contact)
             }
         } else {
             //   toast("No contacts available!")
