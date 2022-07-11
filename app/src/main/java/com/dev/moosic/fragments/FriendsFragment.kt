@@ -12,6 +12,7 @@ import com.dev.moosic.R
 import com.dev.moosic.RecyclerItemDecoration
 import com.dev.moosic.adapters.ContactAdapter
 import com.dev.moosic.adapters.TaggedContactAdapter
+import com.dev.moosic.controllers.FriendsController
 import com.dev.moosic.models.Contact
 import com.dev.moosic.models.Song
 import org.parceler.Parcels
@@ -24,8 +25,7 @@ private const val ARG_PARAM2 = "taggedContactList"
  * Use the [FriendsFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class FriendsFragment : Fragment() {
-
+class FriendsFragment(friendsController: FriendsController) : Fragment() {
     val TAG = "FriendsFragment"
 
     private lateinit var rvContacts : RecyclerView
@@ -35,6 +35,8 @@ class FriendsFragment : Fragment() {
     private var contactList: ArrayList<Contact> = ArrayList()
 
     private var taggedContactList : ArrayList<Pair<Contact, String>> = ArrayList()
+
+    private var friendsController = friendsController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,8 +61,9 @@ class FriendsFragment : Fragment() {
          * @return A new instance of fragment FriendsFragment.
          */
         @JvmStatic
-        fun newInstance(contactList : ArrayList<Contact>, taggedContactList: ArrayList<Pair<Contact, String>>) =
-            FriendsFragment().apply {
+        fun newInstance(contactList : ArrayList<Contact>, taggedContactList: ArrayList<Pair<Contact, String>>,
+            controller: FriendsController) =
+            FriendsFragment(controller).apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_PARAM1, Parcels.wrap(contactList))
                     putParcelable(ARG_PARAM2, Parcels.wrap(taggedContactList))
@@ -73,7 +76,7 @@ class FriendsFragment : Fragment() {
         rvContacts = view.findViewById(R.id.rvContacts)
 
         // TODO, pass taggedContactList instead of contactList
-        adapter = TaggedContactAdapter(view.context, taggedContactList) //ContactAdapter(view.context, contactList)
+        adapter = TaggedContactAdapter(view.context, taggedContactList, friendsController) //ContactAdapter(view.context, contactList)
         rvContacts.adapter = adapter
         val linearLayoutManager = LinearLayoutManager(context)
         rvContacts.layoutManager = linearLayoutManager
@@ -99,6 +102,7 @@ class FriendsFragment : Fragment() {
             return position == 0 || (getSectionHeaderName(position) != getSectionHeaderName(position - 1))
         }
         override fun getSectionHeaderName(position: Int): String {
+            if (!(position in IntRange(0, taggedContacts.size - 1))) return "Index out of range"
             when(taggedContacts.get(position).second) {
                 Contact.KEY_NOT_FOLLOWED_CONTACT -> {return "Friends you might know:"}
                 Contact.KEY_FOLLOWED_CONTACT -> {return "Friends you've followed:"}

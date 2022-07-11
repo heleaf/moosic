@@ -9,12 +9,11 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import com.dev.moosic.controllers.SpotifyAuthController
 import com.dev.moosic.models.Playlist
 import com.google.gson.Gson
-import com.parse.ParseObject
 import com.parse.ParseUser
 import com.spotify.sdk.android.auth.AuthorizationClient
-import com.spotify.sdk.android.auth.AuthorizationRequest
 import com.spotify.sdk.android.auth.AuthorizationResponse
 import org.parceler.Parcels
 

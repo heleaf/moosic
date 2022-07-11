@@ -14,7 +14,10 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.dev.moosic.adapters.TaggedContactAdapter
 import com.dev.moosic.adapters.TrackAdapter
+import com.dev.moosic.controllers.FriendsController
+import com.dev.moosic.controllers.SongController
 import com.dev.moosic.fragments.*
 import com.dev.moosic.models.Contact
 import com.dev.moosic.models.Song
@@ -64,6 +67,7 @@ class MainActivity : AppCompatActivity(){
     }
 
     val mainActivitySongController = MainActivitySongController()
+    val mainActivityFriendsController = MainActivityFriendsController()
 
     var spotifyApiAuthToken : String? = null
     var currentUserId : String? = null
@@ -262,267 +266,6 @@ class MainActivity : AppCompatActivity(){
         SpotifyAppRemote.disconnect(mSpotifyAppRemote);
     }
 
-    inner class MainActivitySongController() : SongController{
-        val TAG = "MainActivityController"
-        override fun logTrackInModel(trackId: String, weight: Int) {
-            spotifyApi.service.getTrackAudioFeatures(trackId, object: Callback<AudioFeaturesTrack> {
-                override fun success(t: AudioFeaturesTrack?, response: Response?) {
-                    if (t != null) {
-                        val featuresEntry = SongFeatures.fromAudioFeaturesTrack(t, weight)
-                        featuresEntry.saveInBackground()
-                        Log.d(TAG, "logged " + trackId + " in model")
-                    }
-                }
-                override fun failure(error: RetrofitError?) {
-                    Log.d(TAG, "failed to get track's audio features: " + error?.message)
-                }
-            })
-        }
-
-        fun addToSpotifyPlaylist(userId: String, playlistId: String, track: Track){
-            val queryParams : Map<String, Any> = mapOf("uris" to track.uri)
-            val bodyParams : Map<String, Any> = emptyMap()
-            spotifyApi.service.addTracksToPlaylist(userId, playlistId,
-                queryParams, bodyParams, object: Callback<Pager<PlaylistTrack>>{
-                    override fun success(t: Pager<PlaylistTrack>?, response: Response?) {
-                        Log.d(TAG, "added: " + track.name + " to playlist " + playlistId)
-                    }
-                    override fun failure(error: RetrofitError?) {
-                        Log.d(TAG, "bad request: " + error?.message)
-                    }
-                })
-        }
-
-        fun addToParsePlaylist(track: Track){
-            Log.d(TAG, "adding " + track.name + " to parse playlist...")
-            val user = ParseUser.getCurrentUser()
-            val playlist = user.getParseObject("parsePlaylist")
-            val playlistSongsRelation = playlist?.getRelation<Song>("playlistSongs")
-            val newSong = Song.fromTrack(track)
-            newSong.saveInBackground {
-                if (it != null) {
-                    Log.d(TAG, "error saving " + track.name + " to Parse")
-                    return@saveInBackground
-                }
-                playlistSongsRelation?.add(newSong)
-                parsePlaylistSongs.add(newSong)
-                playlist?.saveInBackground { e ->
-                    if (e != null) Log.d(TAG, "error adding " + track.name +
-                            " to parse playlist: " + e.message)
-                    else {
-                        Log.d(TAG, "saving " + track.name + " to parse" +
-                                " playlist...")
-                        Toast.makeText(this@MainActivity, "added " + track.name + " to playlist",
-                        Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-            logTrackInModel(track.id, WEIGHT_ADDED_SONG_TO_PLAYLIST)
-        }
-
-        override fun addToPlaylist(userId: String, playlistId: String, track: Track) {
-            addToParsePlaylist(track)
-        }
-
-        fun removeFromSpotifyPlaylist(userId: String, playlistId: String, track: Track, position: Int) {
-            val tracksToRemove : TracksToRemove = TracksToRemove()
-            val trackToRemove : TrackToRemove = TrackToRemove()
-            trackToRemove.uri = track.uri
-            Log.d(TAG, trackToRemove.toString())
-            Log.d(TAG, tracksToRemove.toString())
-            tracksToRemove.tracks = listOf(trackToRemove)
-            val tracksToRemoveWithPosition : TracksToRemoveWithPosition =
-                TracksToRemoveWithPosition()
-            val trackToRemoveWithPosition : TrackToRemoveWithPosition =
-                TrackToRemoveWithPosition()
-            trackToRemoveWithPosition.uri = track.uri
-            trackToRemoveWithPosition.positions = listOf(position)
-            tracksToRemoveWithPosition.tracks = listOf(trackToRemoveWithPosition)
-            spotifyApi.service.removeTracksFromPlaylist(userId, playlistId, tracksToRemoveWithPosition,
-                object: Callback<SnapshotId> {
-                    override fun success(t: SnapshotId?, response: Response?) {
-                        Log.d(TAG, "removed " + track.name)
-                    }
-                    override fun failure(error: RetrofitError?) {
-                        Log.d(TAG, "failed to remove " + track.name + ": " + error?.message)
-                    }
-                })
-        }
-
-        fun removeFromParsePlaylist(track: Track, position: Int){
-            val user = ParseUser.getCurrentUser()
-            val playlist = user.getParseObject("parsePlaylist")
-            val playlistSongsRelation = playlist?.getRelation<Song>("playlistSongs")
-            if (parsePlaylistSongs.size <= position) {
-                Log.d(TAG, "position " + position + " out of bounds?")
-                Log.d(TAG, "parse playlist song size: " + parsePlaylistSongs.size)
-                return
-            }
-            val songToDelete = parsePlaylistSongs.get(position)
-            parsePlaylistSongs.removeAt(position)
-            playlistSongsRelation?.remove(songToDelete)
-            playlist?.saveInBackground {
-                if (it != null) {
-                    Log.d(TAG, "error removing " + track.name + " from playlist")
-                    return@saveInBackground
-                }
-                songToDelete.deleteInBackground()
-            }
-        }
-
-        override fun removeFromPlaylist(userId: String, playlistId: String, track: Track, position : Int) {
-            removeFromParsePlaylist(track, position)
-        }
-
-       fun addToSavedTracks(trackId: String) {
-            spotifyApi.service.addToMySavedTracks(trackId, object: Callback<Any> {
-                override fun success(t: Any?, response: Response?) {
-                    Log.d(TAG, "added track " + trackId + " to saved tracks")
-                }
-                override fun failure(error: RetrofitError?) {
-                    Log.d(TAG, "failed to add track " + trackId + " to saved songs: " +
-                    error?.message)
-                }
-            });
-        }
-
-        fun removeFromSavedTracks(trackId: String) {
-            spotifyApi.service.removeFromMySavedTracks(trackId, object: Callback<Any> {
-                override fun success(t: Any?, response: Response?) {
-                    Log.d(TAG, "removed track " + trackId + " from saved tracks")
-                }
-
-                override fun failure(error: RetrofitError?) {
-                    Log.d(TAG, "failed to remove track " + trackId + " from saved songs: " +
-                            error?.message)
-                }
-            })
-        }
-
-        // TODO: synchronous calls don't work for me?
-        fun tracksAreSaved(tracks: List<Track>): Array<out Boolean>? {
-            val commaSeparatedIds = tracks.fold(
-                ""
-            ) { acc: String, track: Track ->
-                Log.d(TAG, acc.isEmpty().toString() + " " + acc.isBlank().toString())
-                acc
-            }
-            return spotifyApi.service.containsMySavedTracks(tracks[0].id);
-        }
-
-        override fun loadMoreTopSongs(offset: Int, numberItemsToLoad: Int, clearItemList: Boolean,
-                                      adapter: TrackAdapter, swipeContainer: SwipeRefreshLayout) {
-            loadUserTopTracks(offset, numberItemsToLoad, clearItemList, adapter, swipeContainer)
-        }
-
-        override fun loadMoreSearchTracks(query: String, offset: Int, numberItemsToLoad: Int,
-                                          adapter: TrackAdapter
-        ) {
-             loadMoreQueryTracks(query, offset, numberItemsToLoad, false, adapter)
-        }
-
-        override fun loadReccomendedSongs(seedArtists: String, seedGenres: String, seedTracks: String,
-                                          limit: Int
-        ) {
-            val recommendationQuery : Map<String, Any> = mapOf(
-                "seed_artists" to seedArtists, "seed_genres" to seedGenres, "seed_tracks" to seedTracks
-            )
-            spotifyApi.service.getRecommendations(recommendationQuery, object: Callback<Recommendations> {
-                override fun success(t: Recommendations?, response: Response?) {
-                    if (t != null) {
-                        // place t.tracks into some global list variable
-                    }
-                }
-                override fun failure(error: RetrofitError?) {
-                    Log.d(TAG, "error querying reccomendations: " + error?.message)
-                }
-            })
-        }
-
-        override fun playSongOnSpotify(uri: String, spotifyId: String) {
-            mSpotifyAppRemote?.getPlayerApi()?.play(uri);
-            logTrackInModel(spotifyId, WEIGHT_PLAYED_SONG)
-            spotifyApi.service.getTrack(spotifyId, object: Callback<Track> {
-                override fun success(t: Track?, response: Response?) {
-                    if (t != null) {
-                        currentTrack = t
-                        miniPlayerFragment = MiniPlayerFragment.newInstance(t, this@MainActivitySongController, false)
-                        fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
-                            miniPlayerFragment!!).commit()
-                        showMiniPlayerPreview()
-                    }
-                }
-                override fun failure(error: RetrofitError?) {
-                    Log.d(TAG, "error setting up mini player: " + error?.message)
-                }
-            })
-        }
-
-        override fun pauseSongOnSpotify() {
-            mSpotifyAppRemote?.getPlayerApi()?.pause()
-        }
-
-        override fun resumeSongOnSpotify() {
-            mSpotifyAppRemote?.getPlayerApi()?.resume()
-        }
-
-        // TODO: move these to a separate controller interface?
-        override fun goToMiniPlayerDetailView() {
-            if (currentTrack != null && currentTrackIsPaused != null){
-                val miniPlayerDetailFragment
-                        = MiniPlayerDetailFragment.newInstance(currentTrack!!,
-                    this,
-                    currentTrackIsPaused!!)
-                fragmentManager.beginTransaction().replace(R.id.miniPlayerDetailFlContainer, miniPlayerDetailFragment).commit()
-                bottomNavigationView?.visibility = View.GONE
-                supportActionBar?.hide()
-                showMiniPlayerDetailFragment = true
-            }
-        }
-
-        override fun exitMiniPlayerDetailView() {
-            val miniPlayerDetailFragment = fragmentManager.findFragmentById(R.id.miniPlayerDetailFlContainer)
-            if (miniPlayerDetailFragment != null){
-                fragmentManager.beginTransaction().remove(miniPlayerDetailFragment).commit()
-                bottomNavigationView?.visibility = View.VISIBLE
-                supportActionBar?.show()
-                showMiniPlayerDetailFragment = false
-            }
-        }
-
-        fun showMiniPlayerPreview(){
-            val fragmentToShow = fragmentManager.findFragmentById(R.id.miniPlayerFlContainer)
-            if (fragmentToShow != null) {
-                fragmentManager.beginTransaction().show(fragmentToShow).commit()
-                miniPlayerFragmentContainer?.visibility = View.VISIBLE
-                showMiniPlayerFragment = true
-            }
-        }
-
-        fun hideMiniPlayerPreview(){
-            val fragmentToHide = fragmentManager.findFragmentById(R.id.miniPlayerFlContainer)
-            if (fragmentToHide != null) {
-                fragmentManager.beginTransaction().hide(fragmentToHide).commit()
-                miniPlayerFragmentContainer?.visibility = View.GONE
-                pauseSongOnSpotify()
-                showMiniPlayerFragment = false
-            }
-        }
-
-        override fun logOutFromParse(){
-            ParseUser.logOut()
-            finish()
-        }
-
-        override fun exitSettingsTab() {
-            val fragment = fragmentManager.findFragmentById(R.id.flContainer)
-            if (fragment != null) {
-                fragmentManager.beginTransaction().remove(fragment).commit() // help?
-            }
-        }
-
-    }
-
     private fun setUpCurrentUser() {
         val currentParseUser : ParseUser = ParseUser.getCurrentUser()
         if (currentParseUser.getString("userId") == null){
@@ -612,7 +355,7 @@ class MainActivity : AppCompatActivity(){
         searchMenuItem?.isVisible = false
         settingsMenuItem?.isVisible = false
         backMenuItem?.isVisible = false
-        val newFragment = FriendsFragment.newInstance(contactList, taggedContactList)
+        val newFragment = FriendsFragment.newInstance(contactList, taggedContactList, mainActivityFriendsController)
         fragmentManager.beginTransaction().replace(R.id.flContainer, newFragment).commit()
     }
 
@@ -924,7 +667,9 @@ class MainActivity : AppCompatActivity(){
 
 
     fun filterFriendsFromContacts(contactList : List<Contact>): Pair<List<Contact>, List<Contact>> {
-        val usersFollowedRelation = ParseUser.getCurrentUser().getRelation<ParseUser>(KEY_USERS_FOLLOWED)
+        val usersFollowedRelation = ParseUser.getCurrentUser().getRelation<ParseUser>(
+            KEY_USERS_FOLLOWED
+        )
 
 //        usersFollowedRelation.add(ParseUser.getCurrentUser())
 //        ParseUser.getCurrentUser().saveInBackground()
@@ -960,6 +705,340 @@ class MainActivity : AppCompatActivity(){
         // TODO: filter out current user
         val matchedUsers = usersFollowedPhoneNumberQuery.find()
         return matchedUsers.size > 0
+    }
+
+
+    inner class MainActivitySongController() : SongController {
+        val TAG = "MainActivityController"
+        override fun logTrackInModel(trackId: String, weight: Int) {
+            spotifyApi.service.getTrackAudioFeatures(trackId, object: Callback<AudioFeaturesTrack> {
+                override fun success(t: AudioFeaturesTrack?, response: Response?) {
+                    if (t != null) {
+                        val featuresEntry = SongFeatures.fromAudioFeaturesTrack(t, weight)
+                        featuresEntry.saveInBackground()
+                        Log.d(TAG, "logged " + trackId + " in model")
+                    }
+                }
+                override fun failure(error: RetrofitError?) {
+                    Log.d(TAG, "failed to get track's audio features: " + error?.message)
+                }
+            })
+        }
+
+        fun addToSpotifyPlaylist(userId: String, playlistId: String, track: Track){
+            val queryParams : Map<String, Any> = mapOf("uris" to track.uri)
+            val bodyParams : Map<String, Any> = emptyMap()
+            spotifyApi.service.addTracksToPlaylist(userId, playlistId,
+                queryParams, bodyParams, object: Callback<Pager<PlaylistTrack>>{
+                    override fun success(t: Pager<PlaylistTrack>?, response: Response?) {
+                        Log.d(TAG, "added: " + track.name + " to playlist " + playlistId)
+                    }
+                    override fun failure(error: RetrofitError?) {
+                        Log.d(TAG, "bad request: " + error?.message)
+                    }
+                })
+        }
+
+        fun addToParsePlaylist(track: Track){
+            Log.d(TAG, "adding " + track.name + " to parse playlist...")
+            val user = ParseUser.getCurrentUser()
+            val playlist = user.getParseObject("parsePlaylist")
+            val playlistSongsRelation = playlist?.getRelation<Song>("playlistSongs")
+            val newSong = Song.fromTrack(track)
+            newSong.saveInBackground {
+                if (it != null) {
+                    Log.d(TAG, "error saving " + track.name + " to Parse")
+                    return@saveInBackground
+                }
+                playlistSongsRelation?.add(newSong)
+                parsePlaylistSongs.add(newSong)
+                playlist?.saveInBackground { e ->
+                    if (e != null) Log.d(TAG, "error adding " + track.name +
+                            " to parse playlist: " + e.message)
+                    else {
+                        Log.d(TAG, "saving " + track.name + " to parse" +
+                                " playlist...")
+                        Toast.makeText(this@MainActivity, "added " + track.name + " to playlist",
+                            Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            logTrackInModel(track.id, WEIGHT_ADDED_SONG_TO_PLAYLIST)
+        }
+
+        override fun addToPlaylist(userId: String, playlistId: String, track: Track) {
+            addToParsePlaylist(track)
+        }
+
+        fun removeFromSpotifyPlaylist(userId: String, playlistId: String, track: Track, position: Int) {
+            val tracksToRemove : TracksToRemove = TracksToRemove()
+            val trackToRemove : TrackToRemove = TrackToRemove()
+            trackToRemove.uri = track.uri
+            Log.d(TAG, trackToRemove.toString())
+            Log.d(TAG, tracksToRemove.toString())
+            tracksToRemove.tracks = listOf(trackToRemove)
+            val tracksToRemoveWithPosition : TracksToRemoveWithPosition =
+                TracksToRemoveWithPosition()
+            val trackToRemoveWithPosition : TrackToRemoveWithPosition =
+                TrackToRemoveWithPosition()
+            trackToRemoveWithPosition.uri = track.uri
+            trackToRemoveWithPosition.positions = listOf(position)
+            tracksToRemoveWithPosition.tracks = listOf(trackToRemoveWithPosition)
+            spotifyApi.service.removeTracksFromPlaylist(userId, playlistId, tracksToRemoveWithPosition,
+                object: Callback<SnapshotId> {
+                    override fun success(t: SnapshotId?, response: Response?) {
+                        Log.d(TAG, "removed " + track.name)
+                    }
+                    override fun failure(error: RetrofitError?) {
+                        Log.d(TAG, "failed to remove " + track.name + ": " + error?.message)
+                    }
+                })
+        }
+
+        fun removeFromParsePlaylist(track: Track, position: Int){
+            val user = ParseUser.getCurrentUser()
+            val playlist = user.getParseObject("parsePlaylist")
+            val playlistSongsRelation = playlist?.getRelation<Song>("playlistSongs")
+            if (parsePlaylistSongs.size <= position) {
+                Log.d(TAG, "position " + position + " out of bounds?")
+                Log.d(TAG, "parse playlist song size: " + parsePlaylistSongs.size)
+                return
+            }
+            val songToDelete = parsePlaylistSongs.get(position)
+            parsePlaylistSongs.removeAt(position)
+            playlistSongsRelation?.remove(songToDelete)
+            playlist?.saveInBackground {
+                if (it != null) {
+                    Log.d(TAG, "error removing " + track.name + " from playlist")
+                    return@saveInBackground
+                }
+                songToDelete.deleteInBackground()
+            }
+        }
+
+        override fun removeFromPlaylist(userId: String, playlistId: String, track: Track, position : Int) {
+            removeFromParsePlaylist(track, position)
+        }
+
+        fun addToSavedTracks(trackId: String) {
+            spotifyApi.service.addToMySavedTracks(trackId, object: Callback<Any> {
+                override fun success(t: Any?, response: Response?) {
+                    Log.d(TAG, "added track " + trackId + " to saved tracks")
+                }
+                override fun failure(error: RetrofitError?) {
+                    Log.d(TAG, "failed to add track " + trackId + " to saved songs: " +
+                            error?.message)
+                }
+            });
+        }
+
+        fun removeFromSavedTracks(trackId: String) {
+            spotifyApi.service.removeFromMySavedTracks(trackId, object: Callback<Any> {
+                override fun success(t: Any?, response: Response?) {
+                    Log.d(TAG, "removed track " + trackId + " from saved tracks")
+                }
+
+                override fun failure(error: RetrofitError?) {
+                    Log.d(TAG, "failed to remove track " + trackId + " from saved songs: " +
+                            error?.message)
+                }
+            })
+        }
+
+        // TODO: synchronous calls don't work for me?
+        fun tracksAreSaved(tracks: List<Track>): Array<out Boolean>? {
+            val commaSeparatedIds = tracks.fold(
+                ""
+            ) { acc: String, track: Track ->
+                Log.d(TAG, acc.isEmpty().toString() + " " + acc.isBlank().toString())
+                acc
+            }
+            return spotifyApi.service.containsMySavedTracks(tracks[0].id);
+        }
+
+        override fun loadMoreTopSongs(offset: Int, numberItemsToLoad: Int, clearItemList: Boolean,
+                                      adapter: TrackAdapter, swipeContainer: SwipeRefreshLayout) {
+            loadUserTopTracks(offset, numberItemsToLoad, clearItemList, adapter, swipeContainer)
+        }
+
+        override fun loadMoreSearchTracks(query: String, offset: Int, numberItemsToLoad: Int,
+                                          adapter: TrackAdapter
+        ) {
+            loadMoreQueryTracks(query, offset, numberItemsToLoad, false, adapter)
+        }
+
+        override fun loadReccomendedSongs(seedArtists: String, seedGenres: String, seedTracks: String,
+                                          limit: Int
+        ) {
+            val recommendationQuery : Map<String, Any> = mapOf(
+                "seed_artists" to seedArtists, "seed_genres" to seedGenres, "seed_tracks" to seedTracks
+            )
+            spotifyApi.service.getRecommendations(recommendationQuery, object: Callback<Recommendations> {
+                override fun success(t: Recommendations?, response: Response?) {
+                    if (t != null) {
+                        // place t.tracks into some global list variable
+                    }
+                }
+                override fun failure(error: RetrofitError?) {
+                    Log.d(TAG, "error querying reccomendations: " + error?.message)
+                }
+            })
+        }
+
+        override fun playSongOnSpotify(uri: String, spotifyId: String) {
+            mSpotifyAppRemote?.getPlayerApi()?.play(uri);
+            logTrackInModel(spotifyId, WEIGHT_PLAYED_SONG)
+            spotifyApi.service.getTrack(spotifyId, object: Callback<Track> {
+                override fun success(t: Track?, response: Response?) {
+                    if (t != null) {
+                        currentTrack = t
+                        miniPlayerFragment = MiniPlayerFragment.newInstance(t, this@MainActivitySongController, false)
+                        fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
+                            miniPlayerFragment!!).commit()
+                        showMiniPlayerPreview()
+                    }
+                }
+                override fun failure(error: RetrofitError?) {
+                    Log.d(TAG, "error setting up mini player: " + error?.message)
+                }
+            })
+        }
+
+        override fun pauseSongOnSpotify() {
+            mSpotifyAppRemote?.getPlayerApi()?.pause()
+        }
+
+        override fun resumeSongOnSpotify() {
+            mSpotifyAppRemote?.getPlayerApi()?.resume()
+        }
+
+        // TODO: move these to a separate controller interface?
+        override fun goToMiniPlayerDetailView() {
+            if (currentTrack != null && currentTrackIsPaused != null){
+                val miniPlayerDetailFragment
+                        = MiniPlayerDetailFragment.newInstance(currentTrack!!,
+                    this,
+                    currentTrackIsPaused!!)
+                fragmentManager.beginTransaction().replace(R.id.miniPlayerDetailFlContainer, miniPlayerDetailFragment).commit()
+                bottomNavigationView?.visibility = View.GONE
+                supportActionBar?.hide()
+                showMiniPlayerDetailFragment = true
+            }
+        }
+
+        override fun exitMiniPlayerDetailView() {
+            val miniPlayerDetailFragment = fragmentManager.findFragmentById(R.id.miniPlayerDetailFlContainer)
+            if (miniPlayerDetailFragment != null){
+                fragmentManager.beginTransaction().remove(miniPlayerDetailFragment).commit()
+                bottomNavigationView?.visibility = View.VISIBLE
+                supportActionBar?.show()
+                showMiniPlayerDetailFragment = false
+            }
+        }
+
+        fun showMiniPlayerPreview(){
+            val fragmentToShow = fragmentManager.findFragmentById(R.id.miniPlayerFlContainer)
+            if (fragmentToShow != null) {
+                fragmentManager.beginTransaction().show(fragmentToShow).commit()
+                miniPlayerFragmentContainer?.visibility = View.VISIBLE
+                showMiniPlayerFragment = true
+            }
+        }
+
+        fun hideMiniPlayerPreview(){
+            val fragmentToHide = fragmentManager.findFragmentById(R.id.miniPlayerFlContainer)
+            if (fragmentToHide != null) {
+                fragmentManager.beginTransaction().hide(fragmentToHide).commit()
+                miniPlayerFragmentContainer?.visibility = View.GONE
+                pauseSongOnSpotify()
+                showMiniPlayerFragment = false
+            }
+        }
+
+        override fun logOutFromParse(){
+            ParseUser.logOut()
+            finish()
+        }
+
+        override fun exitSettingsTab() {
+            val fragment = fragmentManager.findFragmentById(R.id.flContainer)
+            if (fragment != null) {
+                fragmentManager.beginTransaction().remove(fragment).commit() // help?
+            }
+        }
+
+    }
+
+    inner class MainActivityFriendsController() : FriendsController {
+        val TAG = "MainActivityFriendsController"
+
+        val currentUser = ParseUser.getCurrentUser()
+        val currentUserFollowedRelation = currentUser.getRelation<ParseUser>("usersFollowed")
+
+        // i need the position in the list too, so i can modify it...
+        override fun followContact(contact: Contact, position: Int, adapter: TaggedContactAdapter) {
+            val contactQuery = ParseQuery.getQuery(ParseUser::class.java)
+            contactQuery.whereEqualTo(Contact.KEY_PHONE_NUMBER, contact.phoneNumber)
+            contactQuery.findInBackground { objects, e ->
+                if (e != null) {
+                    Log.e(TAG, "error finding contact: " + e.message)
+                    return@findInBackground
+                }
+                if (objects != null) {
+                    if (objects.size > 0) {
+                        val userToFollow = objects.get(0)
+                        currentUserFollowedRelation.add(userToFollow)
+                        currentUser.saveInBackground{
+                            if (it != null) {
+                                Log.e(TAG, "error saving user contact relation: " + it.message)
+                            }
+                            else {
+                                taggedContactList.removeAt(position)
+                                adapter.notifyItemRemoved(position)
+                                taggedContactList.add(Pair(contact, Contact.KEY_FOLLOWED_CONTACT))
+                                adapter.notifyItemRangeChanged(position, taggedContactList.size)
+                                Toast.makeText(context,
+                                    "followed " + contact.parseUsername,
+                                Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    } else {
+                        Log.d(TAG, "user doesn't exist?")
+                    }
+                }
+            }
+        }
+
+        override fun unfollowContact(contact: Contact) {
+            val contactQuery = ParseQuery.getQuery(ParseUser::class.java)
+            contactQuery.whereEqualTo(Contact.KEY_PHONE_NUMBER, contact.phoneNumber)
+            contactQuery.findInBackground { objects, e ->
+                if (e != null) {
+                    Log.e(TAG, "error finding contact: " + e.message)
+                    return@findInBackground
+                }
+                if (objects != null) {
+                    if (objects.size > 0) {
+                        val userToFollow = objects.get(0)
+                        currentUserFollowedRelation.remove(userToFollow)
+                        currentUser.saveInBackground{
+                            if (it != null) {
+                                Log.e(TAG, "error saving user contact relation: " + it.message)
+                            }
+                            else {
+                                Toast.makeText(
+                                    context,
+                                    "followed " + contact.parseUsername,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    } else {
+                        Log.d(TAG, "user doesn't exist?")
+                    }
+                }
+            }
+        }
     }
 
 }

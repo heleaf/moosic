@@ -1,4 +1,4 @@
-package com.dev.moosic
+package com.dev.moosic.controllers
 
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.adapters.TrackAdapter

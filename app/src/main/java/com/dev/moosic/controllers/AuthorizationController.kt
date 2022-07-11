@@ -1,4 +1,4 @@
-package com.dev.moosic
+package com.dev.moosic.controllers
 
 interface AuthorizationController {
     val CLIENT_ID: String

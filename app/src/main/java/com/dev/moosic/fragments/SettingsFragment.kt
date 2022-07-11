@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
-import com.dev.moosic.SongController
+import com.dev.moosic.controllers.SongController
 import com.dev.moosic.R
 import com.parse.ParseUser
 

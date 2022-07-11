@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.*
+import com.dev.moosic.MainActivity
 import com.dev.moosic.adapters.SongAdapter
 import com.dev.moosic.models.Song
 import org.parceler.Parcels
@@ -85,10 +86,10 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivitySongContr
         rvPlaylistTracks?.adapter = adapter
 
         // TODO sticky headers
-        val recyclerItemDecoration : RecyclerItemDecoration
-        = RecyclerItemDecoration(requireContext(), resources.getDimensionPixelSize(R.dimen.header_height),
-        true, getSectionCallback(songs))
-        rvPlaylistTracks?.addItemDecoration(recyclerItemDecoration)
+//        val recyclerItemDecoration : RecyclerItemDecoration
+//        = RecyclerItemDecoration(requireContext(), resources.getDimensionPixelSize(R.dimen.header_height),
+//        true, getSectionCallback(songs))
+//        rvPlaylistTracks?.addItemDecoration(recyclerItemDecoration)
 
         val linearLayoutManager = LinearLayoutManager(context)
         rvPlaylistTracks?.setLayoutManager(linearLayoutManager)

@@ -1,7 +1,7 @@
-package com.dev.moosic
+package com.dev.moosic.controllers
 
 import android.app.Activity
-import android.content.Context
+import com.dev.moosic.controllers.AuthorizationController
 import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationRequest
 import com.spotify.sdk.android.auth.AuthorizationResponse
