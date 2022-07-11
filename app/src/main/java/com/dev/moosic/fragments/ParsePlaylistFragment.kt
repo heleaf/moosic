@@ -85,11 +85,10 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivitySongContr
         rvPlaylistTracks?.adapter = adapter
 
         // TODO sticky headers
-//        val recyclerItemDecoration : RecyclerItemDecoration
-//        = RecyclerItemDecoration(requireContext(), resources.getDimensionPixelSize(R.dimen.header_height),
-//        false, getSectionCallback(songs))
-//
-//        rvPlaylistTracks?.addItemDecoration(recyclerItemDecoration)
+        val recyclerItemDecoration : RecyclerItemDecoration
+        = RecyclerItemDecoration(requireContext(), resources.getDimensionPixelSize(R.dimen.header_height),
+        true, getSectionCallback(songs))
+        rvPlaylistTracks?.addItemDecoration(recyclerItemDecoration)
 
         val linearLayoutManager = LinearLayoutManager(context)
         rvPlaylistTracks?.setLayoutManager(linearLayoutManager)
@@ -121,12 +120,15 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivitySongContr
     inner class DecorationSectionCallback(songs: ArrayList<Song>) : RecyclerItemDecoration.SectionCallback {
         override fun isHeader(position: Int): Boolean {
             // TODO: return pos == 0 || true if the category of current ! = category of previous
+            // list.get(pos).get("Title")!=list.get(pos-1).get("Title");
             return position == 0 || position == 4
         }
 
         override fun getSectionHeaderName(position: Int): String {
             // TODO: index in at the position and grab the name
-            return "testing"
+            return if (position < 4) " pain " else " suffering "
+//            return songs.get(position).getName()!!
+            // "testing" // if ( position < 4 ) songs.get(position).getName()!! else "hello"
         }
     }
 

@@ -20,6 +20,8 @@ import com.dev.moosic.models.Contact
 import com.dev.moosic.models.Song
 import com.dev.moosic.models.SongFeatures
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.parse.ParseQuery
+import com.parse.ParseRelation
 import com.parse.ParseUser
 import com.spotify.android.appremote.api.ConnectionParams
 import com.spotify.android.appremote.api.Connector
@@ -37,6 +39,8 @@ private const val KEY_ADD_BUTTON = "add"
 private const val KEY_DELETE_BUTTON = "delete"
 private const val KEY_HEART_BUTTON = "heart"
 private const val KEY_LOGOUT_BUTTON = "logOut"
+private const val KEY_USERS_FOLLOWED = "usersFollowed"
+private const val KEY_USER_PHONE_NUMBER = "phoneNumber"
 
 class MainActivity : AppCompatActivity(){
     val TAG = "MainActivity"
@@ -74,6 +78,7 @@ class MainActivity : AppCompatActivity(){
     var topTracks : ArrayList<kaaes.spotify.webapi.android.models.Track> = ArrayList()
 
     var contactList : ArrayList<Contact> = ArrayList()
+    var taggedContactList : ArrayList<Pair<Contact, String>> = ArrayList()
 
     var mostRecentSearchQuery: String? = null
     var searchedTracks : ArrayList<Track> = ArrayList()
@@ -607,7 +612,7 @@ class MainActivity : AppCompatActivity(){
         searchMenuItem?.isVisible = false
         settingsMenuItem?.isVisible = false
         backMenuItem?.isVisible = false
-        val newFragment = FriendsFragment.newInstance(contactList)
+        val newFragment = FriendsFragment.newInstance(contactList, taggedContactList)
         fragmentManager.beginTransaction().replace(R.id.flContainer, newFragment).commit()
     }
 
@@ -814,7 +819,7 @@ class MainActivity : AppCompatActivity(){
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSIONS_REQUEST_READ_CONTACTS) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//                loadContacts()
+                getContacts()
                 Log.d(TAG, "permission granted?")
             } else {
                 Log.d(TAG, "permission not granted?")
@@ -824,7 +829,6 @@ class MainActivity : AppCompatActivity(){
     }
 
     fun testFetchContacts(){
-//        var builder = StringBuilder()
         if (checkSelfPermission(Manifest.permission.READ_CONTACTS)
             != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(arrayOf(Manifest.permission.READ_CONTACTS),
@@ -832,15 +836,31 @@ class MainActivity : AppCompatActivity(){
             // callback onRequestPermissionsResult
         } else {
             Log.d(TAG, "fetching contacts now...")
-            getContacts()
-//            val tmpText = builder.toString()
-//            Log.d(TAG, "...? " + tmpText)
+            val phoneContacts = getContacts()
+
+            // all contacts
+            val testLists = filterFriendsFromContacts(phoneContacts)
+//            Log.d(TAG, "test contact non friend list: " + testList)
+            //  contactList.addAll(testList)
+            contactList.addAll(testLists.first)
+            contactList.addAll(testLists.second)
+
+            val taggedNotAddedContacts = testLists.first.map{
+                contact -> Pair(contact, Contact.KEY_NOT_FOLLOWED_CONTACT)
+            }
+
+            val taggedFollowedFriends = testLists.second.map{
+                contact -> Pair(contact, Contact.KEY_FOLLOWED_CONTACT)
+            }
+
+            taggedContactList.addAll(taggedNotAddedContacts)
+            taggedContactList.addAll(taggedFollowedFriends)
         }
     }
 
-    private fun getContacts() {
-//        val builder = StringBuilder()
-        val resolver: ContentResolver = contentResolver;
+    private fun getContacts(): ArrayList<Contact> {
+        val phoneContacts : ArrayList<Contact> = ArrayList()
+        val resolver: ContentResolver = contentResolver
         val cursor = resolver.query(
             ContactsContract.Contacts.CONTENT_URI, null, null, null,
             null)
@@ -870,7 +890,14 @@ class MainActivity : AppCompatActivity(){
                             Log.e("Name ===>",phoneNumValue);
                             Log.d(TAG, "name: " + name + " phone number: " + phoneNumValue)
                             contact.name = name
-                            contact.phoneNumber = phoneNumValue
+                            // parse this to lose the parens, extra spaces, and dashes
+                            val cleanedUpPhoneNumValue =
+                                String.format("%s%s%s",
+                                phoneNumValue.slice(IntRange(1,3)),
+                                phoneNumValue.slice(IntRange(6,8)),
+                                phoneNumValue.slice(IntRange(10,13))
+                                )
+                            contact.phoneNumber = cleanedUpPhoneNumValue
                         }
                     }
                     cursorPhone!!.close()
@@ -884,17 +911,56 @@ class MainActivity : AppCompatActivity(){
                         Log.d(TAG, "email extracted: " + email)
                         contact.email = email
                     }
-                    //contact contains all the emails of a particular contact
                     emailCursor.close()
                 }
-
-                contactList.add(contact)
+                phoneContacts.add(contact)
             }
         } else {
             //   toast("No contacts available!")
         }
         cursor.close()
-//        return builder
+        return phoneContacts
     }
+
+
+    fun filterFriendsFromContacts(contactList : List<Contact>): Pair<List<Contact>, List<Contact>> {
+        val usersFollowedRelation = ParseUser.getCurrentUser().getRelation<ParseUser>(KEY_USERS_FOLLOWED)
+
+//        usersFollowedRelation.add(ParseUser.getCurrentUser())
+//        ParseUser.getCurrentUser().saveInBackground()
+
+        // TODO: make DB calls in the background (async)
+        val notInFriendsAndIsInParse =  contactList.filter {
+            contact ->!contactIsInFriendsList(contact, usersFollowedRelation)
+                && isParseUser(contact)
+        }
+
+        val parseFriends = usersFollowedRelation.query.find()
+        val contactParseFriends = parseFriends.map{
+            parseUser -> Contact.fromParseUser(parseUser)
+        }
+
+        return Pair(notInFriendsAndIsInParse, contactParseFriends)
+    }
+
+    private fun isParseUser(contact: Contact) : Boolean {
+        val query = ParseQuery.getQuery(ParseUser::class.java)
+        query.whereEqualTo("phoneNumber", contact.phoneNumber)
+        val results = query.find()
+        if (results.size > 0) {
+            contact.parseUsername = results.get(0).username
+        }
+        return results.size > 0
+    }
+
+    private fun contactIsInFriendsList(contact: Contact,
+                                       usersFollowedRelation: ParseRelation<ParseUser>): Boolean {
+        val usersFollowedPhoneNumberQuery = usersFollowedRelation.query
+        usersFollowedPhoneNumberQuery.whereEqualTo(KEY_USER_PHONE_NUMBER, contact.phoneNumber)
+        // TODO: filter out current user
+        val matchedUsers = usersFollowedPhoneNumberQuery.find()
+        return matchedUsers.size > 0
+    }
+
 }
 

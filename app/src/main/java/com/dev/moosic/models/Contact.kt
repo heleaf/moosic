@@ -12,10 +12,14 @@ class Contact() {
 
     companion object Factory {
         val KEY_PHONE_NUMBER = "phoneNumber"
-        fun fromParseUser(user: ParseUser, contact: Contact){
+        val KEY_NOT_FOLLOWED_CONTACT = "notFollowed"
+        val KEY_FOLLOWED_CONTACT = "followed"
+        fun fromParseUser(user: ParseUser): Contact {
+            val contact = Contact()
             contact.parseUsername = user.username
             contact.email = user.email
             contact.phoneNumber = user.getString(KEY_PHONE_NUMBER)
+            return contact
         }
     }
 
