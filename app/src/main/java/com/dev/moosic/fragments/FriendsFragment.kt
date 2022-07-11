@@ -106,6 +106,7 @@ class FriendsFragment(friendsController: FriendsController) : Fragment() {
             when(taggedContacts.get(position).second) {
                 Contact.KEY_NOT_FOLLOWED_CONTACT -> {return "Friends you might know:"}
                 Contact.KEY_FOLLOWED_CONTACT -> {return "Friends you've followed:"}
+                Contact.KEY_RECOMMENDED_CONTACT -> {return "Recommended Users:"}
                 else -> {return ""}
             }
         }

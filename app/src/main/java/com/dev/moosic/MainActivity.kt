@@ -562,10 +562,10 @@ class MainActivity : AppCompatActivity(){
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSIONS_REQUEST_READ_CONTACTS) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                getContacts()
-                Log.d(TAG, "permission granted?")
+                Log.d(TAG, "permission granted")
+                fillTaggedContactList()
             } else {
-                Log.d(TAG, "permission not granted?")
+                Log.d(TAG, "permission not granted")
                 //  toast("Permission must be granted in order to display contacts information")
             }
         }
@@ -579,26 +579,109 @@ class MainActivity : AppCompatActivity(){
             // callback onRequestPermissionsResult
         } else {
             Log.d(TAG, "fetching contacts now...")
-            val phoneContacts = getContacts()
-
-            // all contacts
-            val testLists = filterFriendsFromContacts(phoneContacts)
-//            Log.d(TAG, "test contact non friend list: " + testList)
-            //  contactList.addAll(testList)
-            contactList.addAll(testLists.first)
-            contactList.addAll(testLists.second)
-
-            val taggedNotAddedContacts = testLists.first.map{
-                contact -> Pair(contact, Contact.KEY_NOT_FOLLOWED_CONTACT)
-            }
-
-            val taggedFollowedFriends = testLists.second.map{
-                contact -> Pair(contact, Contact.KEY_FOLLOWED_CONTACT)
-            }
-
-            taggedContactList.addAll(taggedNotAddedContacts)
-            taggedContactList.addAll(taggedFollowedFriends)
+            fillTaggedContactList()
         }
+    }
+
+    fun fillTaggedContactList() {
+        val phoneContacts = getContacts()
+
+        // all contacts
+        val nonFriendsAndFriends = filterFriendsFromContacts(phoneContacts)
+//            Log.d(TAG, "test contact non friend list: " + testList)
+        //  contactList.addAll(testList)
+        contactList.addAll(nonFriendsAndFriends.first)
+        contactList.addAll(nonFriendsAndFriends.second)
+
+        val taggedNotAddedContacts = nonFriendsAndFriends.first.map{
+                contact -> Pair(contact, Contact.KEY_NOT_FOLLOWED_CONTACT)
+        }
+
+        val taggedFollowedFriends = nonFriendsAndFriends.second.map{
+                contact -> Pair(contact, Contact.KEY_FOLLOWED_CONTACT)
+        }
+
+        taggedContactList.addAll(taggedNotAddedContacts)
+
+        val recommendedFriends = getRecommendedFriends()
+
+        val taggedRecommendedFriends = recommendedFriends.map {
+            pair -> val contact = Contact.fromParseUser(pair.first);
+                    contact.similarityScore = pair.second;
+                    Pair(contact, Contact.KEY_RECOMMENDED_CONTACT)
+        }
+
+//         val taggedRecommendedFriends = recommendedFriends.map{
+//              contact -> Pair(Contact.fromParseUser(contact), Contact.KEY_RECOMMENDED_CONTACT)
+//         }
+
+        taggedContactList.addAll(taggedRecommendedFriends)
+        taggedContactList.addAll(taggedFollowedFriends)
+
+    }
+
+    // TODO: add limit on number of friends to extract?
+    private fun getRecommendedFriends(): List<Pair<ParseUser, Double>> {
+        // compute the interest vectors of all the other users
+        val interestVectors : List<Pair<ParseUser, Map<String, Double>>>
+             = SongFeatures.syncGetInterestVectorsOfAllUsers()
+
+        val userInterestVector = SongFeatures.syncGetUserPlaylistFeatureMap(ParseUser.getCurrentUser())
+        val interestVectorSimilarities : List<Pair<ParseUser, Double>>
+            = interestVectors.map {
+            userVectorPair ->
+                Pair(userVectorPair.first,
+                computeVectorSimilarityScore(userVectorPair.second, userInterestVector))
+        }
+
+        val similaritiesFilteredOutNaNs = interestVectorSimilarities.filter {
+            it -> !it.second.isNaN()
+        }
+
+        val vectorComparator = Comparator {
+            vec1 : Pair<ParseUser, Double>,
+            vec2 : Pair<ParseUser, Double> ->
+            if (vec1.second - vec2.second > 0.0) 1
+            else if (vec1.second - vec2.second == 0.0) 0
+            else -1
+        }
+
+        val sortedVectors = similaritiesFilteredOutNaNs.sortedWith(vectorComparator).reversed()
+        for (vec in sortedVectors){
+            Log.d(TAG, "recommended user: " + vec.first.username + " score: " + vec.second)
+        }
+
+        return sortedVectors
+    }
+
+    // TODO: make a vector its own object..
+    private fun computeVectorSimilarityScore(vec1: Map<String, Double>, vec2: Map<String, Double>): Double {
+        return dot(vec1, vec2) / (magnitude(vec1) * magnitude(vec2))
+    }
+
+    private fun dot(vec1: Map<String, Double>, vec2: Map<String, Double>): Double {
+        var total = 0.0
+        for (feature in SongFeatures.FEATURE_KEYS_ARRAY){
+            val v1Entry = vec1.getOrDefault(feature, 0.0)
+            val v2Entry = vec2.getOrDefault(feature, 0.0)
+            if (v1Entry.isNaN() || v2Entry.isNaN()) {
+                Log.d(TAG, "NANs found")
+            } else {
+                total += v1Entry * v2Entry
+            }
+        }
+        return total
+    }
+
+    private fun magnitude(vec: Map<String, Double>): Double {
+        var total = 0.0
+        for (feature in SongFeatures.FEATURE_KEYS_ARRAY) {
+            val entry = vec.getOrDefault(feature, 0.0)
+            if (!entry.isNaN()) {
+                total += entry * entry
+            }
+        }
+        return Math.sqrt(total)
     }
 
     private fun getContacts(): ArrayList<Contact> {
@@ -664,7 +747,6 @@ class MainActivity : AppCompatActivity(){
         cursor.close()
         return phoneContacts
     }
-
 
     fun filterFriendsFromContacts(contactList : List<Contact>): Pair<List<Contact>, List<Contact>> {
         val usersFollowedRelation = ParseUser.getCurrentUser().getRelation<ParseUser>(
@@ -1009,6 +1091,7 @@ class MainActivity : AppCompatActivity(){
             }
         }
 
+        // TODO: account for recommended users at the bottom....
         override fun unfollowContact(contact: Contact) {
             val contactQuery = ParseQuery.getQuery(ParseUser::class.java)
             contactQuery.whereEqualTo(Contact.KEY_PHONE_NUMBER, contact.phoneNumber)

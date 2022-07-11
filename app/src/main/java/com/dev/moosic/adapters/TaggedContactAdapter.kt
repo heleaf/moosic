@@ -11,6 +11,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.R
 import com.dev.moosic.controllers.FriendsController
 import com.dev.moosic.models.Contact
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 class TaggedContactAdapter (context: Context,
                             contactList: List<Pair<Contact, String>>,
@@ -46,6 +48,7 @@ class TaggedContactAdapter (context: Context,
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var nameField : TextView
         var parseUsernameField : TextView
+        var similarityField : TextView
 
         var followButton : Button
 
@@ -54,6 +57,7 @@ class TaggedContactAdapter (context: Context,
         init {
             nameField = itemView.findViewById(R.id.contactName)
             parseUsernameField = itemView.findViewById(R.id.contactParseUsername)
+            similarityField = itemView.findViewById(R.id.contactSimilarityScore)
             followButton = itemView.findViewById(R.id.followContactButton)
         }
 
@@ -76,7 +80,21 @@ class TaggedContactAdapter (context: Context,
                     friendsController.followContact(contactPair.first, position, adapter)
                 }
             } else {
+                // add unfollow button?
                 followButton.visibility = View.GONE
+            }
+
+            if (contactPair.second == Contact.KEY_RECOMMENDED_CONTACT && contactPair.first.similarityScore != null) {
+                similarityField.visibility = View.VISIBLE
+                val displayedSimilarity // = (contactPair.first.similarityScore!!*100).toInt()
+                     = BigDecimal(contactPair.first.similarityScore!!).setScale(2, RoundingMode.HALF_EVEN)
+                similarityField.text = String.format("similarity: $displayedSimilarity")
+                followButton.visibility = View.VISIBLE
+                followButton.setOnClickListener {
+                    friendsController.followContact(contactPair.first, position, adapter)
+                }
+            } else {
+                similarityField.visibility = View.GONE
             }
         }
     }

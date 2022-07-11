@@ -94,11 +94,11 @@ class SongFeatures() : ParseObject() {
             }
         }
 
-        fun syncGetUserPlaylistFeatureMap(/*callback: Callback<Map<String,Number>>*/): Map<String, Double> {
+        fun syncGetUserPlaylistFeatureMap(user: ParseUser): Map<String, Double> {
             val query = ParseQuery.getQuery(SongFeatures::class.java)
             query.include(SongFeatures.KEY_LOGGED_WEIGHT)
             query.include(SongFeatures.KEY_FEATURE_JSON_STRING_DATA)
-            query.whereEqualTo(SongFeatures.KEY_USER_WHO_LOGGED, ParseUser.getCurrentUser())
+            query.whereEqualTo(SongFeatures.KEY_USER_WHO_LOGGED, user)
             val songFeatures = query.find()
             return featureListToMap(songFeatures)
         }
@@ -147,6 +147,18 @@ class SongFeatures() : ParseObject() {
                     featureMap.getOrDefault(feature, 0.0) as Number)
             }
             return queryMap.toMap()
+        }
+
+        fun syncGetInterestVectorsOfAllUsers(includeSelf : Boolean = false)
+            : List<Pair<ParseUser, Map<String, Double>>> {
+            val query = ParseQuery.getQuery(ParseUser::class.java)
+            if (!includeSelf) {
+                query.whereNotEqualTo("username", ParseUser.getCurrentUser().username)
+            }
+            val users = query.find()
+            return users.map {
+                user -> Pair(user, syncGetUserPlaylistFeatureMap(user))
+            }
         }
 
     }

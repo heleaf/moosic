@@ -9,11 +9,13 @@ class Contact() {
     var parseUsername : String? = null
     var email : String? = null
     var phoneNumber : String? = null
+    var similarityScore : Double? = null
 
     companion object Factory {
         val KEY_PHONE_NUMBER = "phoneNumber"
         val KEY_NOT_FOLLOWED_CONTACT = "notFollowed"
         val KEY_FOLLOWED_CONTACT = "followed"
+        val KEY_RECOMMENDED_CONTACT = "recommended"
         fun fromParseUser(user: ParseUser): Contact {
             val contact = Contact()
             contact.parseUsername = user.username

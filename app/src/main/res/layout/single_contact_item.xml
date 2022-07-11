@@ -21,11 +21,12 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
         android:text="parse username"
         android:textSize="18sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/followContactButton"
+        app:layout_constraintEnd_toStartOf="@+id/contactSimilarityScore"
         app:layout_constraintStart_toEndOf="@+id/contactName"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -37,4 +38,16 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/contactSimilarityScore"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="10dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/followContactButton"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.56"
+        tools:text="80% similar" />
 </androidx.constraintlayout.widget.ConstraintLayout>
