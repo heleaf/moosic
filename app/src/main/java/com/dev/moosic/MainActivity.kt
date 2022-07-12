@@ -89,6 +89,7 @@ class MainActivity : AppCompatActivity(){
 
     var contactList : ArrayList<Contact> = ArrayList()
     var taggedContactList : ArrayList<Pair<Contact, String>> = ArrayList()
+    var numberFollowedFriends : Int = 0
 
     var mostRecentSearchQuery: String? = null
     var searchedTracks : ArrayList<Track> = ArrayList()
@@ -97,6 +98,7 @@ class MainActivity : AppCompatActivity(){
 
     var bottomNavigationView : BottomNavigationView? = null
     val fragmentManager = supportFragmentManager
+    var displayingFriendsFragment = false
 //    val friendsFragment = FriendsFragment.newInstance(taggedContactList, mainActivityFriendsController)
     var filledContacts = false
 
@@ -121,10 +123,10 @@ class MainActivity : AppCompatActivity(){
         bottomNavigationView = findViewById(R.id.bottomNavBar)
         bottomNavigationView?.setOnItemSelectedListener { menuItem : MenuItem ->
             when (menuItem.itemId) {
-                R.id.actionHome -> goToHomeFragment()
-                R.id.actionSearch -> goToSearchFragment()
-                R.id.actionProfile -> goToProfilePlaylistFragment()
-                R.id.actionFriends -> goToFriendsFragment()
+                R.id.actionHome -> { displayingFriendsFragment = false; goToHomeFragment() }
+                R.id.actionSearch -> { displayingFriendsFragment = false; goToSearchFragment() }
+                R.id.actionProfile -> { displayingFriendsFragment = false; goToProfilePlaylistFragment() }
+                R.id.actionFriends -> { displayingFriendsFragment = true; goToFriendsFragment() }
                 else -> {}
             }
             return@setOnItemSelectedListener true
@@ -133,7 +135,7 @@ class MainActivity : AppCompatActivity(){
         miniPlayerFragmentContainer = findViewById(R.id.miniPlayerFlContainer)
         mainActivitySongController.hideMiniPlayerPreview()
         setUpCurrentUser()
-        testFetchContacts()
+        fetchCOntacts()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -327,54 +329,17 @@ class MainActivity : AppCompatActivity(){
             arrayListOf(KEY_DELETE_BUTTON)
         )
         fragmentManager.beginTransaction().replace(R.id.flContainer, newFragment).commit()
-
-//        val map = SongFeatures.syncGetUserPlaylistFeatureMap()
-//        Log.d(TAG, map.toString())
-
-        // testing
-//        SongFeatures.asyncGetUserPlaylistFeatureMap(object: Callback<Map<String, Double>> {
-//            override fun success(t: Map<String, Double>?, response: Response?) {
-//                Log.d(TAG, "onSuccess pulling interest vector: " + t.toString())
-////                if (t != null) {
-//////                    val seedGenres = ParseUser.getCurrentUser().getString("seedGenres")
-////                    val queryMap = SongFeatures.featureMapToRecommendationQueryMap(t, "", "", "")
-////                    spotifyApi.service.getRecommendations(
-////                        queryMap, object: Callback<Recommendations> {
-////                            override fun success(t: Recommendations?, response: Response?) {
-////                                Log.d(TAG, "onSuccess getting recommendations: " + t?.tracks.toString())
-////                            }
-////                            override fun failure(error: RetrofitError?) {
-////                                Log.d(TAG, "onFailure getting recommendations: " + error?.message + " "
-////                                    + error?.cause + " " + error?.localizedMessage + " "
-////                                    + error?.response?.reason +
-////                                    " " + ((error?.response?.body) as TypedByteArray).bytes.toString() )
-////                            }
-////
-////                        }
-////                    )
-////                }
-//            }
-//            override fun failure(error: RetrofitError?) {
-//                Log.d(TAG, "onFailure pulling interest vector: " + error?.message)
-//            }
-//        })
-
     }
 
-
     private fun goToFriendsFragment() {
-//        showProgressBar()
-//        hideProgressBar()
         if (!filledContacts) {
             showProgressBar()
         }
-
         searchMenuItem?.isVisible = false
         settingsMenuItem?.isVisible = false
         backMenuItem?.isVisible = false
         val newFragment = FriendsFragment.newInstance(taggedContactList, mainActivityFriendsController)
         fragmentManager.beginTransaction().replace(R.id.flContainer, newFragment).commit()
-/
     }
 
     private fun goToSearchFragment() {
@@ -599,7 +564,7 @@ class MainActivity : AppCompatActivity(){
         }
     }
 
-    fun testFetchContacts(){
+    fun fetchCOntacts(){
         showProgressBar()
         if (checkSelfPermission(Manifest.permission.READ_CONTACTS)
             != PackageManager.PERMISSION_GRANTED) {
@@ -612,7 +577,9 @@ class MainActivity : AppCompatActivity(){
                 override fun success(t: Unit?, response: Response?) {
                     Log.d(TAG, "filled asynchronously")
                     filledContacts = true
-                    goToFriendsFragment()
+                    if (displayingFriendsFragment) {
+                        goToFriendsFragment()
+                    }
                     hideProgressBar()
                 }
                 override fun failure(error: RetrofitError?) {
@@ -658,9 +625,21 @@ class MainActivity : AppCompatActivity(){
                                     contact.similarityScore = pair.second;
                                     Pair(contact, Contact.KEY_RECOMMENDED_CONTACT)
                                 }
-                                taggedContactList.addAll(taggedNotAddedContacts)
-                                taggedContactList.addAll(taggedRecommendedFriends)
-                                taggedContactList.addAll(taggedFollowedFriends)
+
+                                val pairComparator = Comparator {
+                                    friend1 : Pair<Contact, String>,
+                                    friend2 : Pair<Contact, String> ->
+                                    friend1.first.parseUsername!!.compareTo(friend2.first.parseUsername!!, ignoreCase = true)
+                                }
+
+                                val sortedFollowedFriends = taggedFollowedFriends.sortedWith(pairComparator)
+                                val sortedNotAddedContacts = taggedNotAddedContacts.sortedWith(pairComparator)
+                                val sortedRecommendedFriends = taggedRecommendedFriends.sortedWith(pairComparator)
+
+                                taggedContactList.addAll(sortedFollowedFriends)
+                                numberFollowedFriends = taggedFollowedFriends.size
+                                taggedContactList.addAll(sortedNotAddedContacts)
+                                taggedContactList.addAll(sortedRecommendedFriends)
                                 callback.success(Unit, response)
                             }
                             override fun failure(error: RetrofitError?) {
@@ -1397,8 +1376,13 @@ class MainActivity : AppCompatActivity(){
                             else {
                                 taggedContactList.removeAt(position)
                                 adapter.notifyItemRemoved(position)
-                                taggedContactList.add(Pair(contact, Contact.KEY_FOLLOWED_CONTACT))
-                                adapter.notifyItemRangeChanged(position, taggedContactList.size)
+
+                                // i need to insert this at a certain position
+                                val idx = getIndexForNewContact(contact.parseUsername!!, 0, numberFollowedFriends)
+                                taggedContactList.add(idx, Pair(contact, Contact.KEY_FOLLOWED_CONTACT))
+//                                taggedContactList.add(Pair(contact, Contact.KEY_FOLLOWED_CONTACT))
+                                adapter.notifyItemRangeChanged(idx, taggedContactList.size)
+                                numberFollowedFriends += 1
                                 Toast.makeText(context,
                                     "followed " + contact.parseUsername,
                                 Toast.LENGTH_SHORT).show()
@@ -1409,6 +1393,18 @@ class MainActivity : AppCompatActivity(){
                     }
                 }
             }
+        }
+
+        private fun getIndexForNewContact(parseUsername: String,
+                                          startIndexIncl: Int,
+                                          endIndexExcl: Int): Int {
+            for (i in startIndexIncl until endIndexExcl) {
+                val contact = taggedContactList.get(i)
+                if (contact.first.parseUsername!! > parseUsername) {
+                    return i
+                }
+            }
+            return endIndexExcl
         }
 
         override fun unfollowContact(contact: Contact) {
