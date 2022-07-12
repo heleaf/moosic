@@ -149,16 +149,25 @@ class SongFeatures() : ParseObject() {
             return queryMap.toMap()
         }
 
-        fun syncGetInterestVectorsOfAllUsers(includeSelf : Boolean = false)
+        fun syncGetInterestVectorsOfAllUsers(includeSelf : Boolean, friendsToIgnore: List<Contact>)
             : List<Pair<ParseUser, Map<String, Double>>> {
-            val query = ParseQuery.getQuery(ParseUser::class.java)
+            val query = ParseUser.getQuery()
+            val usernamesToIgnore = ArrayList<String>()
             if (!includeSelf) {
-                query.whereNotEqualTo("username", ParseUser.getCurrentUser().username)
+                usernamesToIgnore.add(ParseUser.getCurrentUser().username)
             }
+            for (friend in friendsToIgnore){
+                friend.parseUsername?.let { usernamesToIgnore.add(it) }
+            }
+            query.whereNotContainedIn("username", usernamesToIgnore)
             val users = query.find()
+            for (user in users) {
+                Log.d(TAG, user.username)
+            }
             return users.map {
                 user -> Pair(user, syncGetUserPlaylistFeatureMap(user))
             }
+
         }
 
     }

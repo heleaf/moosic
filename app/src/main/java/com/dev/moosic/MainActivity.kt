@@ -125,8 +125,6 @@ class MainActivity : AppCompatActivity(){
         miniPlayerFragmentContainer = findViewById(R.id.miniPlayerFlContainer)
         mainActivitySongController.hideMiniPlayerPreview()
         setUpCurrentUser()
-        Log.d(TAG, "fetching....")
-        testFetchContacts()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -175,6 +173,9 @@ class MainActivity : AppCompatActivity(){
                     Log.e("MainActivity", throwable.message, throwable)
                 }
             })
+
+//        Log.d(TAG, "fetching....")
+//        testFetchContacts()
 
     }
 
@@ -352,6 +353,10 @@ class MainActivity : AppCompatActivity(){
 
 
     private fun goToFriendsFragment() {
+//        showProgressBar()
+        taggedContactList.clear()
+        testFetchContacts() // this should be asynchronous
+//        hideProgressBar()
         searchMenuItem?.isVisible = false
         settingsMenuItem?.isVisible = false
         backMenuItem?.isVisible = false
@@ -572,6 +577,7 @@ class MainActivity : AppCompatActivity(){
     }
 
     fun testFetchContacts(){
+        showProgressBar()
         if (checkSelfPermission(Manifest.permission.READ_CONTACTS)
             != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(arrayOf(Manifest.permission.READ_CONTACTS),
@@ -586,10 +592,7 @@ class MainActivity : AppCompatActivity(){
     fun fillTaggedContactList() {
         val phoneContacts = getContacts()
 
-        // all contacts
         val nonFriendsAndFriends = filterFriendsFromContacts(phoneContacts)
-//            Log.d(TAG, "test contact non friend list: " + testList)
-        //  contactList.addAll(testList)
         contactList.addAll(nonFriendsAndFriends.first)
         contactList.addAll(nonFriendsAndFriends.second)
 
@@ -603,7 +606,7 @@ class MainActivity : AppCompatActivity(){
 
         taggedContactList.addAll(taggedNotAddedContacts)
 
-        val recommendedFriends = getRecommendedFriends()
+        val recommendedFriends = getRecommendedFriends(nonFriendsAndFriends.second)
 
         val taggedRecommendedFriends = recommendedFriends.map {
             pair -> val contact = Contact.fromParseUser(pair.first);
@@ -611,22 +614,23 @@ class MainActivity : AppCompatActivity(){
                     Pair(contact, Contact.KEY_RECOMMENDED_CONTACT)
         }
 
-//         val taggedRecommendedFriends = recommendedFriends.map{
-//              contact -> Pair(Contact.fromParseUser(contact), Contact.KEY_RECOMMENDED_CONTACT)
-//         }
-
         taggedContactList.addAll(taggedRecommendedFriends)
         taggedContactList.addAll(taggedFollowedFriends)
+        hideProgressBar()
 
     }
 
-    // TODO: add limit on number of friends to extract?
-    private fun getRecommendedFriends(): List<Pair<ParseUser, Double>> {
+    // TODO: add limit on number of friends to extract
+    private fun getRecommendedFriends(followedFriends: List<Contact>): List<Pair<ParseUser, Double>> {
         // compute the interest vectors of all the other users
+        Log.d("SongFeatures", "size: " + followedFriends.size)
+
+        // ignore the ones of the people i've already added
         val interestVectors : List<Pair<ParseUser, Map<String, Double>>>
-             = SongFeatures.syncGetInterestVectorsOfAllUsers()
+             = SongFeatures.syncGetInterestVectorsOfAllUsers(false, followedFriends)
 
         val userInterestVector = SongFeatures.syncGetUserPlaylistFeatureMap(ParseUser.getCurrentUser())
+
         val interestVectorSimilarities : List<Pair<ParseUser, Double>>
             = interestVectors.map {
             userVectorPair ->
@@ -753,26 +757,25 @@ class MainActivity : AppCompatActivity(){
             KEY_USERS_FOLLOWED
         )
 
-//        usersFollowedRelation.add(ParseUser.getCurrentUser())
-//        ParseUser.getCurrentUser().saveInBackground()
-
         // TODO: make DB calls in the background (async)
         val notInFriendsAndIsInParse =  contactList.filter {
             contact ->!contactIsInFriendsList(contact, usersFollowedRelation)
                 && isParseUser(contact)
         }
-
-        val parseFriends = usersFollowedRelation.query.find()
+        val parseFriendsQuery = usersFollowedRelation.query
+        for (friend in notInFriendsAndIsInParse){
+            parseFriendsQuery.whereNotEqualTo(KEY_USER_PHONE_NUMBER, friend.phoneNumber)
+        }
+        val parseFriends = parseFriendsQuery.find()
         val contactParseFriends = parseFriends.map{
             parseUser -> Contact.fromParseUser(parseUser)
         }
-
         return Pair(notInFriendsAndIsInParse, contactParseFriends)
     }
 
     private fun isParseUser(contact: Contact) : Boolean {
         val query = ParseQuery.getQuery(ParseUser::class.java)
-        query.whereEqualTo("phoneNumber", contact.phoneNumber)
+        query.whereEqualTo(KEY_USER_PHONE_NUMBER, contact.phoneNumber)
         val results = query.find()
         if (results.size > 0) {
             contact.parseUsername = results.get(0).username
@@ -974,7 +977,8 @@ class MainActivity : AppCompatActivity(){
                 override fun success(t: Track?, response: Response?) {
                     if (t != null) {
                         currentTrack = t
-                        miniPlayerFragment = MiniPlayerFragment.newInstance(t, this@MainActivitySongController, false)
+                        miniPlayerFragment = MiniPlayerFragment.newInstance(t,
+                            this@MainActivitySongController, false)
                         fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
                             miniPlayerFragment!!).commit()
                         showMiniPlayerPreview()
@@ -1091,7 +1095,6 @@ class MainActivity : AppCompatActivity(){
             }
         }
 
-        // TODO: account for recommended users at the bottom....
         override fun unfollowContact(contact: Contact) {
             val contactQuery = ParseQuery.getQuery(ParseUser::class.java)
             contactQuery.whereEqualTo(Contact.KEY_PHONE_NUMBER, contact.phoneNumber)

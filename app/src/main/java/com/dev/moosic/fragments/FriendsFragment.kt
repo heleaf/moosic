@@ -86,11 +86,6 @@ class FriendsFragment(friendsController: FriendsController) : Fragment() {
         false, getSectionCallback(taggedContactList))
         rvContacts.addItemDecoration(recyclerItemDecoration)
 
-//        Log.d(TAG, taggedContactList.size.toString())
-//        Log.d(TAG, taggedContactList.get(5).first.parseUsername.toString())
-//        Log.d(TAG, taggedContactList.get(5).first.name.toString())
-//        Log.d(TAG, taggedContactList.get(5).first.email.toString())
-//        Log.d(TAG, taggedContactList.get(3).first.)
     }
 
     inner class DecorationSectionCallback(taggedContacts: ArrayList<Pair<Contact, String>>) : RecyclerItemDecoration.SectionCallback {

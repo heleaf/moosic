@@ -10,6 +10,7 @@ class Contact() {
     var email : String? = null
     var phoneNumber : String? = null
     var similarityScore : Double? = null
+    var parseUser: ParseUser? = null
 
     companion object Factory {
         val KEY_PHONE_NUMBER = "phoneNumber"
