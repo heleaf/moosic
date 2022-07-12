@@ -17,7 +17,7 @@ import com.dev.moosic.models.Contact
 import com.dev.moosic.models.Song
 import org.parceler.Parcels
 
-private const val ARG_PARAM1 = "contactList"
+//private const val ARG_PARAM1 = "contactList"
 private const val ARG_PARAM2 = "taggedContactList"
 
 /**
@@ -25,23 +25,21 @@ private const val ARG_PARAM2 = "taggedContactList"
  * Use the [FriendsFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class FriendsFragment(friendsController: FriendsController) : Fragment() {
+class FriendsFragment(private var friendsController: FriendsController) : Fragment() {
     val TAG = "FriendsFragment"
 
     private lateinit var rvContacts : RecyclerView
-    private lateinit var adapter : TaggedContactAdapter
+    lateinit var adapter : TaggedContactAdapter
 
     // remove this, use taggedContactList instead
-    private var contactList: ArrayList<Contact> = ArrayList()
+//    private var contactList: ArrayList<Contact> = ArrayList()
 
     private var taggedContactList : ArrayList<Pair<Contact, String>> = ArrayList()
-
-    private var friendsController = friendsController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            contactList = Parcels.unwrap(it.getParcelable(ARG_PARAM1))
+//            contactList = Parcels.unwrap(it.getParcelable(ARG_PARAM1))
             taggedContactList = Parcels.unwrap(it.getParcelable(ARG_PARAM2))
         }
     }
@@ -61,11 +59,11 @@ class FriendsFragment(friendsController: FriendsController) : Fragment() {
          * @return A new instance of fragment FriendsFragment.
          */
         @JvmStatic
-        fun newInstance(contactList : ArrayList<Contact>, taggedContactList: ArrayList<Pair<Contact, String>>,
+        fun newInstance(taggedContactList: ArrayList<Pair<Contact, String>>,
             controller: FriendsController) =
             FriendsFragment(controller).apply {
                 arguments = Bundle().apply {
-                    putParcelable(ARG_PARAM1, Parcels.wrap(contactList))
+//                    putParcelable(ARG_PARAM1, Parcels.wrap(contactList))
                     putParcelable(ARG_PARAM2, Parcels.wrap(taggedContactList))
                 }
             }

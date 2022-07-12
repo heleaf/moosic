@@ -62,13 +62,14 @@ class TaggedContactAdapter (context: Context,
         }
 
         fun bind(contactPair: Pair<Contact,String>, position: Int) {
-            Log.d(TAG, contactPair.first.parseUsername.toString())
-            Log.d(TAG, contactPair.first.name.toString())
-            Log.d(TAG, contactPair.first.email.toString())
+//            Log.d(TAG, contactPair.first.parseUsername.toString())
+//            Log.d(TAG, contactPair.first.name.toString())
+//            Log.d(TAG, contactPair.first.email.toString())
 
-            if (contactPair.first.name == null) {
-                nameField.visibility = View.GONE
-            } else { nameField.setText(contactPair.first.name) }
+            nameField.visibility = View.GONE
+//            if (contactPair.first.name == null) {
+//                nameField.visibility = View.GONE
+//            } else { nameField.setText(contactPair.first.name) }
 
             if (contactPair.first.parseUsername == null) {
                 parseUsernameField.visibility = View.GONE

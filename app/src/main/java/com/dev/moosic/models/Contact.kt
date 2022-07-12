@@ -11,6 +11,7 @@ class Contact() {
     var phoneNumber : String? = null
     var similarityScore : Double? = null
     var parseUser: ParseUser? = null
+    var parseUserId: String? = null
 
     companion object Factory {
         val KEY_PHONE_NUMBER = "phoneNumber"
@@ -22,6 +23,7 @@ class Contact() {
             contact.parseUsername = user.username
             contact.email = user.email
             contact.phoneNumber = user.getString(KEY_PHONE_NUMBER)
+            contact.parseUserId = user.objectId
             return contact
         }
     }

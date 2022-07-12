@@ -36,6 +36,7 @@ import kaaes.spotify.webapi.android.models.*
 import retrofit.Callback
 import retrofit.RetrofitError
 import retrofit.client.Response
+import retrofit.mime.TypedString
 
 
 private const val KEY_ADD_BUTTON = "add"
@@ -47,6 +48,11 @@ private const val KEY_USER_PHONE_NUMBER = "phoneNumber"
 
 class MainActivity : AppCompatActivity(){
     val TAG = "MainActivity"
+    val dummyResponse = Response( // TODO: adjust to be actual response
+        "url", 200,
+        "reason", emptyList(),
+        TypedString("string")
+    )
 
     val WEIGHT_ADDED_SONG_TO_PLAYLIST = 2
     val FRACTION_OF_SONG_PLAYED_THRESHOLD = 0.2f
@@ -91,6 +97,8 @@ class MainActivity : AppCompatActivity(){
 
     var bottomNavigationView : BottomNavigationView? = null
     val fragmentManager = supportFragmentManager
+//    val friendsFragment = FriendsFragment.newInstance(taggedContactList, mainActivityFriendsController)
+    var filledContacts = false
 
     var searchMenuItem : MenuItem? = null
     var settingsMenuItem : MenuItem? = null
@@ -125,6 +133,7 @@ class MainActivity : AppCompatActivity(){
         miniPlayerFragmentContainer = findViewById(R.id.miniPlayerFlContainer)
         mainActivitySongController.hideMiniPlayerPreview()
         setUpCurrentUser()
+        testFetchContacts()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -309,6 +318,7 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun goToProfilePlaylistFragment() {
+        hideProgressBar()
         searchMenuItem?.isVisible = false
         settingsMenuItem?.isVisible = true
         backMenuItem?.isVisible = false
@@ -322,50 +332,53 @@ class MainActivity : AppCompatActivity(){
 //        Log.d(TAG, map.toString())
 
         // testing
-        SongFeatures.asyncGetUserPlaylistFeatureMap(object: Callback<Map<String, Double>> {
-            override fun success(t: Map<String, Double>?, response: Response?) {
-                Log.d(TAG, "onSuccess pulling interest vector: " + t.toString())
-//                if (t != null) {
-////                    val seedGenres = ParseUser.getCurrentUser().getString("seedGenres")
-//                    val queryMap = SongFeatures.featureMapToRecommendationQueryMap(t, "", "", "")
-//                    spotifyApi.service.getRecommendations(
-//                        queryMap, object: Callback<Recommendations> {
-//                            override fun success(t: Recommendations?, response: Response?) {
-//                                Log.d(TAG, "onSuccess getting recommendations: " + t?.tracks.toString())
-//                            }
-//                            override fun failure(error: RetrofitError?) {
-//                                Log.d(TAG, "onFailure getting recommendations: " + error?.message + " "
-//                                    + error?.cause + " " + error?.localizedMessage + " "
-//                                    + error?.response?.reason +
-//                                    " " + ((error?.response?.body) as TypedByteArray).bytes.toString() )
-//                            }
-//
-//                        }
-//                    )
-//                }
-            }
-            override fun failure(error: RetrofitError?) {
-                Log.d(TAG, "onFailure pulling interest vector: " + error?.message)
-            }
-        })
+//        SongFeatures.asyncGetUserPlaylistFeatureMap(object: Callback<Map<String, Double>> {
+//            override fun success(t: Map<String, Double>?, response: Response?) {
+//                Log.d(TAG, "onSuccess pulling interest vector: " + t.toString())
+////                if (t != null) {
+//////                    val seedGenres = ParseUser.getCurrentUser().getString("seedGenres")
+////                    val queryMap = SongFeatures.featureMapToRecommendationQueryMap(t, "", "", "")
+////                    spotifyApi.service.getRecommendations(
+////                        queryMap, object: Callback<Recommendations> {
+////                            override fun success(t: Recommendations?, response: Response?) {
+////                                Log.d(TAG, "onSuccess getting recommendations: " + t?.tracks.toString())
+////                            }
+////                            override fun failure(error: RetrofitError?) {
+////                                Log.d(TAG, "onFailure getting recommendations: " + error?.message + " "
+////                                    + error?.cause + " " + error?.localizedMessage + " "
+////                                    + error?.response?.reason +
+////                                    " " + ((error?.response?.body) as TypedByteArray).bytes.toString() )
+////                            }
+////
+////                        }
+////                    )
+////                }
+//            }
+//            override fun failure(error: RetrofitError?) {
+//                Log.d(TAG, "onFailure pulling interest vector: " + error?.message)
+//            }
+//        })
 
     }
 
 
     private fun goToFriendsFragment() {
 //        showProgressBar()
-        taggedContactList.clear()
-        testFetchContacts() // this should be asynchronous
 //        hideProgressBar()
+        if (!filledContacts) {
+            showProgressBar()
+        }
+
         searchMenuItem?.isVisible = false
         settingsMenuItem?.isVisible = false
         backMenuItem?.isVisible = false
-        val newFragment = FriendsFragment.newInstance(contactList, taggedContactList, mainActivityFriendsController)
+        val newFragment = FriendsFragment.newInstance(taggedContactList, mainActivityFriendsController)
         fragmentManager.beginTransaction().replace(R.id.flContainer, newFragment).commit()
+/
     }
 
-
     private fun goToSearchFragment() {
+        hideProgressBar()
         searchMenuItem?.isVisible = true
         settingsMenuItem?.isVisible = false
         backMenuItem?.isVisible = false
@@ -568,7 +581,17 @@ class MainActivity : AppCompatActivity(){
         if (requestCode == PERMISSIONS_REQUEST_READ_CONTACTS) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Log.d(TAG, "permission granted")
-                fillTaggedContactList()
+                // fillTaggedContactList()
+                asyncFillTaggedContactList(object: Callback<Unit> {
+                    override fun success(t: Unit?, response: Response?) {
+                        Log.d(TAG, "filled asynchronouly")
+                    }
+
+                    override fun failure(error: RetrofitError?) {
+                        Log.e(TAG, "failed to fill contacts: " + error?.message)
+                    }
+
+                })
             } else {
                 Log.d(TAG, "permission not granted")
                 //  toast("Permission must be granted in order to display contacts information")
@@ -585,25 +608,85 @@ class MainActivity : AppCompatActivity(){
             // callback onRequestPermissionsResult
         } else {
             Log.d(TAG, "fetching contacts now...")
-            fillTaggedContactList()
+            asyncFillTaggedContactList(object: Callback<Unit> {
+                override fun success(t: Unit?, response: Response?) {
+                    Log.d(TAG, "filled asynchronously")
+                    filledContacts = true
+                    goToFriendsFragment()
+                    hideProgressBar()
+                }
+                override fun failure(error: RetrofitError?) {
+                    Log.e(TAG, "failed to fill contacts: " + error?.message)
+                }
+            })
         }
+    }
+
+    fun asyncFillTaggedContactList(callback: Callback<Unit>) {
+        val phoneContacts = getContacts()
+        asyncFilterFriendsFromContacts(phoneContacts,
+            object: Callback<Pair<List<Contact>, List<Contact>>> {
+                override fun success(t: Pair<List<Contact>, List<Contact>>?, response: Response?) {
+                    if (t == null) {
+                        callback.failure(retrofit.RetrofitError.unexpectedError("no url",
+                            Throwable("non friends and friends are null")))
+                        return
+                    }
+                    val nonFriendParseUsers = t.first
+                    val friendParseUsers = t.second
+
+                    val taggedNotAddedContacts = nonFriendParseUsers.map{
+                            contact -> Pair(contact, Contact.KEY_NOT_FOLLOWED_CONTACT)
+                    }
+                    val taggedFollowedFriends = friendParseUsers.map{
+                            contact -> Pair(contact, Contact.KEY_FOLLOWED_CONTACT)
+                    }
+
+                    asyncGetRecommendedFriends(false,
+                        friendParseUsers, object: Callback<List<Pair<Contact, Double>>> {
+                            override fun success(
+                                recs: List<Pair<Contact, Double>>?,
+                                response: Response?
+                            ) {
+                                if (recs == null) {
+                                    callback.failure(retrofit.RetrofitError.unexpectedError("no url",
+                                        Throwable("recommended users are null")))
+                                    return
+                                }
+                                val taggedRecommendedFriends = recs.map {
+                                        pair -> val contact = pair.first;
+                                    contact.similarityScore = pair.second;
+                                    Pair(contact, Contact.KEY_RECOMMENDED_CONTACT)
+                                }
+                                taggedContactList.addAll(taggedNotAddedContacts)
+                                taggedContactList.addAll(taggedRecommendedFriends)
+                                taggedContactList.addAll(taggedFollowedFriends)
+                                callback.success(Unit, response)
+                            }
+                            override fun failure(error: RetrofitError?) {
+                                callback.failure(error)
+                            }
+                        })
+                }
+                override fun failure(error: RetrofitError?) {
+                    callback.failure(error)
+                }
+            })
     }
 
     fun fillTaggedContactList() {
         val phoneContacts = getContacts()
 
         val nonFriendsAndFriends = filterFriendsFromContacts(phoneContacts)
-        contactList.addAll(nonFriendsAndFriends.first)
-        contactList.addAll(nonFriendsAndFriends.second)
+//        contactList.addAll(nonFriendsAndFriends.first)
+//        contactList.addAll(nonFriendsAndFriends.second)
 
         val taggedNotAddedContacts = nonFriendsAndFriends.first.map{
                 contact -> Pair(contact, Contact.KEY_NOT_FOLLOWED_CONTACT)
         }
-
         val taggedFollowedFriends = nonFriendsAndFriends.second.map{
                 contact -> Pair(contact, Contact.KEY_FOLLOWED_CONTACT)
         }
-
         taggedContactList.addAll(taggedNotAddedContacts)
 
         val recommendedFriends = getRecommendedFriends(nonFriendsAndFriends.second)
@@ -752,20 +835,253 @@ class MainActivity : AppCompatActivity(){
         return phoneContacts
     }
 
+    fun asyncGetRecommendedFriends(includeCurrentUser: Boolean,
+                                   contactsToIgnore: List<Contact>,
+                                   callback: Callback<List<Pair<Contact, Double>>>) {
+        // prepare the query of users
+        val userQuery = ParseUser.getQuery()
+        val usernamesToIgnore = ArrayList<String>()
+        if (!includeCurrentUser) {
+            usernamesToIgnore.add(ParseUser.getCurrentUser().username)
+        }
+        for (contact in contactsToIgnore) {
+            contact.parseUsername?.let { usernamesToIgnore.add(it) }
+        }
+        userQuery.whereNotContainedIn("username", usernamesToIgnore)
+        userQuery.findInBackground { objects, e ->
+            if (e != null) {
+                val throwable = Throwable(e.message.toString())
+                val error = retrofit.RetrofitError.unexpectedError(
+                    "no url", throwable
+                )
+                callback.failure(error)
+            }
+            else if (objects == null) {
+                val throwable = Throwable("objects found are null")
+                val error = retrofit.RetrofitError.unexpectedError(
+                    "no url", throwable
+                )
+                callback.failure(error)
+            }
+            asyncGetInterestVectorOfUserList(objects!!, 0,
+                ArrayList<Pair<Contact, Map<String, Double>>>(),
+                object: Callback<List<Pair<Contact, Map<String, Double>>>> {
+                override fun success(
+                    interestVectors: List<Pair<Contact, Map<String, Double>>>?,
+                    response: Response?
+                ) {
+                    // do my calculations here for similarity
+                    if (interestVectors == null) {
+                        val throwable = Throwable("null interest vectors")
+                        callback.failure(retrofit.RetrofitError.unexpectedError("no url", throwable))
+                        return
+                    }
+                    SongFeatures.asyncGetUserPlaylistFeatureMap(ParseUser.getCurrentUser(), object: Callback<Map<String, Double>> {
+                        override fun success(userInterestVector: Map<String, Double>?, response: Response?) {
+                            if (userInterestVector == null) {
+                                val throwable = Throwable("null interest vectors")
+                                callback.failure(retrofit.RetrofitError.unexpectedError("no url", throwable))
+                                return
+                            }
+                            val interestVectorSimilarities : List<Pair<Contact, Double>>
+                                    = interestVectors.map {
+                                    userVectorPair ->
+                                Pair(userVectorPair.first,
+                                    computeVectorSimilarityScore(userVectorPair.second, userInterestVector))
+                            }
+                            val similaritiesFilteredOutNaNs = interestVectorSimilarities.filter {
+                                    it -> !it.second.isNaN()
+                            }
+                            val vectorComparator = Comparator {
+                                    vec1 : Pair<Contact, Double>,
+                                    vec2 : Pair<Contact, Double> ->
+                                if (vec1.second - vec2.second > 0.0) 1
+                                else if (vec1.second - vec2.second == 0.0) 0
+                                else -1
+                            }
+                            val sortedVectors = similaritiesFilteredOutNaNs.sortedWith(vectorComparator).reversed()
+                            callback.success(sortedVectors, dummyResponse)
+                        }
+                        override fun failure(error: RetrofitError?) {
+                            callback.failure(error)
+                        }
+                    })
+                }
+                override fun failure(error: RetrofitError?) {
+                    callback.failure(error)
+                }
+            })
+        }
+    }
+
+    private fun asyncGetInterestVectorOfUserList(parseUsers: List<ParseUser>,
+                                                 index: Int, interestVectorsAccumulator:
+                                                 ArrayList<Pair<Contact, Map<String, Double>>>,
+                                                 callback: Callback<List<Pair<Contact, Map<String, Double>>>>) {
+        if (index >= parseUsers.size) {
+            callback.success(interestVectorsAccumulator, dummyResponse)
+        }
+        else if (index < 0) {
+            val throwable = Throwable("index is negative")
+            val error = retrofit.RetrofitError.unexpectedError(
+                "no url", throwable
+            )
+            callback.failure(error)
+        } else {
+            val user = parseUsers.get(index)
+            SongFeatures.asyncGetUserPlaylistFeatureMap(user, object: Callback<Map<String,Double>> {
+                override fun success(t: Map<String, Double>?, response: Response?) {
+                    if (t != null) {
+                        interestVectorsAccumulator.add(Pair(Contact.fromParseUser(user), t))
+                        asyncGetInterestVectorOfUserList(parseUsers, index+1, interestVectorsAccumulator, callback)
+                    }
+                }
+                override fun failure(error: RetrofitError?) {
+                    callback.failure(error)
+                }
+            })
+        }
+    }
+
+    fun asyncFilterFriendsFromContacts(contactList: List<Contact>,
+                                       callback: Callback<Pair<List<Contact>, List<Contact>>>) {
+        val usersFollowedRelation = ParseUser.getCurrentUser().getRelation<ParseUser>(
+            KEY_USERS_FOLLOWED
+        )
+        asyncGetNonFriendParseUsers(contactList, 0, ArrayList<Contact>(), usersFollowedRelation, object: Callback<List<Contact>> {
+            override fun success(t: List<Contact>?, response: Response?) {
+                if (t != null) {
+                    val nonFriendParseUsers = ArrayList<Contact>()
+                    nonFriendParseUsers.addAll(t)
+                    val friendParseUserQuery = usersFollowedRelation.query
+                    friendParseUserQuery.findInBackground { friendParseUsers, e ->
+                        if (e != null) {
+                            val throwable = Throwable(e.message.toString())
+                            val error = retrofit.RetrofitError.unexpectedError(
+                                "no url", throwable
+                            )
+                            callback.failure(error)
+                        }
+                        else if (friendParseUsers == null) {
+                            val throwable = Throwable("friends found are null")
+                            val error = retrofit.RetrofitError.unexpectedError(
+                                "no url", throwable
+                            )
+                            callback.failure(error)
+                        }
+                        val friendParseUserContacts = friendParseUsers.map{parseUser -> Contact.fromParseUser(parseUser)}
+                        callback.success(Pair(nonFriendParseUsers, friendParseUserContacts), dummyResponse)
+                    }
+                }
+            }
+            override fun failure(error: RetrofitError?) {
+                Log.e(TAG, error?.message.toString())
+            }
+        })
+    }
+
+    private fun asyncGetNonFriendParseUsers(contactList: List<Contact>,
+                                            index: Int,
+                                            accumulator: ArrayList<Contact>,
+                                            usersFollowedRelation: ParseRelation<ParseUser>,
+                                            callback: Callback<List<Contact>>) {
+        if (index >= contactList.size) {
+            val response =  Response( // TODO: adjust to be actual response
+                "url", 200,
+                "reason", emptyList(),
+                TypedString("string")
+            )
+            callback.success(accumulator, response)
+        }
+        else if (index < 0) {
+            val throwable = Throwable("index into list of contacts is negative")
+            val error = retrofit.RetrofitError.unexpectedError(
+                "no url", throwable
+            )
+            callback.failure(error)
+        } else {
+            val contact = contactList.get(index)
+            val usersFollowedQuery = usersFollowedRelation.query
+            usersFollowedQuery.whereEqualTo(KEY_USER_PHONE_NUMBER, contact.phoneNumber)
+            usersFollowedQuery.findInBackground { usersMatched, err ->
+                if (err != null) {
+                    val throwable = Throwable(err.message.toString())
+                    val error = retrofit.RetrofitError.unexpectedError(
+                        "no url", throwable
+                    )
+                    callback.failure(error)
+                }
+                else if (usersMatched == null) {
+                    val throwable = Throwable("objects found are null")
+                    val error = retrofit.RetrofitError.unexpectedError(
+                        "no url", throwable
+                    )
+                    callback.failure(error)
+                }
+                else if (usersMatched.size > 0) {
+                    // already a friend
+                    asyncGetNonFriendParseUsers(contactList,
+                    index+1,
+                    accumulator,
+                    usersFollowedRelation,
+                    callback)
+                } else {
+                    // not a friend, but might be a parse user
+                    val query = ParseQuery.getQuery(ParseUser::class.java)
+                    query.whereEqualTo(KEY_USER_PHONE_NUMBER, contact.phoneNumber)
+                    query.findInBackground { objects, e ->
+                        if (e != null) {
+                            val throwable = Throwable(e.message.toString())
+                            val error = retrofit.RetrofitError.unexpectedError(
+                                "no url", throwable
+                            )
+                            callback.failure(error)
+                        }
+                        else if (objects == null) {
+                            val throwable = Throwable("objects found are null")
+                            val error = retrofit.RetrofitError.unexpectedError(
+                                "no url", throwable
+                            )
+                            callback.failure(error)
+                        }
+                        else if (objects.size > 0){
+                            // is a parse user
+                            contact.parseUsername = objects.get(0).username
+                            contact.parseUserId = objects.get(0).objectId
+                            accumulator.add(contact)
+                            asyncGetNonFriendParseUsers(contactList,
+                                index+1,
+                                accumulator,
+                                usersFollowedRelation,
+                                callback)
+                        }
+                        else {
+                            // not a parse user
+                            asyncGetNonFriendParseUsers(contactList,
+                                index+1,
+                                accumulator,
+                                usersFollowedRelation,
+                                callback)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
     fun filterFriendsFromContacts(contactList : List<Contact>): Pair<List<Contact>, List<Contact>> {
         val usersFollowedRelation = ParseUser.getCurrentUser().getRelation<ParseUser>(
             KEY_USERS_FOLLOWED
         )
-
         // TODO: make DB calls in the background (async)
         val notInFriendsAndIsInParse =  contactList.filter {
             contact ->!contactIsInFriendsList(contact, usersFollowedRelation)
                 && isParseUser(contact)
         }
         val parseFriendsQuery = usersFollowedRelation.query
-        for (friend in notInFriendsAndIsInParse){
-            parseFriendsQuery.whereNotEqualTo(KEY_USER_PHONE_NUMBER, friend.phoneNumber)
-        }
+//        val usernamesToIgnore = notInFriendsAndIsInParse.map{friend -> friend.parseUsername}
+//        parseFriendsQuery.whereNotContainedIn("username", usernamesToIgnore)
         val parseFriends = parseFriendsQuery.find()
         val contactParseFriends = parseFriends.map{
             parseUser -> Contact.fromParseUser(parseUser)
@@ -779,6 +1095,7 @@ class MainActivity : AppCompatActivity(){
         val results = query.find()
         if (results.size > 0) {
             contact.parseUsername = results.get(0).username
+            contact.parseUserId = results.get(0).objectId
         }
         return results.size > 0
     }
@@ -791,7 +1108,6 @@ class MainActivity : AppCompatActivity(){
         val matchedUsers = usersFollowedPhoneNumberQuery.find()
         return matchedUsers.size > 0
     }
-
 
     inner class MainActivitySongController() : SongController {
         val TAG = "MainActivityController"

@@ -63,11 +63,13 @@ class SongFeatures() : ParseObject() {
             return features
         }
 
-        fun asyncGetUserPlaylistFeatureMap(callback: Callback<Map<String, Double>>){
+
+
+        fun asyncGetUserPlaylistFeatureMap(user: ParseUser, callback: Callback<Map<String, Double>>){
             val query = ParseQuery.getQuery(SongFeatures::class.java)
             query.include(SongFeatures.KEY_LOGGED_WEIGHT)
             query.include(SongFeatures.KEY_FEATURE_JSON_STRING_DATA)
-            query.whereEqualTo(SongFeatures.KEY_USER_WHO_LOGGED, ParseUser.getCurrentUser())
+            query.whereEqualTo(SongFeatures.KEY_USER_WHO_LOGGED, user)
             val songFeatures = query.findInBackground { objects, e ->
                 if (e != null) {
                     // TODO: shouldn't pass in the message for the url parameter
