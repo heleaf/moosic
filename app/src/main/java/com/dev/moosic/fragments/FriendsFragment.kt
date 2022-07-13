@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.R
@@ -31,6 +32,7 @@ class FriendsFragment(private var friendsController: FriendsController) : Fragme
 
     private lateinit var rvContacts : RecyclerView
     lateinit var adapter : TaggedContactAdapter
+    lateinit var emptyFriendsText : TextView
 
     // remove this, use taggedContactList instead
 //    private var contactList: ArrayList<Contact> = ArrayList()
@@ -73,6 +75,12 @@ class FriendsFragment(private var friendsController: FriendsController) : Fragme
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         rvContacts = view.findViewById(R.id.rvContacts)
+
+        emptyFriendsText = view.findViewById(R.id.emptyFriendsDescription)
+
+        if (taggedContactList.size == 0) {
+            emptyFriendsText.visibility = View.VISIBLE
+        } else emptyFriendsText.visibility = View.GONE
 
         // TODO, pass taggedContactList instead of contactList
         adapter = TaggedContactAdapter(view.context, taggedContactList, friendsController) //ContactAdapter(view.context, contactList)

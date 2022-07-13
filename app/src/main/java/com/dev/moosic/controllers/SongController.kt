@@ -19,7 +19,7 @@ interface SongController {
 
     fun loadReccomendedSongs(seedArtists: String, seedGenres: String, seedTracks: String, limit: Int)
 
-    fun loadMoreMixedHomeFeedItems(/*trackOffset: Int, friendPlaylistOffset: Int,*/
+    fun loadMoreMixedHomeFeedItems(trackOffset: Int, /*friendPlaylistOffset: Int,*/
                                    numberItemsToLoad: Int, adapter: HomeFeedItemAdapter,
                                    swipeContainer: SwipeRefreshLayout?)
 

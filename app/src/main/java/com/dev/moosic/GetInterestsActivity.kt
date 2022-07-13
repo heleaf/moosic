@@ -52,14 +52,15 @@ class GetInterestsActivity : AppCompatActivity() {
                     adapter?.notifyDataSetChanged()
                 }
             }
+
             override fun failure(error: RetrofitError?) {
                 Log.d(TAG, "failed to get seed genres: " + error?.message)
                 Toast.makeText(this@GetInterestsActivity,
                     "Failed to pull genres from Spotify api, " +
                             "please restart the app and authorize your Spotify account.",
                 Toast.LENGTH_LONG).show()
-//                TODO: authorize here?
-            //    SpotifyAuthController(this@GetInterestsActivity).authorizeUser()
+            //   TODO: authorize here?
+            //   SpotifyAuthController(this@GetInterestsActivity).authorizeUser()
             }
         })
     }

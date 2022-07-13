@@ -13,6 +13,7 @@ import com.dev.moosic.LoadMoreFunction
 import com.dev.moosic.R
 import com.dev.moosic.adapters.HomeFeedItemAdapter
 import com.dev.moosic.controllers.SongController
+import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
 import kotlin.properties.Delegates
 
@@ -20,6 +21,7 @@ import kotlin.properties.Delegates
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
 private const val KEY_MIXED_ITEM_LIST = "mixedItemList"
 private const val KEY_NUMBER_FRIENDS_PLAYLISTS_INSERTED = "numberFriendsPlaylistsInserted"
+private const val KEY_TOP_TRACKS_LIST = "topTracksList"
 
 /**
  * A simple [Fragment] subclass.
@@ -30,6 +32,7 @@ private const val KEY_NUMBER_FRIENDS_PLAYLISTS_INSERTED = "numberFriendsPlaylist
 class MixedHomeFeedFragment(private var songController: SongController) : Fragment() {
     // TODO: Rename and change types of parameters
     private var mixedItemList : ArrayList<Pair<Any, String>> = ArrayList()
+    private var topTracksList : ArrayList<Track> = ArrayList()
 
     var numberFriendsPlaylistsInserted by Delegates.notNull<Int>()
 
@@ -41,7 +44,8 @@ class MixedHomeFeedFragment(private var songController: SongController) : Fragme
         super.onCreate(savedInstanceState)
         arguments?.let {
             mixedItemList = Parcels.unwrap(it.getParcelable(KEY_MIXED_ITEM_LIST))
-            numberFriendsPlaylistsInserted = it.getInt(KEY_NUMBER_FRIENDS_PLAYLISTS_INSERTED)
+//            numberFriendsPlaylistsInserted = it.getInt(KEY_NUMBER_FRIENDS_PLAYLISTS_INSERTED)
+            topTracksList = Parcels.unwrap(it.getParcelable(KEY_TOP_TRACKS_LIST))
         }
     }
 
@@ -59,11 +63,11 @@ class MixedHomeFeedFragment(private var songController: SongController) : Fragme
          * @return A new instance of fragment MixedHomeFeedFragment.
          */
         @JvmStatic
-        fun newInstance(mixedItemList: ArrayList<Pair<Any, String>>, numberFriendsPlaylistInserted: Int, songController: SongController) =
+        fun newInstance(mixedItemList: ArrayList<Pair<Any, String>>, topTracks: ArrayList<Track>, songController: SongController) =
             MixedHomeFeedFragment(songController).apply {
                 arguments = Bundle().apply {
                     putParcelable(KEY_MIXED_ITEM_LIST, Parcels.wrap(mixedItemList))
-                    putInt(KEY_NUMBER_FRIENDS_PLAYLISTS_INSERTED, numberFriendsPlaylistInserted)
+                    putParcelable(KEY_TOP_TRACKS_LIST, Parcels.wrap(topTracks))
                 }
             }
     }
@@ -80,7 +84,7 @@ class MixedHomeFeedFragment(private var songController: SongController) : Fragme
         scrollListener = EndlessRecyclerViewScrollListener(linearLayoutManager, object: LoadMoreFunction {
             override fun onLoadMore(page: Int, totalItemsCount: Int, view: RecyclerView?) {
                 Log.d("MixedHomeFeedFragment", "loading: " + totalItemsCount)
-                songController.loadMoreMixedHomeFeedItems(totalItemsCount, adapter, null)
+                songController.loadMoreMixedHomeFeedItems(topTracksList.size, totalItemsCount, adapter, null)
             }
         })
 
