@@ -11,13 +11,14 @@ import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.R
 import com.dev.moosic.controllers.FriendsController
 import com.dev.moosic.models.Contact
+import com.dev.moosic.models.TaggedContactList
 import java.math.BigDecimal
 import java.math.RoundingMode
 
 class TaggedContactAdapter (context: Context,
                             contactList: List<Pair<Contact, String>>,
                             friendsController: FriendsController
-    ) : RecyclerView.Adapter<TaggedContactAdapter.ViewHolder>() {
+) : RecyclerView.Adapter<TaggedContactAdapter.ViewHolder>() {
     var contactList : List<Pair<Contact, String>> = ArrayList()
     var context : Context
     var friendsController : FriendsController
@@ -37,12 +38,14 @@ class TaggedContactAdapter (context: Context,
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+//        val contact = this.contactList.get(position)
         val contact = this.contactList.get(position)
         holder.bind(contact, position)
     }
 
     override fun getItemCount(): Int {
         return this.contactList.size
+//        return this.contactList.size
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -75,11 +78,16 @@ class TaggedContactAdapter (context: Context,
                 parseUsernameField.visibility = View.GONE
             } else { parseUsernameField.setText(contactPair.first.parseUsername) }
 
+            followButton.setOnClickListener {
+                friendsController.followContact(contactPair.first, position, adapter)
+            }
+
             if (contactPair.second == Contact.KEY_NOT_FOLLOWED_CONTACT) {
                 followButton.visibility = View.VISIBLE
-                followButton.setOnClickListener {
-                    friendsController.followContact(contactPair.first, position, adapter)
-                }
+//                followButton.setOnClickListener {
+////                    friendsController.followContact(contactPair.first, position, adapter)
+//
+//                }
             } else {
                 // add unfollow button?
                 followButton.visibility = View.GONE
@@ -91,9 +99,9 @@ class TaggedContactAdapter (context: Context,
                      = BigDecimal(contactPair.first.similarityScore!!).setScale(2, RoundingMode.HALF_EVEN)
                 similarityField.text = String.format("similarity: $displayedSimilarity")
                 followButton.visibility = View.VISIBLE
-                followButton.setOnClickListener {
-                    friendsController.followContact(contactPair.first, position, adapter)
-                }
+//                followButton.setOnClickListener {
+////                    friendsController.followContact(contactPair.first, position, adapter)
+//                }
             } else {
                 similarityField.visibility = View.GONE
             }

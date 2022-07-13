@@ -59,7 +59,7 @@ class TrackAdapter(context : Context, tracks : ArrayList<Track>, userId : String
         val TAG = "TopTrackAdapter"
 
         init {
-            albumCover = itemView.findViewById(R.id.topTrackImg)
+            albumCover = itemView.findViewById(R.id.singleFriendPlaylistSongImage)
             trackTitle = itemView.findViewById(R.id.trackTitle)
             albumTitle = itemView.findViewById(R.id.albumTitle)
             artistName = itemView.findViewById(R.id.artistName)

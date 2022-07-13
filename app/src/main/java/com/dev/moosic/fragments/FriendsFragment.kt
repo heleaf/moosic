@@ -15,6 +15,7 @@ import com.dev.moosic.adapters.TaggedContactAdapter
 import com.dev.moosic.controllers.FriendsController
 import com.dev.moosic.models.Contact
 import com.dev.moosic.models.Song
+import com.dev.moosic.models.TaggedContactList
 import org.parceler.Parcels
 
 //private const val ARG_PARAM1 = "contactList"
@@ -81,7 +82,7 @@ class FriendsFragment(private var friendsController: FriendsController) : Fragme
 
         val recyclerItemDecoration : RecyclerItemDecoration
         = RecyclerItemDecoration(requireContext(), resources.getDimensionPixelSize(R.dimen.header_height),
-        false, getSectionCallback(taggedContactList))
+        false, getSectionCallback(taggedContactList)) // taggedContactList
         rvContacts.addItemDecoration(recyclerItemDecoration)
 
     }

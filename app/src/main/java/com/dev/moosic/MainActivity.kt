@@ -502,17 +502,27 @@ class MainActivity : AppCompatActivity(){
 //                    Log.d(TAG, "success: " + t.toString() + " size: " + t.items.size)
                     topTracks.clear()
                     topTracks.addAll(t.items)
-                    if (currentUserId != null && userPlaylistId != null){
-                        val homeFragment = HomeFeedFragment.newInstance(topTracks,
-                            currentUserId!!, userPlaylistId!!, mainActivitySongController
-                        )
-                        fragmentManager.beginTransaction()
-                            .replace(R.id.flContainer, homeFragment).commit()
-                    } else {
-                        Toast.makeText(this@MainActivity,
-                            "Setting up home page.. please refresh",
-                        Toast.LENGTH_LONG).show()
+
+//
+//                    if (currentUserId != null && userPlaylistId != null){
+//                        val homeFragment = HomeFeedFragment.newInstance(topTracks,
+//                            currentUserId!!, userPlaylistId!!, mainActivitySongController
+//                        )
+//                        fragmentManager.beginTransaction()
+//                            .replace(R.id.flContainer, homeFragment).commit()
+//                    } else {
+//                        Toast.makeText(this@MainActivity,
+//                            "Setting up home page.. please refresh",
+//                        Toast.LENGTH_LONG).show()
+//                    }
+
+                    for (item in t.items) {
+                        homeFeedItems.add(Pair(item, HomeFeedItemAdapter.TAG_TRACK))
                     }
+
+                    val newFragment = MixedHomeFeedFragment.newInstance(homeFeedItems, mainActivitySongController)
+                    fragmentManager.beginTransaction()
+                            .replace(R.id.flContainer, newFragment).commit()
                 }
                 if (response != null){
                     Log.d(TAG, "success: " + response.body)
@@ -527,6 +537,8 @@ class MainActivity : AppCompatActivity(){
         })
 
     }
+
+
 
     private fun launchSettingsFragment() {
         searchMenuItem?.isVisible = false
@@ -1006,7 +1018,10 @@ class MainActivity : AppCompatActivity(){
                                 override fun success(t: Unit?, response: Response?) {
                                     Log.d(TAG, "storing all friends' playlsits")
                                     for (friendPlaylist in friendPlaylists){
-                                        homeFeedItems.add(Pair(friendPlaylists, HomeFeedItemAdapter.TAG_FRIEND_PLAYLIST))
+                                        if (friendPlaylist.second.size > 0) {
+                                            homeFeedItems.add(Pair(friendPlaylist, HomeFeedItemAdapter.TAG_FRIEND_PLAYLIST))
+                                        }
+                                        Log.d(TAG, friendPlaylist.first.parseUsername + " " + friendPlaylist.second.size)
                                     }
                                 }
 
