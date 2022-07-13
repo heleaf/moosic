@@ -14,6 +14,7 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.dev.moosic.adapters.HomeFeedItemAdapter
 import com.dev.moosic.adapters.TaggedContactAdapter
 import com.dev.moosic.adapters.TrackAdapter
 import com.dev.moosic.controllers.FriendsController
@@ -22,6 +23,7 @@ import com.dev.moosic.fragments.*
 import com.dev.moosic.models.Contact
 import com.dev.moosic.models.Song
 import com.dev.moosic.models.SongFeatures
+import com.dev.moosic.models.TaggedContactList
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.parse.ParseQuery
 import com.parse.ParseRelation
@@ -58,6 +60,8 @@ class MainActivity : AppCompatActivity(){
     val FRACTION_OF_SONG_PLAYED_THRESHOLD = 0.2f
     val WEIGHT_PLAYED_SONG = 1
 
+    val DEFAULT_NUMBER_RECOMMENDED_USERS = 2
+
     val URI_PREFIX_LENGTH = 14
 
     val PERMISSIONS_REQUEST_READ_CONTACTS = 100
@@ -81,13 +85,14 @@ class MainActivity : AppCompatActivity(){
 
     var currentTrack : Track? = null
     var currentTrackIsPaused : Boolean? = null
-    var currentTrackIsLoggedInModel : Boolean? = null
 
     var playerStateSubscription: Subscription<PlayerState>? = null
 
     var topTracks : ArrayList<kaaes.spotify.webapi.android.models.Track> = ArrayList()
+    var homeFeedItems : ArrayList<Pair<Any, String>> = ArrayList()
 
-    var contactList : ArrayList<Contact> = ArrayList()
+    var friendPlaylists : ArrayList<Pair<Contact, ArrayList<Song>>> = ArrayList()
+
     var taggedContactList : ArrayList<Pair<Contact, String>> = ArrayList()
     var numberFollowedFriends : Int = 0
 
@@ -99,8 +104,10 @@ class MainActivity : AppCompatActivity(){
     var bottomNavigationView : BottomNavigationView? = null
     val fragmentManager = supportFragmentManager
     var displayingFriendsFragment = false
-//    val friendsFragment = FriendsFragment.newInstance(taggedContactList, mainActivityFriendsController)
     var filledContacts = false
+
+    var displayingProfileFragment = false
+    var filledUserPlaylist = false
 
     var searchMenuItem : MenuItem? = null
     var settingsMenuItem : MenuItem? = null
@@ -123,10 +130,26 @@ class MainActivity : AppCompatActivity(){
         bottomNavigationView = findViewById(R.id.bottomNavBar)
         bottomNavigationView?.setOnItemSelectedListener { menuItem : MenuItem ->
             when (menuItem.itemId) {
-                R.id.actionHome -> { displayingFriendsFragment = false; goToHomeFragment() }
-                R.id.actionSearch -> { displayingFriendsFragment = false; goToSearchFragment() }
-                R.id.actionProfile -> { displayingFriendsFragment = false; goToProfilePlaylistFragment() }
-                R.id.actionFriends -> { displayingFriendsFragment = true; goToFriendsFragment() }
+                R.id.actionHome -> {
+                    displayingProfileFragment = false
+                    displayingFriendsFragment = false
+                    goToHomeFragment()
+                }
+                R.id.actionSearch -> {
+                    displayingProfileFragment = false
+                    displayingFriendsFragment = false
+                    goToSearchFragment()
+                }
+                R.id.actionProfile -> {
+                    displayingProfileFragment = true
+                    displayingFriendsFragment = false
+                    goToProfilePlaylistFragment()
+                }
+                R.id.actionFriends -> {
+                    displayingProfileFragment = false
+                    displayingFriendsFragment = true
+                    goToFriendsFragment() }
+
                 else -> {}
             }
             return@setOnItemSelectedListener true
@@ -135,7 +158,7 @@ class MainActivity : AppCompatActivity(){
         miniPlayerFragmentContainer = findViewById(R.id.miniPlayerFlContainer)
         mainActivitySongController.hideMiniPlayerPreview()
         setUpCurrentUser()
-        fetchCOntacts()
+        fetchContacts()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -312,15 +335,30 @@ class MainActivity : AppCompatActivity(){
         val playlistSongsRelation = playlistObj?.getRelation<Song>("playlistSongs")
         val query = playlistSongsRelation?.getQuery()
         query?.addDescendingOrder("createdAt")
-        val songs = query?.find()
-        if (songs != null) {
-            parsePlaylistSongs.addAll(songs)
+
+        query?.findInBackground { objects, e ->
+            if (e != null) {
+                Toast.makeText(context, "failed to load playlist songs",
+                Toast.LENGTH_LONG).show()
+            }
+            else if (objects == null) {
+                Toast.makeText(context, "songs found are null",
+                Toast.LENGTH_LONG).show()
+            }
+            else {
+                parsePlaylistSongs.addAll(objects)
+                filledUserPlaylist = true
+                if (displayingProfileFragment) goToProfilePlaylistFragment()
+            }
         }
         goToHomeFragment()
     }
 
     private fun goToProfilePlaylistFragment() {
-        hideProgressBar()
+        if (!filledUserPlaylist) {
+            showProgressBar()
+        }
+        else { hideProgressBar() }
         searchMenuItem?.isVisible = false
         settingsMenuItem?.isVisible = true
         backMenuItem?.isVisible = false
@@ -338,6 +376,7 @@ class MainActivity : AppCompatActivity(){
         searchMenuItem?.isVisible = false
         settingsMenuItem?.isVisible = false
         backMenuItem?.isVisible = false
+
         val newFragment = FriendsFragment.newInstance(taggedContactList, mainActivityFriendsController)
         fragmentManager.beginTransaction().replace(R.id.flContainer, newFragment).commit()
     }
@@ -546,10 +585,14 @@ class MainActivity : AppCompatActivity(){
         if (requestCode == PERMISSIONS_REQUEST_READ_CONTACTS) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Log.d(TAG, "permission granted")
-                // fillTaggedContactList()
                 asyncFillTaggedContactList(object: Callback<Unit> {
                     override fun success(t: Unit?, response: Response?) {
                         Log.d(TAG, "filled asynchronouly")
+                        filledContacts = true
+                        if (displayingFriendsFragment) {
+                            goToFriendsFragment()
+                        }
+                        hideProgressBar()
                     }
 
                     override fun failure(error: RetrofitError?) {
@@ -557,6 +600,7 @@ class MainActivity : AppCompatActivity(){
                     }
 
                 })
+
             } else {
                 Log.d(TAG, "permission not granted")
                 //  toast("Permission must be granted in order to display contacts information")
@@ -564,7 +608,7 @@ class MainActivity : AppCompatActivity(){
         }
     }
 
-    fun fetchCOntacts(){
+    fun fetchContacts(){
         showProgressBar()
         if (checkSelfPermission(Manifest.permission.READ_CONTACTS)
             != PackageManager.PERMISSION_GRANTED) {
@@ -605,12 +649,14 @@ class MainActivity : AppCompatActivity(){
                     val taggedNotAddedContacts = nonFriendParseUsers.map{
                             contact -> Pair(contact, Contact.KEY_NOT_FOLLOWED_CONTACT)
                     }
+
                     val taggedFollowedFriends = friendParseUsers.map{
                             contact -> Pair(contact, Contact.KEY_FOLLOWED_CONTACT)
                     }
 
                     asyncGetRecommendedFriends(false,
-                        friendParseUsers, object: Callback<List<Pair<Contact, Double>>> {
+                        friendParseUsers, DEFAULT_NUMBER_RECOMMENDED_USERS,
+                        object: Callback<List<Pair<Contact, Double>>> {
                             override fun success(
                                 recs: List<Pair<Contact, Double>>?,
                                 response: Response?
@@ -816,6 +862,7 @@ class MainActivity : AppCompatActivity(){
 
     fun asyncGetRecommendedFriends(includeCurrentUser: Boolean,
                                    contactsToIgnore: List<Contact>,
+                                   numberOfUsersRequested: Int,
                                    callback: Callback<List<Pair<Contact, Double>>>) {
         // prepare the query of users
         val userQuery = ParseUser.getQuery()
@@ -879,7 +926,9 @@ class MainActivity : AppCompatActivity(){
                                 else -1
                             }
                             val sortedVectors = similaritiesFilteredOutNaNs.sortedWith(vectorComparator).reversed()
-                            callback.success(sortedVectors, dummyResponse)
+                            val vecsToReturn = if (sortedVectors.size < numberOfUsersRequested) sortedVectors
+                                else sortedVectors.slice(IntRange(0, numberOfUsersRequested - 1))
+                            callback.success(vecsToReturn, dummyResponse)
                         }
                         override fun failure(error: RetrofitError?) {
                             callback.failure(error)
@@ -948,6 +997,25 @@ class MainActivity : AppCompatActivity(){
                             )
                             callback.failure(error)
                         }
+
+                        // use friendParseUsers here to fill in my friendPlaylists variable
+                        asyncExtractFriendPlaylists(
+                            friendParseUsers,
+                            0,
+                            object: Callback<Unit> {
+                                override fun success(t: Unit?, response: Response?) {
+                                    Log.d(TAG, "storing all friends' playlsits")
+                                    for (friendPlaylist in friendPlaylists){
+                                        homeFeedItems.add(Pair(friendPlaylists, HomeFeedItemAdapter.TAG_FRIEND_PLAYLIST))
+                                    }
+                                }
+
+                                override fun failure(error: RetrofitError?) {
+                                    Log.e(TAG, "failed to get playlists: " + error?.message)
+                                }
+                            }
+                        )
+
                         val friendParseUserContacts = friendParseUsers.map{parseUser -> Contact.fromParseUser(parseUser)}
                         callback.success(Pair(nonFriendParseUsers, friendParseUserContacts), dummyResponse)
                     }
@@ -959,18 +1027,43 @@ class MainActivity : AppCompatActivity(){
         })
     }
 
+    private fun asyncExtractFriendPlaylists(friendParseUsers: List<ParseUser>,
+                                            index: Int,
+                                            callback: Callback<Unit>) {
+        if (index >= friendParseUsers.size) {
+            callback.success(Unit, dummyResponse)
+        }
+        else if (index < 0) {
+            callback.failure(retrofit.RetrofitError.unexpectedError("no url",
+            Throwable("negative index")))
+        } else {
+            val parseUser = friendParseUsers.get(index)
+            val playlistObj = parseUser.getParseObject("parsePlaylist")
+            val playlistSongsRelation = playlistObj?.getRelation<Song>("playlistSongs")
+            val query = playlistSongsRelation?.getQuery()
+            query?.addDescendingOrder("createdAt")
+            query?.findInBackground { objects, e ->
+                if (e != null) callback.failure(retrofit.RetrofitError.unexpectedError("no url",
+                Throwable(e.message)))
+                else if (objects == null) callback.failure(retrofit.RetrofitError.unexpectedError("no url",
+                Throwable("playlist songs found for user is null")))
+                else {
+                    val songs = ArrayList<Song>()
+                    songs.addAll(objects)
+                    friendPlaylists.add(Pair(Contact.fromParseUser(parseUser), songs))
+                    asyncExtractFriendPlaylists(friendParseUsers,index+1, callback)
+                }
+            }
+        }
+    }
+
     private fun asyncGetNonFriendParseUsers(contactList: List<Contact>,
                                             index: Int,
                                             accumulator: ArrayList<Contact>,
                                             usersFollowedRelation: ParseRelation<ParseUser>,
                                             callback: Callback<List<Contact>>) {
         if (index >= contactList.size) {
-            val response =  Response( // TODO: adjust to be actual response
-                "url", 200,
-                "reason", emptyList(),
-                TypedString("string")
-            )
-            callback.success(accumulator, response)
+            callback.success(accumulator, dummyResponse)
         }
         else if (index < 0) {
             val throwable = Throwable("index into list of contacts is negative")
@@ -1059,8 +1152,6 @@ class MainActivity : AppCompatActivity(){
                 && isParseUser(contact)
         }
         val parseFriendsQuery = usersFollowedRelation.query
-//        val usernamesToIgnore = notInFriendsAndIsInParse.map{friend -> friend.parseUsername}
-//        parseFriendsQuery.whereNotContainedIn("username", usernamesToIgnore)
         val parseFriends = parseFriendsQuery.find()
         val contactParseFriends = parseFriends.map{
             parseUser -> Contact.fromParseUser(parseUser)
