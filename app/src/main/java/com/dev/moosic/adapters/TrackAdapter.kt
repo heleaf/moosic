@@ -107,8 +107,7 @@ class TrackAdapter(context : Context, tracks : ArrayList<Track>, userId : String
             if (mShowAddButton) {
                 addToPlaylistButton?.visibility = View.VISIBLE
                 addToPlaylistButton?.setOnClickListener(View.OnClickListener {
-                    mainActivitySongController.addToPlaylist(this@TrackAdapter.mUserId!!,
-                        this@TrackAdapter.mPlaylistId!!, track)
+                    mainActivitySongController.addToPlaylist(track)
                 })
             } else {
                 addToPlaylistButton?.visibility = View.GONE

@@ -14,6 +14,7 @@ import com.dev.moosic.controllers.SongController
 import com.dev.moosic.models.Contact
 import com.dev.moosic.models.Song
 import com.facebook.drawee.view.SimpleDraweeView
+import com.google.gson.Gson
 import kaaes.spotify.webapi.android.models.Track
 import java.lang.Exception
 
@@ -71,8 +72,8 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
         val item = itemList.get(position)
         when (item.second) {
             TAG_FRIEND_PLAYLIST -> {
-                Log.e("HomeFeedMixed adapter", item.toString())
-                Log.e("HomeFeedMixed adapter", item.first.toString())
+//                Log.e("HomeFeedMixed adapter", item.toString())
+//                Log.e("HomeFeedMixed adapter", item.first.toString())
                 val playlistHolder = holder as PlaylistViewHolder
                 playlistHolder.bindPlaylist(item.first as Pair<Contact, ArrayList<Song>>, position)
             }
@@ -105,17 +106,15 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
             if (contact.parseUsername != null) {
                 usernameField.setText(contact.parseUsername)
             }
-            val playlistSongAdapter = HorizontalPlaylistAdapter(context, songs)
+            val playlistSongAdapter = HorizontalPlaylistAdapter(context, songs, controller)
             playlistRv.adapter = playlistSongAdapter
-            // LinearLayoutManager.HORIZONTAL,
-            //                false
             val linearLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL,
                 false)
             playlistRv.layoutManager = linearLayoutManager
         }
     }
 
-    class TrackViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class TrackViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val albumCover : SimpleDraweeView
         val songTitle : TextView
         val albumTitle : TextView
@@ -157,9 +156,25 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
                 Log.e("HomeFeedItemAdapter", "error: " + e.message)
             }
 
-            listOf(heartButton, deleteFromPlaylistButton, addToPlaylistButton).map{
+            listOf(heartButton, deleteFromPlaylistButton).map{
                 button -> button.visibility = View.GONE
             }
+
+            addToPlaylistButton.visibility = View.VISIBLE
+            addToPlaylistButton.setOnClickListener {
+                controller.addToPlaylist(track)
+            }
+
+            albumCover.setOnLongClickListener {
+                val gson = Gson()
+                controller.addToPlaylist(track)
+                return@setOnLongClickListener true
+            }
+
+            albumCover.setOnClickListener {
+                controller.playSongOnSpotify(track.uri, track.id)
+            }
+
         }
     }
 

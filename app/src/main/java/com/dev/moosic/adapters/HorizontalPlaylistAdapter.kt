@@ -8,19 +8,24 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.R
+import com.dev.moosic.controllers.SongController
 import com.dev.moosic.models.Song
 import com.facebook.drawee.view.SimpleDraweeView
+import com.google.gson.Gson
+import kaaes.spotify.webapi.android.models.Track
 import java.lang.Exception
 
-class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>)
+class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>, controller: SongController)
     : RecyclerView.Adapter<HorizontalPlaylistAdapter.ViewHolder>() {
 
     val context: Context
     val songs: ArrayList<Song>
+    val controller: SongController
 
     init {
         this.context = context
         this.songs = songs
+        this.controller = controller
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -37,7 +42,7 @@ class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>)
         return songs.size
     }
 
-    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val albumCover: SimpleDraweeView
         val songTitle: TextView
         init {
@@ -51,6 +56,18 @@ class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>)
                 albumCover.setImageURI(albumCoverImgUri);
             } catch (e : Exception) {
                 Log.e("SongAdapter", "error: " + e.message)
+            }
+
+            val gson = Gson()
+            val track = gson.fromJson(song.getJsonDataString(), Track::class.java)
+
+            albumCover.setOnLongClickListener {
+                controller.addToPlaylist(track)
+                return@setOnLongClickListener true
+            }
+
+            albumCover.setOnClickListener {
+                controller.playSongOnSpotify(track.uri, track.id)
             }
         }
     }

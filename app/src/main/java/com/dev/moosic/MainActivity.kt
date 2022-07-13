@@ -60,7 +60,9 @@ class MainActivity : AppCompatActivity(){
     val FRACTION_OF_SONG_PLAYED_THRESHOLD = 0.2f
     val WEIGHT_PLAYED_SONG = 1
 
-    val DEFAULT_NUMBER_RECOMMENDED_USERS = 2
+    val DEFAULT_NUMBER_RECOMMENDED_USERS = 5
+
+    val TRACK_SECTION_INCREMENT = 4
 
     val URI_PREFIX_LENGTH = 14
 
@@ -91,8 +93,9 @@ class MainActivity : AppCompatActivity(){
     var topTracks : ArrayList<kaaes.spotify.webapi.android.models.Track> = ArrayList()
     var homeFeedItems : ArrayList<Pair<Any, String>> = ArrayList()
 
+    var followedFriends: ArrayList<ParseUser> = ArrayList()
     var friendPlaylists : ArrayList<Pair<Contact, ArrayList<Song>>> = ArrayList()
-
+    var friendPlaylistsIndex : Int = 0
     var taggedContactList : ArrayList<Pair<Contact, String>> = ArrayList()
     var numberFollowedFriends : Int = 0
 
@@ -103,6 +106,10 @@ class MainActivity : AppCompatActivity(){
 
     var bottomNavigationView : BottomNavigationView? = null
     val fragmentManager = supportFragmentManager
+
+    var displayingHomeFragment = true
+    var filledFollowedFriends = false
+
     var displayingFriendsFragment = false
     var filledContacts = false
 
@@ -490,18 +497,23 @@ class MainActivity : AppCompatActivity(){
         searchMenuItem?.isVisible = false
         settingsMenuItem?.isVisible = false
         backMenuItem?.isVisible = false
+
+        if (!filledFollowedFriends) {
+            showProgressBar()
+            return
+        }
+
         showProgressBar()
         spotifyApi.service.getTopTracks(
             object : Callback<Pager<kaaes.spotify.webapi.android.models.Track>> {
             override fun success(
-                t: Pager<kaaes.spotify.webapi.android.models.Track>?,
+                topTracksPager: Pager<kaaes.spotify.webapi.android.models.Track>?,
                 response: Response?
             ) {
-                hideProgressBar()
-                if (t != null){
+                if (topTracksPager != null){
 //                    Log.d(TAG, "success: " + t.toString() + " size: " + t.items.size)
                     topTracks.clear()
-                    topTracks.addAll(t.items)
+                    topTracks.addAll(topTracksPager.items)
 
 //                    if (currentUserId != null && userPlaylistId != null){
 //                        val homeFragment = HomeFeedFragment.newInstance(topTracks,
@@ -517,22 +529,31 @@ class MainActivity : AppCompatActivity(){
 
                     homeFeedItems.clear()
 
-                    for (item in t.items) {
-                        homeFeedItems.add(Pair(item, HomeFeedItemAdapter.TAG_TRACK))
-                    }
+//                    for (item in t.items) {
+//                        homeFeedItems.add(Pair(item, HomeFeedItemAdapter.TAG_TRACK))
+//                    }
 
-                    if (friendPlaylists.size > 0) {
-                        val stepSize = homeFeedItems.size / friendPlaylists.size
-                        var idxToInsert = 0
-                        for (item in friendPlaylists) {
-                            homeFeedItems.add(idxToInsert, Pair(item, HomeFeedItemAdapter.TAG_FRIEND_PLAYLIST))
-                            idxToInsert += stepSize
-                        }
-                    }
+                    friendPlaylists.clear()
+                    asyncExtractFriendPlaylists(followedFriends, 0, ArrayList<Pair<Contact, ArrayList<Song>>>(),
+                        object:Callback<ArrayList<Pair<Contact, ArrayList<Song>>>> {
+                            override fun success(
+                                friendPlaylistList: ArrayList<Pair<Contact, ArrayList<Song>>>?,
+                                response: Response?
+                            ) {
+                                if (friendPlaylistList != null) {
+                                    friendPlaylists.addAll(friendPlaylistList)
+                                    friendPlaylistsIndex = fillHomeFeedItemsList(topTracksPager.items, 0, TRACK_SECTION_INCREMENT)
+                                    hideProgressBar()
+                                    val newFragment = MixedHomeFeedFragment.newInstance(homeFeedItems, friendPlaylists.size, mainActivitySongController)
+                                    fragmentManager.beginTransaction()
+                                        .replace(R.id.flContainer, newFragment).commit()
+                                }
+                            }
+                            override fun failure(error: RetrofitError?) {
+                                Log.e(TAG, error?.message.toString())
+                            }
+                        })
 
-                    val newFragment = MixedHomeFeedFragment.newInstance(homeFeedItems, friendPlaylists.size, mainActivitySongController)
-                    fragmentManager.beginTransaction()
-                            .replace(R.id.flContainer, newFragment).commit()
                 }
                 if (response != null){
                     Log.d(TAG, "success: " + response.body)
@@ -547,6 +568,30 @@ class MainActivity : AppCompatActivity(){
 
     }
 
+    private fun fillHomeFeedItemsList(tracksToAdd: List<Track>,
+                                      friendsPlaylistIndex: Int,
+                                      sectionIncrement: Int): Int {
+        var currentTrackIdx = 0
+        var currentFriendsIndex = friendsPlaylistIndex
+        while (currentTrackIdx < tracksToAdd.size) {
+            if (currentFriendsIndex < friendPlaylists.size
+                && homeFeedItems.size % sectionIncrement == 0) {
+                // try to add in friendsPlaylist
+                val playlist = friendPlaylists.get(currentFriendsIndex)
+                homeFeedItems.add(Pair(playlist, HomeFeedItemAdapter.TAG_FRIEND_PLAYLIST))
+                currentFriendsIndex += 1
+            }
+            else {
+                val trackToAdd = tracksToAdd.get(currentTrackIdx)
+                homeFeedItems.add(Pair(trackToAdd, HomeFeedItemAdapter.TAG_TRACK))
+                currentTrackIdx += 1
+            }
+//            val trackToAdd = tracksToAdd.get(currentTrackIdx)
+//            homeFeedItems.add(Pair(trackToAdd, HomeFeedItemAdapter.TAG_TRACK))
+//            currentTrackIdx += 1
+        }
+        return currentFriendsIndex
+    }
 
 
     private fun launchSettingsFragment() {
@@ -1020,25 +1065,32 @@ class MainActivity : AppCompatActivity(){
                         }
 
                         // use friendParseUsers here to fill in my friendPlaylists variable
-                        asyncExtractFriendPlaylists(
-                            friendParseUsers,
-                            0,
-                            object: Callback<Unit> {
-                                override fun success(t: Unit?, response: Response?) {
-                                    Log.d(TAG, "storing all friends' playlsits")
-                                    for (friendPlaylist in friendPlaylists){
-                                        if (friendPlaylist.second.size > 0) {
-                                            homeFeedItems.add(Pair(friendPlaylist, HomeFeedItemAdapter.TAG_FRIEND_PLAYLIST))
-                                        }
-                                        Log.d(TAG, friendPlaylist.first.parseUsername + " " + friendPlaylist.second.size)
-                                    }
-                                }
+                        followedFriends.addAll(friendParseUsers)
+                        filledFollowedFriends = true
 
-                                override fun failure(error: RetrofitError?) {
-                                    Log.e(TAG, "failed to get playlists: " + error?.message)
-                                }
-                            }
-                        )
+                        if (displayingHomeFragment) {
+                            goToHomeFragment()
+                        }
+
+//                        asyncExtractFriendPlaylists(
+//                            friendParseUsers,
+//                            0,
+//                            object: Callback<Unit> {
+//                                override fun success(t: Unit?, response: Response?) {
+//                                    Log.d(TAG, "storing all friends' playlsits")
+////                                    for (friendPlaylist in friendPlaylists){
+////                                        if (friendPlaylist.second.size > 0) {
+////                                            homeFeedItems.add(Pair(friendPlaylist, HomeFeedItemAdapter.TAG_FRIEND_PLAYLIST))
+////                                        }
+////                                        Log.d(TAG, friendPlaylist.first.parseUsername + " " + friendPlaylist.second.size)
+////                                    }
+//                                }
+//
+//                                override fun failure(error: RetrofitError?) {
+//                                    Log.e(TAG, "failed to get playlists: " + error?.message)
+//                                }
+//                            }
+//                        )
 
                         val friendParseUserContacts = friendParseUsers.map{parseUser -> Contact.fromParseUser(parseUser)}
                         callback.success(Pair(nonFriendParseUsers, friendParseUserContacts), dummyResponse)
@@ -1053,9 +1105,10 @@ class MainActivity : AppCompatActivity(){
 
     private fun asyncExtractFriendPlaylists(friendParseUsers: List<ParseUser>,
                                             index: Int,
-                                            callback: Callback<Unit>) {
+                                            accumulator: ArrayList<Pair<Contact, ArrayList<Song>>>,
+                                            callback: Callback<ArrayList<Pair<Contact, ArrayList<Song>>>>) {
         if (index >= friendParseUsers.size) {
-            callback.success(Unit, dummyResponse)
+            callback.success(accumulator, dummyResponse)
         }
         else if (index < 0) {
             callback.failure(retrofit.RetrofitError.unexpectedError("no url",
@@ -1075,9 +1128,9 @@ class MainActivity : AppCompatActivity(){
                     val songs = ArrayList<Song>()
                     songs.addAll(objects)
                     if (songs.size > 0) {
-                        friendPlaylists.add(Pair(Contact.fromParseUser(parseUser), songs))
+                        accumulator.add(Pair(Contact.fromParseUser(parseUser), songs))
                     }
-                    asyncExtractFriendPlaylists(friendParseUsers,index+1, callback)
+                    asyncExtractFriendPlaylists(friendParseUsers,index+1, accumulator, callback)
                 }
             }
         }
@@ -1263,7 +1316,7 @@ class MainActivity : AppCompatActivity(){
             logTrackInModel(track.id, WEIGHT_ADDED_SONG_TO_PLAYLIST)
         }
 
-        override fun addToPlaylist(userId: String, playlistId: String, track: Track) {
+        override fun addToPlaylist(track: Track) {
             addToParsePlaylist(track)
         }
 
@@ -1383,12 +1436,41 @@ class MainActivity : AppCompatActivity(){
         }
 
         override fun loadMoreMixedHomeFeedItems(
-            offset: Int,
+            /* trackOffset: Int,
+            friendPlaylistOffset: Int, */
             numberItemsToLoad: Int,
             adapter: HomeFeedItemAdapter,
             swipeContainer: SwipeRefreshLayout?
         ) {
-            // PAINGE
+            val queryMap = mapOf("limit" to numberItemsToLoad, "offset" to homeFeedItems.size - friendPlaylistsIndex)
+            spotifyApi.service.getTopTracks(
+                queryMap,
+                object : Callback<Pager<kaaes.spotify.webapi.android.models.Track>> {
+                    override fun success(
+                        t: Pager<kaaes.spotify.webapi.android.models.Track>?,
+                        response: Response?
+                    ) {
+                        if (t != null){
+                            Log.d(TAG, "success: " + t.toString() + " size: " + t.items.size)
+                            val prevSize = homeFeedItems.size
+                            val prevFriendsIndex = friendPlaylistsIndex
+                            friendPlaylistsIndex = fillHomeFeedItemsList(t.items, prevFriendsIndex, TRACK_SECTION_INCREMENT)
+//                            for (item in t.items) {
+//                                homeFeedItems.add(Pair(item, HomeFeedItemAdapter.TAG_TRACK))
+//                            }
+                            adapter.notifyItemRangeInserted(prevSize, t.items.size + friendPlaylistsIndex - prevFriendsIndex)
+                        }
+                        if (response != null){
+                            Log.d(TAG, "success: " + response.body)
+                        }
+                        swipeContainer?.isRefreshing = false
+                    }
+
+                    override fun failure(error: RetrofitError?) {
+                        Log.d(TAG, "Top tracks failure: " +  error.toString())
+                        swipeContainer?.isRefreshing = false
+                    }
+                })
         }
 
         override fun playSongOnSpotify(uri: String, spotifyId: String) {
