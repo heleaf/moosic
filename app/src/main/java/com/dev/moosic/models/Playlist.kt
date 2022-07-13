@@ -2,7 +2,9 @@ package com.dev.moosic.models
 
 import android.util.Log
 import com.parse.*
+import org.parceler.Parcel
 
+@Parcel
 @ParseClassName("Playlist")
 class Playlist() : ParseObject() {
     final val KEY_NAME = "name"
@@ -86,15 +88,7 @@ class Playlist() : ParseObject() {
                     }
                     playlistSongsRelation.add(newSong)
                 }
-                // check if playlistTrack.track already exists in the parse database
-                // if so, then just add that object in
-                // otherwise initialize a new track object, save it, then add it to the relation
             }
-//            newPlaylist.saveInBackground { e ->
-//                if (e != null) {
-//                    Log.d(TAG, "failed to save new playlist: " + e.message)
-//                }
-//            }
         }
     }
 }

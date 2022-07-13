@@ -5,7 +5,8 @@
     xmlns:fresco="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="5dp">
+    android:layout_margin="5dp"
+    android:layout_marginTop = "100dp">
 
     <com.facebook.drawee.view.SimpleDraweeView
         android:id="@+id/topTrackImg"
@@ -55,7 +56,8 @@
         android:layout_marginTop="10dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/heartButton"
-        fresco:srcCompat="@android:drawable/ic_input_add" />
+
+        fresco:srcCompat="@drawable/plusimg" />
 
     <ImageView
         android:id="@+id/heartButton"
@@ -73,5 +75,17 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/addToPlaylistButton"
         fresco:srcCompat="@android:drawable/ic_delete" />
+
+    <Button
+        android:id="@+id/logOutRvButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:text="Log Out"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/addToPlaylistButton"
+        app:layout_constraintStart_toStartOf="@+id/topTrackImg"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

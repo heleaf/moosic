@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_margin="5dp"
-    tools:context=".fragments.PlaylistFragment">
+    tools:context=".fragments.ParsePlaylistFragment">
 
     <TextView
         android:id="@+id/playlistTitle"
@@ -38,12 +38,37 @@
         app:layout_constraintTop_toBottomOf="@+id/playlistTitle"
         tools:text="playlist description" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvPlaylistTracks"
-        android:layout_width="0dp"
+    <TextView
+        android:id="@+id/emptyPlaylistText"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
+        android:text="Songs added to your playlist will appear here!"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/playlistAuthor" />
+
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/profileFeedSwipeContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="5dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/emptyPlaylistText">
+
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvPlaylistTracks"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/playlistAuthor" />
+
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

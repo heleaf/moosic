@@ -9,43 +9,52 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.dev.moosic.EndlessRecyclerViewScrollListener
 import com.dev.moosic.MainActivity
 import com.dev.moosic.R
-import com.dev.moosic.adapters.TopTrackAdapter
+import com.dev.moosic.adapters.TrackAdapter
 import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
+// currently not in use
+
 private const val ARG_PARAM1 = "playlistTracks"
 private const val ARG_PARAM2 = "currentUserId"
 private const val ARG_PARAM3 = "userPlaylistId"
+private const val ARG_PARAM4 = "showAddButton"
+private const val ARG_PARAM5 = "showDeleteButton"
+private const val ARG_PARAM6 = "showHeartButton"
 
 /**
  * A simple [Fragment] subclass.
- * Use the [PlaylistFragment.newInstance] factory method to
+ * Use the [ParsePlaylistFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
 open class PlaylistFragment(controller : MainActivity.MainActivityController) : Fragment() {
-    // TODO: Rename and change types of parameters
-    val TAG = "ProfileLibraryFragment"
+    val TAG = "PlaylistFragment"
 
-//    private var playlistTracks: ArrayList<PlaylistTrack> = ArrayList()
-    private var tracks: List<Track> = ArrayList()
+    private var tracks: ArrayList<Track> = ArrayList()
     private var currentUserId: String? = null
     private var userPlaylistId: String? = null
     private var mainActivityController = controller
+    private var showAddButton: Boolean? = null
+    private var showDeleteButton: Boolean? = null
+    private var showHeartButton: Boolean? = null
 
     var rvPlaylistTracks : RecyclerView? = null
-    var adapter : TopTrackAdapter? = null // TODO: switch to a different track adapter
+    var adapter : TrackAdapter? = null // TODO: switch to a different track adapter
+    var scrollListener : EndlessRecyclerViewScrollListener? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
+            tracks.clear()
             tracks = Parcels.unwrap(it.getParcelable(ARG_PARAM1))
-//            tracks = playlistTracks.map{ playlistTrack -> playlistTrack.track }
             currentUserId = it.getString(ARG_PARAM2)
             userPlaylistId = it.getString(ARG_PARAM3)
+            showAddButton = it.getBoolean(ARG_PARAM4)
+            showDeleteButton = it.getBoolean(ARG_PARAM5)
+            showHeartButton = it.getBoolean(ARG_PARAM6)
         }
     }
 
@@ -58,15 +67,18 @@ open class PlaylistFragment(controller : MainActivity.MainActivityController) : 
     }
 
     companion object {
-        // TODO: Rename and change types and number of parameters
         @JvmStatic
         fun newInstance(playlistTracks: ArrayList<Track>, userId: String, playlistId: String,
-                        controller: MainActivity.MainActivityController) =
-            PlaylistFragment(controller).apply {
+                        controller: MainActivity.MainActivityController,
+                        showAdd: Boolean, showDelete: Boolean, showHeart: Boolean) =
+            ParsePlaylistFragment(controller).apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_PARAM1, Parcels.wrap(playlistTracks))
                     putString(ARG_PARAM2, userId)
                     putString(ARG_PARAM3, playlistId)
+                    putBoolean(ARG_PARAM4, showAdd)
+                    putBoolean(ARG_PARAM5, showDelete)
+                    putBoolean(ARG_PARAM6, showHeart)
                 }
             }
     }
@@ -81,13 +93,21 @@ open class PlaylistFragment(controller : MainActivity.MainActivityController) : 
         rvPlaylistTracks = view.findViewById(R.id.rvPlaylistTracks)
         Log.d(TAG, "curent user id: " + currentUserId)
         Log.d(TAG, "user playlist id: " + userPlaylistId)
-        adapter = TopTrackAdapter(view.context,
+        adapter = TrackAdapter(view.context,
             tracks,
             currentUserId!!, userPlaylistId!!, mainActivityController,
-            false, true)
-        // one of these things is null....?
+            showAddButton!!, showDeleteButton!!)
         rvPlaylistTracks?.adapter = adapter
         val linearLayoutManager = LinearLayoutManager(context)
         rvPlaylistTracks?.setLayoutManager(linearLayoutManager)
+
+//        scrollListener = EndlessRecyclerViewScrollListener(linearLayoutManager, object: LoadMoreFunction {
+//            override fun onLoadMore(offset: Int, totalItemsCount: Int, view: RecyclerView?) {
+//                mainActivityController.loadMorePlaylistSongs(tracks.size, totalItemsCount, adapter!!)
+//            }
+//        })
+//
+//        rvPlaylistTracks?.addOnScrollListener(scrollListener!!);
+
     }
 }

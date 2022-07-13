@@ -1,5 +1,6 @@
 package com.dev.moosic
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.telephony.PhoneNumberUtils
@@ -9,18 +10,26 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import com.dev.moosic.models.Playlist
+import com.google.gson.Gson
 import com.parse.ParseObject
 import com.parse.ParseUser
+import com.spotify.sdk.android.auth.AuthorizationClient
+import com.spotify.sdk.android.auth.AuthorizationRequest
+import com.spotify.sdk.android.auth.AuthorizationResponse
+import org.parceler.Parcels
 
 class SignUpActivity : AppCompatActivity() {
     val TAG = "SignUpActivity"
     val KEY_PHONE_NUMBER = "phoneNumber"
-
+    val REQUEST_CODE_GET_INTERESTS = 1999
+    val KEY_USER_PICKED_GENRES = "userPickedGenres"
     var mUsername : EditText? = null
     var mPassword : EditText? = null
     var mEmail : EditText? = null
     var mPhoneNumber : EditText? = null
     var mSignUpButton : Button? = null
+    var accessToken: String? = null
+    var user : ParseUser = ParseUser()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,10 +55,25 @@ class SignUpActivity : AppCompatActivity() {
 
         })
 
+        accessToken = intent.getStringExtra("accessToken")
+        Log.d(TAG, "accesstoken: " + accessToken)
+
+        val usernameText = intent.getStringExtra("usernameText")
+        val passwordText = intent.getStringExtra("passwordText")
+
+        Log.d(TAG, "username: " + usernameText + " password: " + passwordText)
+
+        if (usernameText != null){
+            mUsername?.setText(usernameText)
+        }
+
+        if (passwordText != null){
+            mPassword?.setText(passwordText)
+        }
+
     }
 
     private fun signUp(username: String, password: String, email: String, phone: String) {
-        val user = ParseUser()
         user.setUsername(username)
         user.setPassword(password)
         user.setEmail(email)
@@ -77,13 +101,55 @@ class SignUpActivity : AppCompatActivity() {
                     else {
                         user.put("parsePlaylist", playlist)
                         user.saveInBackground()
-                        finish()
+                        Log.d(TAG, "wtf?")
+                        SpotifyAuthController(this).authorizeUser()
                     }
                 }
             }
         }
-
-
-
     }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == SpotifyAuthController(this).AUTH_REQUEST_CODE) {
+            val response = AuthorizationClient.getResponse(resultCode, data)
+            when (response.type) {
+                AuthorizationResponse.Type.TOKEN -> {
+                    Log.d(TAG, "token: " + response.accessToken)
+                    accessToken = response.accessToken
+                    val intent = Intent(this, GetInterestsActivity::class.java)
+                    intent.putExtra("user", Parcels.wrap(user))
+                    intent.putExtra("accessToken", accessToken)
+                    startActivityForResult(intent, REQUEST_CODE_GET_INTERESTS)
+                }
+                AuthorizationResponse.Type.ERROR -> {
+                    Toast.makeText(this, "Failed to authorize spotify account: " + response.error,
+                        Toast.LENGTH_LONG).show()
+                    Log.d(TAG, "error: " + response.error)
+                }
+                else -> {
+                    Toast.makeText(this, "Failed to authorize spotify account, please restart the app to try again",
+                        Toast.LENGTH_LONG).show()
+                    Log.d(TAG, response.type.toString())
+                }
+            }
+        }
+        if (requestCode == REQUEST_CODE_GET_INTERESTS) {
+            if (resultCode == RESULT_OK){
+                val genres : ArrayList<String>
+                    = Parcels.unwrap(data?.getParcelableExtra("userPickedGenres"))
+                val gson = Gson()
+                val pickedGenresJsonString = gson.toJson(genres)
+                user.put(KEY_USER_PICKED_GENRES, pickedGenresJsonString)
+                user.saveInBackground {
+                    if (it != null) {
+                        Log.d(TAG, "error saving user's genres: " + it.message)
+                        return@saveInBackground
+                    }
+                    finish()
+                }
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data)
+    }
+
 }
