@@ -43,10 +43,12 @@ class MiniPlayerFragment(controller: MainActivity.MainActivitySongController) : 
     var trackTitle: TextView? = null
     var trackArtist: TextView? = null
     var trackAlbumCover: SimpleDraweeView? = null
-    var playPauseButton: ImageView? = null
+    var playPauseButton: ImageButton? = null
     var layout: ConstraintLayout? = null
 
     var closeMiniPlayerButton: ImageButton? = null
+
+    lateinit var addToPlaylistButton: ImageButton
 
     var isPaused: Boolean = false
 
@@ -95,6 +97,11 @@ class MiniPlayerFragment(controller: MainActivity.MainActivitySongController) : 
         playPauseButton = view.findViewById(R.id.miniPlayerPlayPauseButton)
         layout = view.findViewById(R.id.miniPlayerConstraintLayout)
         closeMiniPlayerButton = view.findViewById(R.id.closeMiniPlayerButton)
+        addToPlaylistButton = view.findViewById(R.id.miniPlayerPreviewAddToPlaylistButton)
+
+        addToPlaylistButton.setOnClickListener {
+            currentTrack?.let { it1 -> mainActivityController.addToParsePlaylist(it1) }
+        }
 
         closeMiniPlayerButton?.setOnClickListener {
             mainActivityController.hideMiniPlayerPreview()

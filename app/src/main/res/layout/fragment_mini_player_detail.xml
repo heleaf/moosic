@@ -94,9 +94,19 @@
         android:layout_marginTop="20dp"
         android:backgroundTint="#FFFFFF"
         android:src="?attr/homeAsUpIndicator"
-        android:tint="#673AB7"
         app:layout_constraintStart_toStartOf="@+id/miniPlayerDetailTitle"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="#673AB7" />
+
+    <ImageView
+        android:id="@+id/miniPlayerDetailAddToPlaylistButton"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/plusimg"
+        app:layout_constraintEnd_toEndOf="@+id/miniPlayerDetailImg"
+        app:layout_constraintTop_toTopOf="@+id/miniPlayerDetailPlayPause"
+        app:tint="#FFFFFF" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

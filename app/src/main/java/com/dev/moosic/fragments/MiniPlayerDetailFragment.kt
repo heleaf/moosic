@@ -35,6 +35,8 @@ class MiniPlayerDetailFragment(controller: MainActivity.MainActivitySongControll
     var playPauseButton: ImageView? = null
     var backToHome: ImageButton? = null
 
+    lateinit var addToPlaylistButton: ImageButton
+
     var seekBar: SeekBar? = null
     var currentTime: TextView? = null
     var totalTime : TextView? = null
@@ -72,6 +74,12 @@ class MiniPlayerDetailFragment(controller: MainActivity.MainActivitySongControll
         trackAlbumCover = view.findViewById(R.id.miniPlayerDetailImg)
         playPauseButton = view.findViewById(R.id.miniPlayerDetailPlayPause)
         backToHome = view.findViewById(R.id.miniPlayerDetailBackToHome)
+
+        addToPlaylistButton = view.findViewById(R.id.miniPlayerDetailAddToPlaylistButton)
+
+        addToPlaylistButton.setOnClickListener {
+            currentTrack?.let { it1 -> mainActivityController.addToParsePlaylist(it1) }
+        }
 
         backToHome?.setOnClickListener {
             mainActivityController.exitMiniPlayerDetailView()

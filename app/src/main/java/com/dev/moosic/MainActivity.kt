@@ -503,7 +503,6 @@ class MainActivity : AppCompatActivity(){
                     topTracks.clear()
                     topTracks.addAll(t.items)
 
-//
 //                    if (currentUserId != null && userPlaylistId != null){
 //                        val homeFragment = HomeFeedFragment.newInstance(topTracks,
 //                            currentUserId!!, userPlaylistId!!, mainActivitySongController
@@ -516,11 +515,22 @@ class MainActivity : AppCompatActivity(){
 //                        Toast.LENGTH_LONG).show()
 //                    }
 
+                    homeFeedItems.clear()
+
                     for (item in t.items) {
                         homeFeedItems.add(Pair(item, HomeFeedItemAdapter.TAG_TRACK))
                     }
 
-                    val newFragment = MixedHomeFeedFragment.newInstance(homeFeedItems, mainActivitySongController)
+                    if (friendPlaylists.size > 0) {
+                        val stepSize = homeFeedItems.size / friendPlaylists.size
+                        var idxToInsert = 0
+                        for (item in friendPlaylists) {
+                            homeFeedItems.add(idxToInsert, Pair(item, HomeFeedItemAdapter.TAG_FRIEND_PLAYLIST))
+                            idxToInsert += stepSize
+                        }
+                    }
+
+                    val newFragment = MixedHomeFeedFragment.newInstance(homeFeedItems, friendPlaylists.size, mainActivitySongController)
                     fragmentManager.beginTransaction()
                             .replace(R.id.flContainer, newFragment).commit()
                 }
@@ -531,7 +541,6 @@ class MainActivity : AppCompatActivity(){
             override fun failure(error: RetrofitError?) {
                 Log.d(TAG, "Top tracks failure: " +  error.toString())
                 hideProgressBar()
-
             }
 
         })
@@ -1065,7 +1074,9 @@ class MainActivity : AppCompatActivity(){
                 else {
                     val songs = ArrayList<Song>()
                     songs.addAll(objects)
-                    friendPlaylists.add(Pair(Contact.fromParseUser(parseUser), songs))
+                    if (songs.size > 0) {
+                        friendPlaylists.add(Pair(Contact.fromParseUser(parseUser), songs))
+                    }
                     asyncExtractFriendPlaylists(friendParseUsers,index+1, callback)
                 }
             }
@@ -1369,6 +1380,15 @@ class MainActivity : AppCompatActivity(){
                     Log.d(TAG, "error querying reccomendations: " + error?.message)
                 }
             })
+        }
+
+        override fun loadMoreMixedHomeFeedItems(
+            offset: Int,
+            numberItemsToLoad: Int,
+            adapter: HomeFeedItemAdapter,
+            swipeContainer: SwipeRefreshLayout?
+        ) {
+            // PAINGE
         }
 
         override fun playSongOnSpotify(uri: String, spotifyId: String) {
