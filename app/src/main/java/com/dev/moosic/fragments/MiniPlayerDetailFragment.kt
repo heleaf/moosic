@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AnimationUtils
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.SeekBar
@@ -17,39 +18,34 @@ import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
 import java.lang.Exception
 
-private const val ARG_PARAM1 = "currentTrack"
-private const val ARG_PARAM2 = "isPaused"
+private const val ARG_CURRENT_TRACK = "currentTrack"
+private const val ARG_IS_PAUSED = "isPaused"
+private const val TAG = "MiniPlayerDetailFragment"
 
-/**
- * A simple [Fragment] subclass.
- * Use the [MiniPlayerDetailFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
+private const val EMPTY_STR = ""
+private const val ARTIST_STR_SEPARATOR = ", "
+
 class MiniPlayerDetailFragment(controller: MainActivity.MainActivitySongController) : Fragment() {
-    val TAG = "MiniPlayerDetailFragment"
+    private lateinit var currentTrack: Track
+    lateinit var trackTitle: TextView
+    lateinit var trackArtist: TextView
+    lateinit var trackAlbumCover: SimpleDraweeView
+    lateinit var playPauseButton: ImageView
+    lateinit var backToHome: ImageButton
+    lateinit var addToPlaylistButton: ImageView
 
-    private var currentTrack: Track? = null
-    var trackTitle: TextView? = null
-    var trackArtist: TextView? = null
-    var trackAlbumCover: SimpleDraweeView? = null
-    var playPauseButton: ImageView? = null
-    var backToHome: ImageButton? = null
-
-    lateinit var addToPlaylistButton: ImageButton
-
-    var seekBar: SeekBar? = null
-    var currentTime: TextView? = null
-    var totalTime : TextView? = null
+    lateinit var seekBar: SeekBar
+    lateinit var currentTime: TextView
+    lateinit var totalTime : TextView
 
     var isPaused: Boolean = false
-
-    val mainActivityController = controller
+    private val mainActivityController = controller
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            currentTrack = Parcels.unwrap(it.getParcelable(ARG_PARAM1))
-            isPaused = it.getBoolean(ARG_PARAM2)
+            currentTrack = Parcels.unwrap(it.getParcelable(ARG_CURRENT_TRACK))
+            isPaused = it.getBoolean(ARG_IS_PAUSED)
         }
     }
 
@@ -65,9 +61,9 @@ class MiniPlayerDetailFragment(controller: MainActivity.MainActivitySongControll
         seekBar = view.findViewById(R.id.miniPlayerSeekBar)
         currentTime = view.findViewById(R.id.miniPlayerDetailCurrentTime)
         totalTime = view.findViewById(R.id.miniPlayerTotalTime)
-        seekBar?.visibility = View.GONE
-        currentTime?.visibility = View.GONE
-        totalTime?.visibility = View.GONE
+        seekBar.visibility = View.GONE
+        currentTime.visibility = View.GONE
+        totalTime.visibility = View.GONE
 
         trackTitle = view.findViewById(R.id.miniPlayerDetailTitle)
         trackArtist = view.findViewById(R.id.miniPlayerDetailArtist)
@@ -78,60 +74,61 @@ class MiniPlayerDetailFragment(controller: MainActivity.MainActivitySongControll
         addToPlaylistButton = view.findViewById(R.id.miniPlayerDetailAddToPlaylistButton)
 
         addToPlaylistButton.setOnClickListener {
-            currentTrack?.let { it1 -> mainActivityController.addToParsePlaylist(it1) }
+            currentTrack.let { it1 -> mainActivityController.addToParsePlaylist(it1) }
         }
 
-        backToHome?.setOnClickListener {
+        backToHome.setOnClickListener {
             mainActivityController.exitMiniPlayerDetailView()
         }
 
         if (isPaused){
-            playPauseButton?.setImageResource(android.R.drawable.ic_media_play)
-        } else playPauseButton?.setImageResource(android.R.drawable.ic_media_pause)
+            playPauseButton.setImageResource(android.R.drawable.ic_media_play)
+            trackAlbumCover.clearAnimation()
+        } else {
+            playPauseButton.setImageResource(android.R.drawable.ic_media_pause)
+            trackAlbumCover.startAnimation(
+                AnimationUtils.loadAnimation(activity, R.anim.rotate_indefinitely) );
+        }
 
-        playPauseButton?.setOnClickListener {
+        playPauseButton.setOnClickListener {
             if (isPaused) {
                 mainActivityController.resumeSongOnSpotify()
-                playPauseButton?.setImageResource(android.R.drawable.ic_media_pause)
+                playPauseButton.setImageResource(android.R.drawable.ic_media_pause)
+                trackAlbumCover.startAnimation(
+                    AnimationUtils.loadAnimation(activity, R.anim.rotate_indefinitely) )
             } else {
                 mainActivityController.pauseSongOnSpotify()
-                playPauseButton?.setImageResource(android.R.drawable.ic_media_play)
+                playPauseButton.setImageResource(android.R.drawable.ic_media_play)
+                trackAlbumCover.clearAnimation()
             }
             isPaused = !isPaused
         }
 
-        trackTitle?.setText(currentTrack?.name)
-        val artistText = currentTrack?.artists?.fold(
-            ""
+        trackTitle.setText(currentTrack.name)
+        val artistText = currentTrack.artists?.fold(
+            EMPTY_STR
         ) { acc, artist ->
-            if (acc == "") artist.name else acc + ", " + artist.name
+            if (acc == EMPTY_STR) artist.name else acc + ARTIST_STR_SEPARATOR + artist.name
         }
-        trackArtist?.setText(artistText)
 
+        trackArtist.setText(artistText)
         try {
-            val albumCoverImgUri = currentTrack?.album?.images?.get(0)?.url
-            trackAlbumCover?.setImageURI(albumCoverImgUri);
+            val albumCoverImgUri = currentTrack.album.images.get(0).url
+            trackAlbumCover.setImageURI(albumCoverImgUri);
         } catch (e : Exception) {
-            Log.e(TAG, "error: " + e.message)
+            e.message?.let { Log.e(TAG, it) }
         }
-
 
     }
 
     companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @return A new instance of fragment MiniPlayerDetailFragment.
-         */
         @JvmStatic
         fun newInstance(track: Track, controller: MainActivity.MainActivitySongController,
                         isPaused: Boolean) =
             MiniPlayerDetailFragment(controller).apply {
                 arguments = Bundle().apply {
-                    putParcelable(ARG_PARAM1, Parcels.wrap(track))
-                    putBoolean(ARG_PARAM2, isPaused)
+                    putParcelable(ARG_CURRENT_TRACK, Parcels.wrap(track))
+                    putBoolean(ARG_IS_PAUSED, isPaused)
                 }
             }
     }
