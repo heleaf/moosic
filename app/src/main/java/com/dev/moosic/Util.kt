@@ -1,5 +1,6 @@
 package com.dev.moosic
 
+import retrofit.RetrofitError
 import retrofit.client.Header
 import retrofit.client.Response
 import retrofit.mime.TypedString
@@ -30,21 +31,21 @@ class Util {
         const val SPOTIFY_QUERY_PARAM_LIMIT = "limit"
 
         const val DUMMY_URL = "url"
-        const val DUMMY_STATUS = 200
-        const val DUMMY_REASON = "reason"
-        val DUMMY_HEADER_LIST : List<Header> = emptyList()
-        const val DUMMY_BODY_STRING = "string"
+        private const val DUMMY_STATUS = 200
+        private const val DUMMY_REASON = "reason"
+        private val DUMMY_HEADER_LIST : List<Header> = emptyList()
+        private const val DUMMY_BODY_STRING = "string"
         val dummyResponse = Response(
             DUMMY_URL, DUMMY_STATUS,
             DUMMY_REASON, DUMMY_HEADER_LIST,
             TypedString(DUMMY_BODY_STRING)
         )
-        const val THROWABLE_NULL_SUCCESS_MESSAGE = "Objects on success are null"
-        val NULL_SUCCESS_ERROR = retrofit.RetrofitError.unexpectedError(
+        private const val THROWABLE_NULL_SUCCESS_MESSAGE = "Objects on success are null"
+        val NULL_SUCCESS_ERROR: RetrofitError = retrofit.RetrofitError.unexpectedError(
             DUMMY_URL, Throwable(THROWABLE_NULL_SUCCESS_MESSAGE))
 
-        const val THROWABLE_INVALID_INDEX_MESSAGE = "Invalid index"
-        val INVALID_INDEX_ERROR = retrofit.RetrofitError.unexpectedError(
+        private const val THROWABLE_INVALID_INDEX_MESSAGE = "Invalid index"
+        val INVALID_INDEX_ERROR: RetrofitError = retrofit.RetrofitError.unexpectedError(
             DUMMY_URL, Throwable(THROWABLE_INVALID_INDEX_MESSAGE))
 
         const val INTENT_KEY_SPOTIFY_ACCESS_TOKEN = "accessToken"

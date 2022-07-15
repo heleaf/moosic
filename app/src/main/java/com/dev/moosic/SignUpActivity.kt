@@ -4,10 +4,13 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.telephony.PhoneNumberUtils
+import android.text.method.HideReturnsTransformationMethod
+import android.text.method.PasswordTransformationMethod
 import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.Toast
 import com.dev.moosic.controllers.SpotifyAuthController
 import com.dev.moosic.models.Playlist
@@ -33,15 +36,28 @@ class SignUpActivity : AppCompatActivity() {
     lateinit var accessToken: String
     var user : ParseUser = ParseUser()
 
+    lateinit var showHidePasswordButton: ImageButton
+    var showingPassword = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sign_up)
 
         mUsername = findViewById(R.id.etSignUpUsername)
         mPassword = findViewById(R.id.etSignUpPassword)
+        showHidePasswordButton = findViewById(R.id.showHidePasswordButton)
         mEmail = findViewById(R.id.etSignUpEmail)
         mPhoneNumber = findViewById(R.id.etSignUpPhone)
         mSignUpButton = findViewById(R.id.signUpSignUpButton)
+
+        showHidePasswordButton.setOnClickListener {
+            if (showingPassword) {
+                mPassword.transformationMethod = PasswordTransformationMethod.getInstance()
+            } else {
+                mPassword.transformationMethod = HideReturnsTransformationMethod.getInstance()
+            }
+            showingPassword = !showingPassword
+        }
 
         mSignUpButton.setOnClickListener(View.OnClickListener {
             val usernameText = mUsername.text

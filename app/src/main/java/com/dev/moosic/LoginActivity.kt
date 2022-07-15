@@ -29,7 +29,7 @@ class LoginActivity : AppCompatActivity() {
     lateinit var mEtPassword : EditText
     lateinit var mLoginButton : Button
     lateinit var mSignUpButton : Button
-    lateinit var accessToken : String
+    var accessToken : String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

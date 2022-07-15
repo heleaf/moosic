@@ -1208,7 +1208,7 @@ class MainActivity : AppCompatActivity(){
                                     prevFriendsIndex, TRACK_SECTION_INCREMENT)
                             adapter.notifyItemRangeInserted(
                                 prevSize,
-                                topTracksPager.items.size 
+                                topTracksPager.items.size
                                         + friendPlaylistsIndex - prevFriendsIndex)
                         }
                         swipeContainer?.isRefreshing = false
