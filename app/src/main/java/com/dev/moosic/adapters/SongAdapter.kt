@@ -82,7 +82,6 @@ class SongAdapter(
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var albumCover : SimpleDraweeView? = null
         var songTitle : TextView? = null
-        var albumTitle : TextView? = null
         var artistName : TextView? = null
 
         var heartButton : ImageView? = null
@@ -94,7 +93,6 @@ class SongAdapter(
         init {
             albumCover = itemView.findViewById(R.id.singleFriendPlaylistSongImage)
             songTitle = itemView.findViewById(R.id.trackTitle)
-            albumTitle = itemView.findViewById(R.id.albumTitle)
             artistName = itemView.findViewById(R.id.artistName)
             heartButton = itemView.findViewById(R.id.heartButton)
             addToPlaylistButton = itemView.findViewById(R.id.addToPlaylistButton)
@@ -107,7 +105,6 @@ class SongAdapter(
             val gson = Gson()
             val track = gson.fromJson(jsonDataString, Track::class.java)
             if (jsonDataString != null) {
-                albumTitle?.setText(track.album.name)
                 val artistNameText = track.artists.fold(
                     EMPTY_STR
                 ) { accumulator, artist ->
@@ -125,6 +122,13 @@ class SongAdapter(
                     song.getSpotifyUri()
                         ?.let { uri -> mainActivitySongController.playSongOnSpotify(uri, id) }
                 }
+            }
+
+            itemView.setOnLongClickListener {
+                if (track != null) {
+                    mainActivitySongController.addToPlaylist(track)
+                }
+                return@setOnLongClickListener true
             }
 
             try {

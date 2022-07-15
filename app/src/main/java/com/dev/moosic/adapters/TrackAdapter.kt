@@ -49,7 +49,6 @@ class TrackAdapter(context : Context, tracks : ArrayList<Track>,
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var albumCover : SimpleDraweeView
         var trackTitle : TextView
-        var albumTitle : TextView
         var artistName : TextView
         var heartButton : ImageView
         var addToPlaylistButton : ImageView
@@ -57,7 +56,6 @@ class TrackAdapter(context : Context, tracks : ArrayList<Track>,
         init {
             albumCover = itemView.findViewById(R.id.singleFriendPlaylistSongImage)
             trackTitle = itemView.findViewById(R.id.trackTitle)
-            albumTitle = itemView.findViewById(R.id.albumTitle)
             artistName = itemView.findViewById(R.id.artistName)
             heartButton = itemView.findViewById(R.id.heartButton)
             addToPlaylistButton = itemView.findViewById(R.id.addToPlaylistButton)
@@ -74,10 +72,7 @@ class TrackAdapter(context : Context, tracks : ArrayList<Track>,
 
             val trackTitleText = track.name
             trackTitle.setText(trackTitleText)
-
-            val albumTitleText = track.album.name
-            albumTitle.setText(albumTitleText)
-
+            
             val artistNameText = track.artists.fold(
                 EMPTY_STR
             ) { accumulator, artist ->

@@ -44,7 +44,6 @@ class TaggedContactAdapter (context: Context,
         var nameField : TextView
         var parseUsernameField : TextView
         var similarityField : TextView
-
         var followButton : Button
 
         init {

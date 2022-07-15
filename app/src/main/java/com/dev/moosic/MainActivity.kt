@@ -414,7 +414,7 @@ class MainActivity : AppCompatActivity(){
         backMenuItem?.isVisible = false
         val searchView = (searchMenuItem?.actionView) as androidx.appcompat.widget.SearchView
         searchView.onActionViewExpanded()
-        searchView.requestFocus()
+//        searchView.requestFocus()
         searchView.setOnQueryTextListener(object
             : androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
@@ -1152,7 +1152,6 @@ class MainActivity : AppCompatActivity(){
                 }
             }
             logTrackInModel(track.id, WEIGHT_ADDED_SONG_TO_PLAYLIST)
-
         }
 
         override fun addToPlaylist(track: Track) {

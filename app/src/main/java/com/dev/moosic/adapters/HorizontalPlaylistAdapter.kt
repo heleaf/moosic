@@ -63,14 +63,15 @@ class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>, contro
             val gson = Gson()
             val track = gson.fromJson(song.getJsonDataString(), Track::class.java)
 
-            albumCover.setOnLongClickListener {
+            itemView.setOnLongClickListener {
                 controller.addToPlaylist(track)
                 return@setOnLongClickListener true
             }
 
-            albumCover.setOnClickListener {
+            itemView.setOnClickListener {
                 controller.playSongOnSpotify(track.uri, track.id)
             }
+
         }
     }
 

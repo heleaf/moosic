@@ -76,7 +76,7 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
             }
             TAG_TRACK -> {
                 val trackHolder = holder as TrackViewHolder
-                trackHolder.bindTrack(item.first as Track, position)
+                trackHolder.bindTrack(item.first as Track)
             }
             else -> {}
         }
@@ -112,7 +112,6 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
     inner class TrackViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val albumCover : SimpleDraweeView
         private val songTitle : TextView
-        private val albumTitle : TextView
         private val artistName : TextView
 
         private val heartButton : ImageView
@@ -122,19 +121,24 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
         init{
             albumCover = itemView.findViewById(R.id.singleFriendPlaylistSongImage)
             songTitle = itemView.findViewById(R.id.trackTitle)
-            albumTitle = itemView.findViewById(R.id.albumTitle)
             artistName = itemView.findViewById(R.id.artistName)
             heartButton = itemView.findViewById(R.id.heartButton)
             addToPlaylistButton = itemView.findViewById(R.id.addToPlaylistButton)
             deleteFromPlaylistButton = itemView.findViewById(R.id.deleteFromPlaylistButton)
         }
 
-        fun bindTrack(track: Track, position: Int) {
+        fun bindTrack(track: Track) {
+            itemView.setOnLongClickListener {
+                controller.addToPlaylist(track)
+                return@setOnLongClickListener true
+            }
+
+            itemView.setOnClickListener {
+                controller.playSongOnSpotify(track.uri, track.id)
+            }
+
             val trackTitleText = track.name
             songTitle.setText(trackTitleText)
-
-            val albumTitleText = track.album.name
-            albumTitle.setText(albumTitleText)
 
             val artistNameText = track.artists.fold(
                 ""
@@ -158,15 +162,6 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
             addToPlaylistButton.visibility = View.VISIBLE
             addToPlaylistButton.setOnClickListener {
                 controller.addToPlaylist(track)
-            }
-
-            albumCover.setOnLongClickListener {
-                controller.addToPlaylist(track)
-                return@setOnLongClickListener true
-            }
-
-            albumCover.setOnClickListener {
-                controller.playSongOnSpotify(track.uri, track.id)
             }
 
         }
