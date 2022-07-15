@@ -19,6 +19,9 @@
         android:theme="@style/Theme.Moosic"
         tools:targetApi="31">
         <activity
+            android:name=".SettingsActivity"
+            android:exported="false" />
+        <activity
             android:name=".GetInterestsActivity"
             android:configChanges="orientation|screenSize"
             android:exported="false" />
@@ -28,17 +31,16 @@
             android:exported="false" />
         <activity
             android:name=".MainActivity"
-            android:exported="false"
             android:configChanges="orientation|screenSize"
-            android:screenOrientation="portrait"
-            />
+            android:exported="false"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".LoginActivity"
-            android:exported="true"
             android:configChanges="orientation|screenSize"
-            >
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

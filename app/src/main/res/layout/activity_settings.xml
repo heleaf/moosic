@@ -7,7 +7,7 @@
 
     android:background="#FFFFFF"
     android:padding="10dp"
-    tools:context=".fragments.SettingsFragment">
+    tools:context=".SettingsActivity">
 
     <TextView
         android:id="@+id/settingsUsername"

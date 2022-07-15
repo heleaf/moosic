@@ -56,6 +56,9 @@ class Util {
 
         const val REQUEST_CODE_USER_AUTH = 1337
         const val REQUEST_CODE_GET_INTERESTS = 1999
+        const val REQUEST_CODE_SETTINGS = 2000
+        const val RESULT_CODE_LOG_OUT = 2001
+        const val RESULT_CODE_EXIT_SETTINGS = 2002
 
     }
 }

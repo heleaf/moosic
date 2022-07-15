@@ -2,6 +2,7 @@ package com.dev.moosic
 
 import android.Manifest
 import android.content.ContentResolver
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.provider.ContactsContract
@@ -181,7 +182,7 @@ class MainActivity : AppCompatActivity(){
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.settingsMenuIcon -> { launchSettingsFragment(); return true }
+            R.id.settingsMenuIcon -> { launchSettingsActivity(); return true }
             R.id.backMenuIcon -> {
                 mainActivitySongController.exitSettingsTab();
                 backMenuItem?.isVisible = false
@@ -649,12 +650,27 @@ class MainActivity : AppCompatActivity(){
         return currentFriendsIndex
     }
 
-    private fun launchSettingsFragment() {
-        searchMenuItem?.isVisible = false
-        settingsMenuItem?.isVisible = false
-        backMenuItem?.isVisible = true
-        val settingsFragment = SettingsFragment.newInstance(mainActivitySongController)
-        fragmentManager.beginTransaction().add(R.id.flContainer, settingsFragment).commit()
+    private fun launchSettingsActivity() {
+        val intent = Intent(this, SettingsActivity::class.java)
+        startActivityForResult(intent, Util.REQUEST_CODE_SETTINGS)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        when (requestCode) {
+            Util.REQUEST_CODE_SETTINGS -> {
+                when (resultCode) {
+                    Util.RESULT_CODE_LOG_OUT -> {
+                        finish()
+                    }
+                    Util.RESULT_CODE_EXIT_SETTINGS -> {
+                        // do nothing?
+                    }
+                    else -> { }
+                }
+            }
+            else -> {}
+        }
     }
 
     private fun showProgressBar(){
@@ -1136,6 +1152,7 @@ class MainActivity : AppCompatActivity(){
                 }
             }
             logTrackInModel(track.id, WEIGHT_ADDED_SONG_TO_PLAYLIST)
+
         }
 
         override fun addToPlaylist(track: Track) {
