@@ -14,16 +14,17 @@ class Contact() {
     var parseUserId: String? = null
 
     companion object Factory {
-        val KEY_PHONE_NUMBER = "phoneNumber"
-        val KEY_NOT_FOLLOWED_CONTACT = "notFollowed"
-        val KEY_FOLLOWED_CONTACT = "followed"
-        val KEY_RECOMMENDED_CONTACT = "recommended"
+        const val KEY_PHONE_NUMBER = "phoneNumber"
+        const val KEY_NOT_FOLLOWED_CONTACT = "notFollowed"
+        const val KEY_FOLLOWED_CONTACT = "followed"
+        const val KEY_RECOMMENDED_CONTACT = "recommended"
         fun fromParseUser(user: ParseUser): Contact {
             val contact = Contact()
             contact.parseUsername = user.username
             contact.email = user.email
             contact.phoneNumber = user.getString(KEY_PHONE_NUMBER)
             contact.parseUserId = user.objectId
+            contact.parseUser = user
             return contact
         }
     }

@@ -16,37 +16,27 @@ import com.dev.moosic.adapters.TrackAdapter
 import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
 
-private const val ARG_PARAM1 = "searchedTracks"
-private const val ARG_PARAM2 = "userId"
-private const val ARG_PARAM3 = "playlistId"
-private const val ARG_PARAM4 = "searchedQuery"
+private const val ARG_SEARCHED_TRACKS = "searchedTracks"
+private const val ARG_SEARCHED_QUERY_STR = "searchedQuery"
 
-/**
- * A simple [Fragment] subclass.
- * Use the [SearchFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class SearchFragment(controller: MainActivity.MainActivitySongController) : Fragment() {
     private var searchedTracks: ArrayList<Track> = ArrayList()
-    private var userId : String? = null
-    private var playlistId : String? = null
     private var mainActivityController = controller
-    private var currentQuery : String? = null
+    private lateinit var currentQuery : String
 
-    var rvSearchedTracks : RecyclerView? = null
-    var adapter : TrackAdapter? = null // TODO: switch to a custom adapter
-    var scrollListener : EndlessRecyclerViewScrollListener? = null
+    lateinit var rvSearchedTracks : RecyclerView
+    lateinit var adapter : TrackAdapter
+    lateinit var scrollListener : EndlessRecyclerViewScrollListener
 
-    var swipeContainer : SwipeRefreshLayout? = null
+    lateinit var swipeContainer : SwipeRefreshLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
             searchedTracks.clear()
-            searchedTracks = Parcels.unwrap(it.getParcelable(ARG_PARAM1))
-            userId = it.getString(ARG_PARAM2)
-            playlistId = it.getString(ARG_PARAM3)
-            currentQuery = it.getString(ARG_PARAM4)
+            searchedTracks = Parcels.unwrap(it.getParcelable(ARG_SEARCHED_TRACKS))
+            currentQuery = if (it.getString(ARG_SEARCHED_QUERY_STR) == null)
+                "" else it.getString(ARG_SEARCHED_QUERY_STR).toString()
         }
     }
 
@@ -54,21 +44,17 @@ class SearchFragment(controller: MainActivity.MainActivitySongController) : Frag
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_search, container, false)
     }
 
     companion object {
         @JvmStatic
-        fun newInstance(searchedTracks : ArrayList<Track>, userId : String,
-                        playlistId : String, controller : MainActivity.MainActivitySongController,
-                        searchedQuery: String) =
+        fun newInstance(searchedTracks : ArrayList<Track>, searchedQuery: String,
+                        controller : MainActivity.MainActivitySongController) =
             SearchFragment(controller).apply {
                 arguments = Bundle().apply {
-                    putParcelable(ARG_PARAM1, Parcels.wrap(searchedTracks))
-                    putString(ARG_PARAM2, userId)
-                    putString(ARG_PARAM3, playlistId)
-                    putString(ARG_PARAM4, searchedQuery)
+                    putParcelable(ARG_SEARCHED_TRACKS, Parcels.wrap(searchedTracks))
+                    putString(ARG_SEARCHED_QUERY_STR, searchedQuery)
                 }
             }
     }
@@ -77,37 +63,34 @@ class SearchFragment(controller: MainActivity.MainActivitySongController) : Frag
         super.onViewCreated(view, savedInstanceState)
         rvSearchedTracks = view.findViewById(R.id.rvSearchedTracks)
         adapter = TrackAdapter(view.context, searchedTracks,
-            userId!!, playlistId!!, mainActivityController, true, false)
+            mainActivityController, true, false)
 
-        rvSearchedTracks?.adapter = adapter
+        rvSearchedTracks.adapter = adapter
         val linearLayoutManager = LinearLayoutManager(context)
-        rvSearchedTracks?.layoutManager = linearLayoutManager
+        rvSearchedTracks.layoutManager = linearLayoutManager
 
-        if (currentQuery != null){
-            scrollListener = EndlessRecyclerViewScrollListener(linearLayoutManager, object: LoadMoreFunction {
+        if (currentQuery.isNotEmpty()){
+            scrollListener = EndlessRecyclerViewScrollListener(linearLayoutManager,
+                object: LoadMoreFunction {
                 override fun onLoadMore(page: Int, totalItemsCount: Int, view: RecyclerView?) {
-                    mainActivityController.loadMoreSearchTracks(currentQuery!!, searchedTracks.size, totalItemsCount, adapter!!)
+                    mainActivityController.loadMoreSearchTracks(currentQuery, searchedTracks.size,
+                        totalItemsCount, adapter)
                 }
             })
-            rvSearchedTracks?.addOnScrollListener(scrollListener!!);
+            rvSearchedTracks.addOnScrollListener(scrollListener);
         }
 
         swipeContainer = view.findViewById(R.id.searchFeedSwipeContainer)
-        swipeContainer?.setOnRefreshListener {
-//            mainActivityController.loadMoreSearchTracks(
-//                currentQuery!!,
-//                0, 20, adapter!!)
-//            scrollListener?.resetState()
-            swipeContainer?.isRefreshing = false
+        swipeContainer.setOnRefreshListener {
+            swipeContainer.isRefreshing = false
         }
 
-        swipeContainer?.setColorSchemeResources(
+        swipeContainer.setColorSchemeResources(
             android.R.color.holo_blue_bright,
             android.R.color.holo_green_light,
             android.R.color.holo_orange_light,
             android.R.color.holo_red_light
         )
-
 
     }
 }

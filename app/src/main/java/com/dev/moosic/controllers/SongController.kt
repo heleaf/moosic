@@ -7,33 +7,19 @@ import kaaes.spotify.webapi.android.models.Track
 
 interface SongController {
     fun logTrackInModel(trackId: String, weight: Int) : Unit
-
     fun addToPlaylist(track : Track) : Unit
-
-    fun removeFromPlaylist(userId: String, playlistId: String, track : Track, position : Int) : Unit
-
-    fun loadMoreTopSongs(offset: Int, numberItemsToLoad: Int, clearItems: Boolean, adapter: TrackAdapter,
-                         swipeContainer: SwipeRefreshLayout)
-
+    fun removeFromPlaylist(track : Track, position : Int) : Unit
     fun loadMoreSearchTracks(query: String, offset: Int, numberItemsToLoad: Int, adapter: TrackAdapter)
-
-    fun loadReccomendedSongs(seedArtists: String, seedGenres: String, seedTracks: String, limit: Int)
-
-    fun loadMoreMixedHomeFeedItems(trackOffset: Int, /*friendPlaylistOffset: Int,*/
+    fun loadMoreMixedHomeFeedItems(trackOffset: Int,
                                    numberItemsToLoad: Int, adapter: HomeFeedItemAdapter,
                                    swipeContainer: SwipeRefreshLayout?)
 
     fun playSongOnSpotify(uri: String, spotifyId: String)
-
     fun pauseSongOnSpotify()
-
     fun resumeSongOnSpotify()
-
     fun goToMiniPlayerDetailView()
-
     fun exitMiniPlayerDetailView()
 
     fun logOutFromParse()
-
     fun exitSettingsTab()
 }

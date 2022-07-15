@@ -15,11 +15,12 @@ import com.google.gson.Gson
 import kaaes.spotify.webapi.android.models.Track
 import java.lang.Exception
 
+private const val TAG = "HorizontalPlaylistAdapter"
 class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>, controller: SongController)
     : RecyclerView.Adapter<HorizontalPlaylistAdapter.ViewHolder>() {
 
     val context: Context
-    val songs: ArrayList<Song>
+    private val songs: ArrayList<Song>
     val controller: SongController
 
     init {
@@ -29,13 +30,14 @@ class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>, contro
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(this.context).inflate(R.layout.single_friend_playlist_song_item, parent, false)
+        val view = LayoutInflater.from(this.context).inflate(
+            R.layout.single_friend_playlist_song_item, parent, false)
         return ViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val song = songs.get(position)
-        holder.bind(song, position)
+        holder.bind(song)
     }
 
     override fun getItemCount(): Int {
@@ -43,19 +45,19 @@ class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>, contro
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val albumCover: SimpleDraweeView
-        val songTitle: TextView
+        private val albumCover: SimpleDraweeView
+        private val songTitle: TextView
         init {
             albumCover = itemView.findViewById(R.id.singleFriendPlaylistSongImage)
             songTitle = itemView.findViewById(R.id.singleFriendPlaylistItemSongTitle)
         }
-        fun bind(song: Song, position: Int) {
+        fun bind(song: Song) {
             songTitle.setText(song.getName())
             try {
                 val albumCoverImgUri = song.getImageUri()
                 albumCover.setImageURI(albumCoverImgUri);
             } catch (e : Exception) {
-                Log.e("SongAdapter", "error: " + e.message)
+                e.message?.let { Log.e(TAG, it) }
             }
 
             val gson = Gson()

@@ -1,6 +1,7 @@
 package com.dev.moosic.models
 
 import android.util.Log
+import com.dev.moosic.Util
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.parse.ParseClassName
@@ -10,6 +11,7 @@ import com.parse.ParseUser
 import kaaes.spotify.webapi.android.models.AudioFeaturesTrack
 import retrofit.Callback
 import retrofit.RetrofitError
+import retrofit.client.Header
 import retrofit.client.Response
 import retrofit.mime.TypedInput
 import retrofit.mime.TypedString
@@ -44,15 +46,31 @@ class SongFeatures() : ParseObject() {
     }
 
     companion object Factory {
-        val TAG = "SongFeatures"
-        val KEY_USER_WHO_LOGGED = "loggedBy"
-        val KEY_LOGGED_WEIGHT = "loggedWeight"
-        val KEY_FEATURE_JSON_STRING_DATA = "jsonStringData"
+        private const val DUMMY_URL = "url"
+        private const val DUMMY_STATUS = 200
+        private const val DUMMY_REASON = "reason"
+        private val DUMMY_HEADER_LIST : List<Header> = emptyList()
+        private const val DUMMY_BODY_STRING = "string"
+        private val dummyResponse = Response(
+            DUMMY_URL, DUMMY_STATUS,
+            DUMMY_REASON, DUMMY_HEADER_LIST,
+            TypedString(DUMMY_BODY_STRING)
+        )
+
+        const val TAG = "SongFeatures"
+        const val KEY_USER_WHO_LOGGED = "loggedBy"
+        const val KEY_LOGGED_WEIGHT = "loggedWeight"
+        const val KEY_FEATURE_JSON_STRING_DATA = "jsonStringData"
 
         val FEATURE_KEYS_ARRAY = listOf(
             "acousticness", "danceability", "energy", "instrumentalness",
             "liveness", "speechiness", "valence"
         )
+
+        private const val NULL_PARSE_QUERY = "parse queried objects are null"
+        private const val DEFAULT_FEATURE_VALUE = 0.0
+        private const val SPOTIFY_QUERY_PARAM_TARGET_PREFIX = "target_%s"
+        private const val PARSE_KEY_USERNAME = "username"
 
         fun fromAudioFeaturesTrack(audioFeatures: AudioFeaturesTrack, weight: Int):
                 SongFeatures {
@@ -63,34 +81,25 @@ class SongFeatures() : ParseObject() {
             return features
         }
 
-
-
         fun asyncGetUserPlaylistFeatureMap(user: ParseUser, callback: Callback<Map<String, Double>>){
             val query = ParseQuery.getQuery(SongFeatures::class.java)
             query.include(SongFeatures.KEY_LOGGED_WEIGHT)
             query.include(SongFeatures.KEY_FEATURE_JSON_STRING_DATA)
             query.whereEqualTo(SongFeatures.KEY_USER_WHO_LOGGED, user)
-            val songFeatures = query.findInBackground { objects, e ->
+            query.findInBackground { objects, e ->
                 if (e != null) {
-                    // TODO: shouldn't pass in the message for the url parameter
                     val error = retrofit.RetrofitError.unexpectedError(
                         e.message, e.cause
                     )
                     callback.failure(error)
                 } else if (objects == null) {
-                    // TODO: shouldn't pass in the message for the url parameter
-                    val throwable = Throwable("objects are null")
+                    val throwable = Throwable(NULL_PARSE_QUERY)
                     val error = retrofit.RetrofitError.unexpectedError(
-                        "no url", throwable
+                        DUMMY_URL, throwable
                     )
                     callback.failure(error)
                 } else {
-                    // TODO: create actual valid response
-                    val response =  Response(
-                        "url", 200,
-                        "reason", emptyList(),
-                        TypedString("string")
-                    )
+                    val response = dummyResponse
                     callback.success(featureListToMap(objects), response)
                 }
             }
@@ -111,29 +120,25 @@ class SongFeatures() : ParseObject() {
             val gson = Gson()
             for (songFeature in songFeatures) {
                 val loggedWeight = songFeature.getLoggedWeight()
-//                Log.d(TAG, "logged weight for song: " + loggedWeight?.toDouble().toString())
                 if (loggedWeight != null) {
                     totalWeight += loggedWeight.toDouble()
                 }
                 val songFeatureJsonStrData = songFeature.getJsonStringData()
                 if (songFeatureJsonStrData != null) {
-//                    Log.d(TAG, "not null song feature json str data")
                     val jsonObject = gson.fromJson(songFeatureJsonStrData, JsonObject::class.java)
                     for (feature in FEATURE_KEYS_ARRAY) {
                         val featureValue = jsonObject.get(feature).asNumber
-//                        Log.d(TAG, "feature: " + feature + " value: " + featureValue.toString())
                         val weightedFeatureValue =
                             (if (loggedWeight == null) featureValue.toDouble() else
                                 (featureValue.toDouble() * loggedWeight.toDouble()))
-//                        Log.d(TAG, "feature: " + feature + " weighted value: " + weightedFeatureValue)
-                        map.put(feature, map.getOrDefault(feature, 0.0) + weightedFeatureValue)
+                        map.put(feature, map.getOrDefault(feature, DEFAULT_FEATURE_VALUE)
+                                + weightedFeatureValue)
                     }
                 }
             }
-//            Log.d(TAG, "total weight: " + totalWeight)
-            // normalize by the total weight
             for (feature in FEATURE_KEYS_ARRAY) {
-                map.put(feature, map.getOrDefault(feature, 0.0) / totalWeight)
+                map.put(feature, map.getOrDefault(feature,
+                    DEFAULT_FEATURE_VALUE) / totalWeight)
             }
             return map.toMap()
         }
@@ -141,12 +146,12 @@ class SongFeatures() : ParseObject() {
         fun featureMapToRecommendationQueryMap(featureMap: Map<String, Double>,
             seedArtists: String, seedGenres: String, seedTracks: String): Map<String, Any> {
             val queryMap : MutableMap<String, Any> = mutableMapOf()
-            queryMap.put("seed_artists", seedArtists)
-            queryMap.put("seed_genres", seedGenres)
-            queryMap.put("seed_tracks", seedTracks)
+            queryMap.put(Util.SPOTIFY_QUERY_PARAM_SEED_ARTISTS, seedArtists)
+            queryMap.put(Util.SPOTIFY_QUERY_PARAM_SEED_GENRES, seedGenres)
+            queryMap.put(Util.SPOTIFY_QUERY_PARAM_SEED_TRACKS, seedTracks)
             for (feature in featureMap.keys) {
-                queryMap.put(String.format("target_%s", feature),
-                    featureMap.getOrDefault(feature, 0.0) as Number)
+                queryMap.put(String.format(SPOTIFY_QUERY_PARAM_TARGET_PREFIX, feature),
+                    featureMap.getOrDefault(feature, DEFAULT_FEATURE_VALUE) as Number)
             }
             return queryMap.toMap()
         }
@@ -161,7 +166,7 @@ class SongFeatures() : ParseObject() {
             for (friend in friendsToIgnore){
                 friend.parseUsername?.let { usernamesToIgnore.add(it) }
             }
-            query.whereNotContainedIn("username", usernamesToIgnore)
+            query.whereNotContainedIn(PARSE_KEY_USERNAME, usernamesToIgnore)
             val users = query.find()
             for (user in users) {
                 Log.d(TAG, user.username)
@@ -169,10 +174,36 @@ class SongFeatures() : ParseObject() {
             return users.map {
                 user -> Pair(user, syncGetUserPlaylistFeatureMap(user))
             }
-
         }
 
+
+        fun computeVectorSimilarityScore(vec1: Map<String, Double>,
+                                         vec2: Map<String, Double>): Double {
+            return dot(vec1, vec2) / (magnitude(vec1) * magnitude(vec2))
+        }
+
+        private fun dot(vec1: Map<String, Double>, vec2: Map<String, Double>): Double {
+            var total = 0.0
+            for (feature in SongFeatures.FEATURE_KEYS_ARRAY){
+                val v1Entry = vec1.getOrDefault(feature, 0.0)
+                val v2Entry = vec2.getOrDefault(feature, 0.0)
+                if (v1Entry.isNaN() || v2Entry.isNaN()) {
+                } else {
+                    total += v1Entry * v2Entry
+                }
+            }
+            return total
+        }
+
+        private fun magnitude(vec: Map<String, Double>): Double {
+            var total = 0.0
+            for (feature in SongFeatures.FEATURE_KEYS_ARRAY) {
+                val entry = vec.getOrDefault(feature, 0.0)
+                if (!entry.isNaN()) {
+                    total += entry * entry
+                }
+            }
+            return Math.sqrt(total)
+        }
     }
-
-
 }

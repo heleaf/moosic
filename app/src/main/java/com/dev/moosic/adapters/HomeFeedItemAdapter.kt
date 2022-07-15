@@ -14,23 +14,20 @@ import com.dev.moosic.controllers.SongController
 import com.dev.moosic.models.Contact
 import com.dev.moosic.models.Song
 import com.facebook.drawee.view.SimpleDraweeView
-import com.google.gson.Gson
 import kaaes.spotify.webapi.android.models.Track
 import java.lang.Exception
 
+private const val TAG = "HomeFeedAdapter"
+
 class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String>>,
     controller: SongController) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-
     companion object {
-        val TAG_TRACK = "track"
-        val INT_CODE_TRACK = 0
-
-        val TAG_FRIEND_PLAYLIST = "friendPlaylist"
-        val INT_CODE_FRIEND_PLAYLIST = 1
-
-        val INT_CODE_UNKNOWN = 2
+        const val TAG_TRACK = "track"
+        const val TAG_FRIEND_PLAYLIST = "friendPlaylist"
+        const val INT_CODE_TRACK = 0
+        const val INT_CODE_FRIEND_PLAYLIST = 1
+        const val INT_CODE_UNKNOWN = 2
     }
-
     var itemList: ArrayList<Pair<Any, String>>
     var context: Context
     var controller: SongController
@@ -53,16 +50,18 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
         val view: View
         return when (viewType) {
             INT_CODE_FRIEND_PLAYLIST -> {
-                view = LayoutInflater.from(this.context).inflate(R.layout.friend_playlist_display_item, parent, false)
+                view = LayoutInflater.from(this.context)
+                    .inflate(R.layout.friend_playlist_display_item, parent, false)
                 PlaylistViewHolder(view)
             }
             INT_CODE_TRACK -> {
-                view = LayoutInflater.from(this.context).inflate(R.layout.single_track_item, parent, false)
+                view = LayoutInflater.from(this.context)
+                    .inflate(R.layout.single_track_item, parent, false)
                 TrackViewHolder(view)
             }
-            // TODO: return something else here
             else -> {
-                view = LayoutInflater.from(this.context).inflate(R.layout.single_track_item, parent, false)
+                view = LayoutInflater.from(this.context)
+                    .inflate(R.layout.single_track_item, parent, false)
                 TrackViewHolder(view)
             }
         }
@@ -72,8 +71,6 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
         val item = itemList.get(position)
         when (item.second) {
             TAG_FRIEND_PLAYLIST -> {
-//                Log.e("HomeFeedMixed adapter", item.toString())
-//                Log.e("HomeFeedMixed adapter", item.first.toString())
                 val playlistHolder = holder as PlaylistViewHolder
                 playlistHolder.bindPlaylist(item.first as Pair<Contact, ArrayList<Song>>, position)
             }
@@ -81,9 +78,7 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
                 val trackHolder = holder as TrackViewHolder
                 trackHolder.bindTrack(item.first as Track, position)
             }
-            else -> {
-                // nah bruh
-            }
+            else -> {}
         }
     }
 
@@ -92,8 +87,8 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
     }
 
     inner class PlaylistViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val usernameField : TextView
-        val playlistRv : RecyclerView
+        private val usernameField : TextView
+        private val playlistRv : RecyclerView
 
         init {
             this.usernameField = itemView.findViewById(R.id.friendPlaylistDisplayParseUsername)
@@ -115,14 +110,14 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
     }
 
     inner class TrackViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val albumCover : SimpleDraweeView
-        val songTitle : TextView
-        val albumTitle : TextView
-        val artistName : TextView
+        private val albumCover : SimpleDraweeView
+        private val songTitle : TextView
+        private val albumTitle : TextView
+        private val artistName : TextView
 
-        val heartButton : ImageView
-        val addToPlaylistButton : ImageView
-        val deleteFromPlaylistButton : ImageView
+        private val heartButton : ImageView
+        private val addToPlaylistButton : ImageView
+        private val deleteFromPlaylistButton : ImageView
 
         init{
             albumCover = itemView.findViewById(R.id.singleFriendPlaylistSongImage)
@@ -153,7 +148,7 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
                 val albumCoverImgUri = track.album.images.get(0).url
                 albumCover.setImageURI(albumCoverImgUri);
             } catch (e : Exception) {
-                Log.e("HomeFeedItemAdapter", "error: " + e.message)
+                e.message?.let { Log.e(TAG, it) }
             }
 
             listOf(heartButton, deleteFromPlaylistButton).map{
@@ -166,7 +161,6 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
             }
 
             albumCover.setOnLongClickListener {
-                val gson = Gson()
                 controller.addToPlaylist(track)
                 return@setOnLongClickListener true
             }
@@ -177,7 +171,5 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
 
         }
     }
-
-
 
 }

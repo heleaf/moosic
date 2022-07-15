@@ -1,11 +1,13 @@
 package com.dev.moosic.controllers
 
+import com.dev.moosic.Util
+
 interface AuthorizationController {
     val CLIENT_ID: String
-        get() = "7b7fed9bf37945818d20992b055ac63b"
+        get() = Util.SPOTIFY_APK_CLIENT_ID
     val REDIRECT_URI: String
-        get() = "http://localhost:8080"
+        get() = Util.SPOTIFY_APK_REDIRECT_URI
     val AUTH_REQUEST_CODE: Int
-        get() = 1337
+        get() = Util.REQUEST_CODE_USER_AUTH
     fun authorizeUser()
 }

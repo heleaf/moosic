@@ -17,35 +17,23 @@ import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
 import kotlin.properties.Delegates
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val KEY_MIXED_ITEM_LIST = "mixedItemList"
-private const val KEY_NUMBER_FRIENDS_PLAYLISTS_INSERTED = "numberFriendsPlaylistsInserted"
-private const val KEY_TOP_TRACKS_LIST = "topTracksList"
+private const val ARG_MIXED_ITEM_LIST = "mixedItemList"
+private const val ARG_TOP_TRACKS_LIST = "topTracksList"
 
-/**
- * A simple [Fragment] subclass.
- * Use the [MixedHomeFeedFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
+private const val TAG = "MixedHomeFeedFragment"
 
 class MixedHomeFeedFragment(private var songController: SongController) : Fragment() {
-    // TODO: Rename and change types of parameters
     private var mixedItemList : ArrayList<Pair<Any, String>> = ArrayList()
     private var topTracksList : ArrayList<Track> = ArrayList()
-
-    var numberFriendsPlaylistsInserted by Delegates.notNull<Int>()
-
-    lateinit var mixedItemListRv : RecyclerView
+    private lateinit var mixedItemListRv : RecyclerView
     lateinit var adapter : HomeFeedItemAdapter
     lateinit var scrollListener : EndlessRecyclerViewScrollListener
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            mixedItemList = Parcels.unwrap(it.getParcelable(KEY_MIXED_ITEM_LIST))
-//            numberFriendsPlaylistsInserted = it.getInt(KEY_NUMBER_FRIENDS_PLAYLISTS_INSERTED)
-            topTracksList = Parcels.unwrap(it.getParcelable(KEY_TOP_TRACKS_LIST))
+            mixedItemList = Parcels.unwrap(it.getParcelable(ARG_MIXED_ITEM_LIST))
+            topTracksList = Parcels.unwrap(it.getParcelable(ARG_TOP_TRACKS_LIST))
         }
     }
 
@@ -57,17 +45,13 @@ class MixedHomeFeedFragment(private var songController: SongController) : Fragme
     }
 
     companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         * @return A new instance of fragment MixedHomeFeedFragment.
-         */
         @JvmStatic
-        fun newInstance(mixedItemList: ArrayList<Pair<Any, String>>, topTracks: ArrayList<Track>, songController: SongController) =
+        fun newInstance(mixedItemList: ArrayList<Pair<Any, String>>, topTracks: ArrayList<Track>,
+                        songController: SongController) =
             MixedHomeFeedFragment(songController).apply {
                 arguments = Bundle().apply {
-                    putParcelable(KEY_MIXED_ITEM_LIST, Parcels.wrap(mixedItemList))
-                    putParcelable(KEY_TOP_TRACKS_LIST, Parcels.wrap(topTracks))
+                    putParcelable(ARG_MIXED_ITEM_LIST, Parcels.wrap(mixedItemList))
+                    putParcelable(ARG_TOP_TRACKS_LIST, Parcels.wrap(topTracks))
                 }
             }
     }
@@ -79,16 +63,16 @@ class MixedHomeFeedFragment(private var songController: SongController) : Fragme
 
         mixedItemListRv.adapter = adapter
         val linearLayoutManager = LinearLayoutManager(context)
-        mixedItemListRv.setLayoutManager(linearLayoutManager)
+        mixedItemListRv.layoutManager = linearLayoutManager
 
-        scrollListener = EndlessRecyclerViewScrollListener(linearLayoutManager, object: LoadMoreFunction {
+        scrollListener = EndlessRecyclerViewScrollListener(linearLayoutManager,
+            object: LoadMoreFunction {
             override fun onLoadMore(page: Int, totalItemsCount: Int, view: RecyclerView?) {
-                Log.d("MixedHomeFeedFragment", "loading: " + totalItemsCount)
-                songController.loadMoreMixedHomeFeedItems(topTracksList.size, totalItemsCount, adapter, null)
+                songController.loadMoreMixedHomeFeedItems(topTracksList.size,
+                    totalItemsCount, adapter, null)
             }
         })
 
         mixedItemListRv.addOnScrollListener(scrollListener)
-
     }
 }

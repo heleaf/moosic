@@ -10,7 +10,7 @@ import com.dev.moosic.R
 
 class InterestItemAdapter(context: Context, items: ArrayList<String>,
 checkedItems: ArrayList<String>) : RecyclerView.Adapter<InterestItemAdapter.ViewHolder>() {
-    var context: Context? = null
+    var context: Context
     var items: ArrayList<String> = ArrayList()
     var checkedItems: ArrayList<String> = ArrayList()
 
@@ -21,13 +21,14 @@ checkedItems: ArrayList<String>) : RecyclerView.Adapter<InterestItemAdapter.View
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(this.context).inflate(R.layout.single_interest_item, parent, false)
+        val view = LayoutInflater.from(this.context).inflate(R.layout.single_interest_item,
+            parent, false)
         return ViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = this.items.get(position)
-        holder.bind(item, position)
+        holder.bind(item)
     }
 
     override fun getItemCount(): Int {
@@ -39,7 +40,7 @@ checkedItems: ArrayList<String>) : RecyclerView.Adapter<InterestItemAdapter.View
         init {
             checkListItem = itemView.findViewById(R.id.interestItemCheckbox)
         }
-        fun bind(item: String, position: Int) {
+        fun bind(item: String) {
             checkListItem?.setText(item)
             checkListItem?.isChecked = item in checkedItems
             checkListItem?.setOnClickListener {
