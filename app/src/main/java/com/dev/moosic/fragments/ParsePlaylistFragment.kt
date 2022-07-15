@@ -28,10 +28,6 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivitySongContr
     lateinit var adapter : SongAdapter
     private lateinit var swipeContainer: SwipeRefreshLayout
 
-    private lateinit var playlistTitle: TextView
-    private lateinit var playlistDescription: TextView
-    private lateinit var playlistAuthor: TextView
-
     private lateinit var emptyPlaylistText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,13 +61,8 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivitySongContr
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        playlistTitle = view.findViewById(R.id.playlistTitle)
-        playlistAuthor = view.findViewById(R.id.playlistAuthor)
-        playlistDescription = view.findViewById(R.id.playlistDescription)
-        listOf(playlistTitle, playlistAuthor, playlistDescription).map{
-                tv -> tv.visibility = View.GONE }
-
         emptyPlaylistText = view.findViewById(R.id.emptyPlaylistText)
+        if (songs.size == 0) emptyPlaylistText.visibility = View.GONE
 
         rvPlaylistTracks = view.findViewById(R.id.rvPlaylistTracks)
 
