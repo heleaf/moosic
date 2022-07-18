@@ -63,7 +63,7 @@ class SearchFragment(controller: MainActivity.MainActivitySongController) : Frag
         super.onViewCreated(view, savedInstanceState)
         rvSearchedTracks = view.findViewById(R.id.rvSearchedTracks)
         adapter = TrackAdapter(view.context, searchedTracks,
-            mainActivityController, true, false)
+            mainActivityController)
 
         rvSearchedTracks.adapter = adapter
         val linearLayoutManager = LinearLayoutManager(context)

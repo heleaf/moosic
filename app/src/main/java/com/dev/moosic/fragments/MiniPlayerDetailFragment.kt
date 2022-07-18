@@ -16,6 +16,9 @@ import com.dev.moosic.R
 import com.facebook.drawee.view.SimpleDraweeView
 import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
+import retrofit.Callback
+import retrofit.RetrofitError
+import retrofit.client.Response
 import java.lang.Exception
 
 private const val ARG_CURRENT_TRACK = "currentTrack"
@@ -74,7 +77,13 @@ class MiniPlayerDetailFragment(controller: MainActivity.MainActivitySongControll
         addToPlaylistButton = view.findViewById(R.id.miniPlayerDetailAddToPlaylistButton)
 
         addToPlaylistButton.setOnClickListener {
-            currentTrack.let { it1 -> mainActivityController.addToParsePlaylist(it1) }
+            currentTrack.let { it1 -> mainActivityController.addToParsePlaylist(it1, object: Callback<Unit> {
+                override fun success(t: Unit?, response: Response?) {
+                }
+
+                override fun failure(error: RetrofitError?) {
+                }
+            }) }
         }
 
         backToHome.setOnClickListener {

@@ -144,6 +144,7 @@ class SignUpActivity : AppCompatActivity() {
                 }
             }
         }
+
         if (requestCode == Util.REQUEST_CODE_GET_INTERESTS) {
             if (resultCode == RESULT_OK){
                 val genres : ArrayList<String>

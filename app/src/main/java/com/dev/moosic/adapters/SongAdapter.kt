@@ -17,6 +17,9 @@ import com.facebook.drawee.view.SimpleDraweeView
 import com.google.gson.Gson
 import com.parse.ParseUser
 import kaaes.spotify.webapi.android.models.Track
+import retrofit.Callback
+import retrofit.RetrofitError
+import retrofit.client.Response
 import java.lang.Exception
 
 private const val TAG = "SongAdapter"
@@ -80,24 +83,16 @@ class SongAdapter(
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var albumCover : SimpleDraweeView? = null
-        var songTitle : TextView? = null
-        var artistName : TextView? = null
-
-        var heartButton : ImageView? = null
-        var addToPlaylistButton : ImageView? = null
-        var deleteFromPlaylistButton : ImageView? = null
-
-        var logOutRvButton: Button? = null
+        var albumCover : SimpleDraweeView
+        var songTitle : TextView
+        var artistName : TextView
+        var heartButton : ImageView
 
         init {
             albumCover = itemView.findViewById(R.id.singleFriendPlaylistSongImage)
             songTitle = itemView.findViewById(R.id.trackTitle)
             artistName = itemView.findViewById(R.id.artistName)
             heartButton = itemView.findViewById(R.id.heartButton)
-            addToPlaylistButton = itemView.findViewById(R.id.addToPlaylistButton)
-            deleteFromPlaylistButton = itemView.findViewById(R.id.deleteFromPlaylistButton)
-            logOutRvButton = itemView.findViewById(R.id.logOutRvButton)
         }
 
         fun bind(song: Song, position: Int) {
@@ -111,10 +106,10 @@ class SongAdapter(
                     if (artist.name == track.artists.get(0).name) artist.name else
                         accumulator + ARTIST_STR_SEPARATOR + artist.name
                 }
-                artistName?.setText(artistNameText)
+                artistName.setText(artistNameText)
             }
 
-            songTitle?.setText(song.getName())
+            songTitle.setText(song.getName())
 
             itemView.setOnClickListener {
                 val id = song.getSpotifyId()
@@ -124,52 +119,68 @@ class SongAdapter(
                 }
             }
 
-            itemView.setOnLongClickListener {
-                if (track != null) {
-                    mainActivitySongController.addToPlaylist(track)
-                }
-                return@setOnLongClickListener true
-            }
+//            itemView.setOnLongClickListener {
+//                if (track != null) {
+//                    mainActivitySongController.addToPlaylist(track, object: Callback<Unit> {
+//                        override fun success(t: Unit?, response: Response?) {
+//                        }
+//
+//                        override fun failure(error: RetrofitError?) {
+//                        }
+//
+//                    } )
+//                }
+//                return@setOnLongClickListener true
+//            }
 
             try {
                 val albumCoverImgUri = song.getImageUri()
-                albumCover?.setImageURI(albumCoverImgUri);
+                albumCover.setImageURI(albumCoverImgUri);
             } catch (e : Exception) {
                 e.message?.let { Log.e(TAG, it) }
             }
 
-            if (mShowHeartButton) {
-                heartButton?.visibility = View.VISIBLE
-                heartButton?.setOnClickListener(View.OnClickListener {
-                    mainActivitySongController.addToSavedTracks(track.id)
-                })
-            } else {
-                heartButton?.visibility = View.GONE
-            }
+            heartButton.visibility = View.VISIBLE
+            var isInPlaylist = false
+            mainActivitySongController.isInPlaylist(track, object: Callback<Boolean> {
+                override fun success(t: Boolean?, response: Response?) {
+                    if (t==null) {heartButton.visibility = View.GONE; return }
+                    val heartIcon = if (t == true) R.drawable.ufi_heart_active else R.drawable.ufi_heart
+                    heartButton.setImageResource(heartIcon)
+                    isInPlaylist = t
+                }
+                override fun failure(error: RetrofitError?) {
+                    heartButton.visibility = View.GONE
+                }
+            })
 
-            if (mShowAddButton) {
-                addToPlaylistButton?.visibility = View.VISIBLE
-                addToPlaylistButton?.setOnClickListener(View.OnClickListener {
-                    mainActivitySongController.addToParsePlaylist(track)
-                })
-            } else {
-                addToPlaylistButton?.visibility = View.GONE
-            }
+            heartButton.setOnClickListener(View.OnClickListener {
+                if (isInPlaylist) {
+                    mainActivitySongController.removeFromPlaylist(track, object: Callback<Unit> {
+                        override fun success(t: Unit?, response: Response?) {
+                            heartButton.setImageResource(R.drawable.ufi_heart)
+                            isInPlaylist = !isInPlaylist
+                            this@SongAdapter.notifyItemRemoved(position)
+                            this@SongAdapter.notifyItemRangeChanged(position, mSongs.size)
+                            if (mSongs.isEmpty()) {
+                                showEmptyPlaylistText()
+                            }
+                        }
+                        override fun failure(error: RetrofitError?) {}
+                    })
+                } else {
+                    mainActivitySongController.addToPlaylist(track, object: Callback<Unit> {
+                        override fun success(t: Unit?, response: Response?) {
+                            isInPlaylist = !isInPlaylist
+                            heartButton.setImageResource(R.drawable.ufi_heart_active)
+                        }
 
-            val deleteButton : ImageView = itemView.findViewById(R.id.deleteFromPlaylistButton)
-            if (mShowDeleteButton){
-                deleteButton.visibility = View.VISIBLE
-                deleteButton.setOnClickListener(View.OnClickListener {
-                    mainActivitySongController.removeFromParsePlaylist(track, position)
-                    this@SongAdapter.notifyItemRemoved(position)
-                    this@SongAdapter.notifyItemRangeChanged(position, mSongs.size)
-                    if (mSongs.isEmpty()) {
-                        showEmptyPlaylistText()
-                    }
-                })
-            } else {
-                deleteButton.visibility = View.GONE
-            }
+                        override fun failure(error: RetrofitError?) {}
+
+                    })
+                }
+
+            })
 
         }
     }

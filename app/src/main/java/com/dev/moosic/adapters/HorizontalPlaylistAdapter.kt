@@ -13,6 +13,9 @@ import com.dev.moosic.models.Song
 import com.facebook.drawee.view.SimpleDraweeView
 import com.google.gson.Gson
 import kaaes.spotify.webapi.android.models.Track
+import retrofit.Callback
+import retrofit.RetrofitError
+import retrofit.client.Response
 import java.lang.Exception
 
 private const val TAG = "HorizontalPlaylistAdapter"
@@ -64,7 +67,14 @@ class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>, contro
             val track = gson.fromJson(song.getJsonDataString(), Track::class.java)
 
             itemView.setOnLongClickListener {
-                controller.addToPlaylist(track)
+                controller.addToPlaylist(track, object: Callback<Unit> {
+                    override fun success(t: Unit?, response: Response?) {
+                    }
+
+                    override fun failure(error: RetrofitError?) {
+                    }
+
+                })
                 return@setOnLongClickListener true
             }
 

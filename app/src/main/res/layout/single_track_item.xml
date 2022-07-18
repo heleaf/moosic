@@ -21,6 +21,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="5dp"
+        android:layout_marginTop="10dp"
         android:layout_marginEnd="10dp"
         android:textSize="18sp"
         android:textStyle="bold"
@@ -40,43 +41,12 @@
         tools:text="Artist" />
 
     <ImageView
-        android:id="@+id/addToPlaylistButton"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:layout_marginTop="10dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/heartButton"
-
-        fresco:srcCompat="@drawable/plusimg" />
-
-    <ImageView
         android:id="@+id/heartButton"
         android:layout_width="30dp"
         android:layout_height="30dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         fresco:srcCompat="@drawable/ufi_heart" />
-
-    <ImageView
-        android:id="@+id/deleteFromPlaylistButton"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:layout_marginTop="10dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/addToPlaylistButton"
-        fresco:srcCompat="@android:drawable/ic_delete" />
-
-    <Button
-        android:id="@+id/logOutRvButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:text="Log Out"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@+id/dummyButtonView"
-        app:layout_constraintStart_toStartOf="@+id/singleFriendPlaylistSongImage"
-        app:layout_constraintTop_toTopOf="parent" />
 
     <View
         android:id="@+id/dummyButtonView"
