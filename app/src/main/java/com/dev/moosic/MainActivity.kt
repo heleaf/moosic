@@ -65,6 +65,7 @@ const val ARTIST_SEEDS_LIMIT = 5
 const val GENRE_SEEDS_LIMIT = 5
 const val DUMMY_SEED = ""
 const val RECOMMENDED_SONGS_LIMIT = 20
+const val SONGS_PER_FRIEND_TO_SHOW = 5
 
 const val URI_PREFIX_LENGTH = 14
 const val PERMISSIONS_REQUEST_READ_CONTACTS_CODE = 100
@@ -78,7 +79,7 @@ class MainActivity : AppCompatActivity(){
     val spotifyApi = SpotifyApi()
 
     val mainActivitySongController = MainActivitySongController()
-    val mainActivityFriendsController = MainActivityFriendsController()
+    private val mainActivityFriendsController = MainActivityFriendsController()
 
     lateinit var spotifyApiAuthToken : String
     var currentUserId : String? = null
@@ -88,8 +89,6 @@ class MainActivity : AppCompatActivity(){
 
     var playerStateSubscription: Subscription<PlayerState>? = null
 
-    var oldListOfTopTracks : ArrayList<kaaes.spotify.webapi.android.models.Track> = ArrayList()
-
     var topTracks: ArrayList<kaaes.spotify.webapi.android.models.Track> = ArrayList()
     var topTracksDisplayed: ArrayList<Track> = ArrayList()
     var recommendedTracks: ArrayList<kaaes.spotify.webapi.android.models.Track> = ArrayList()
@@ -97,7 +96,6 @@ class MainActivity : AppCompatActivity(){
 
     var followedFriends: ArrayList<ParseUser> = ArrayList()
     var friendPlaylists : ArrayList<Pair<Contact, ArrayList<Song>>> = ArrayList()
-    var friendPlaylistsIndex : Int = 0
     var taggedContactList : ArrayList<Pair<Contact, String>> = ArrayList()
     var numberFollowedFriends : Int = 0
 
@@ -525,28 +523,54 @@ class MainActivity : AppCompatActivity(){
         homeFeedItems.clear()
         friendPlaylists.clear()
         showProgressBar()
+
         asyncExtractFriendPlaylists(followedFriends, 0, ArrayList<Pair<Contact, ArrayList<Song>>>(),
             object:Callback<ArrayList<Pair<Contact, ArrayList<Song>>>> {
                 override fun success(
                     friendPlaylistList: ArrayList<Pair<Contact, ArrayList<Song>>>?,
                     response: Response?
                 ) {
+
                     if (friendPlaylistList != null) {
                         friendPlaylists.addAll(friendPlaylistList)
-                        friendPlaylistsIndex = 0
+
+                        val mergedFriendsPlaylist = getMergedFriendsPlaylist(SONGS_PER_FRIEND_TO_SHOW);
+                        val playlistObject = Pair(Contact(), mergedFriendsPlaylist)
+                        homeFeedItems.add(Pair(playlistObject, HomeFeedItemAdapter.TAG_FRIEND_PLAYLIST))
                         topTracksDisplayed.clear()
-                        friendPlaylistsIndex = fillHomeFeedItemsList(recommendedTracks, friendPlaylistsIndex, TRACK_SECTION_INCREMENT)
+
+                        for (track in recommendedTracks){
+                            homeFeedItems.add(Pair(track, HomeFeedItemAdapter.TAG_TRACK))
+                        }
+
                         hideProgressBar()
-                        topTracksDisplayed.clear()
                         val newFragment = MixedHomeFeedFragment.newInstance(homeFeedItems, topTracksDisplayed, mainActivitySongController)
                         fragmentManager.beginTransaction()
                             .replace(R.id.flContainer, newFragment).commit()
                     }
+
                 }
                 override fun failure(error: RetrofitError?) {
                     Log.e(TAG, error?.message.toString())
                 }
             })
+    }
+
+    fun getMergedFriendsPlaylist(songsPerFriend : Int?): ArrayList<Song> {
+        val mergedList = ArrayList<Song>()
+        for (playlist in friendPlaylists){
+            val songList = playlist.second
+            if (songsPerFriend != null) {
+                var songListIdx = 0
+                while (songListIdx < songList.size && songListIdx < songsPerFriend) {
+                    mergedList.add(songList.get(songListIdx))
+                    songListIdx += 1
+                }
+            } else {
+                mergedList.addAll(songList)
+            }
+        }
+        return mergedList
     }
 
     private fun prepareRecommendationSeeds(topTracksIdList: List<String>,
@@ -1302,14 +1326,12 @@ class MainActivity : AppCompatActivity(){
                         if (topTracksPager != null){
                             topTracksDisplayed.addAll(topTracksPager.items)
                             val prevSize = homeFeedItems.size
-                            val prevFriendsIndex = friendPlaylistsIndex
-                            friendPlaylistsIndex =
-                                fillHomeFeedItemsList(topTracksPager.items,
-                                    prevFriendsIndex, TRACK_SECTION_INCREMENT)
-                            adapter.notifyItemRangeInserted(
-                                prevSize,
-                                topTracksPager.items.size
-                                        + friendPlaylistsIndex - prevFriendsIndex)
+
+                            for (track in topTracksPager.items){
+                                homeFeedItems.add(Pair(track, HomeFeedItemAdapter.TAG_TRACK))
+                            }
+
+                            adapter.notifyItemRangeInserted(prevSize, topTracksPager.items.size)
                         }
                         swipeContainer?.isRefreshing = false
                     }

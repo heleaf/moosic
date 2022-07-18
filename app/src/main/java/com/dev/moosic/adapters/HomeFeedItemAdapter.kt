@@ -99,11 +99,9 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
         }
 
         fun bindPlaylist(pair: Pair<Contact, ArrayList<Song>>, position: Int) {
-            val contact = pair.first
             val songs = pair.second
-            if (contact.parseUsername != null) {
-                usernameField.setText(contact.parseUsername)
-            }
+            usernameField.visibility = View.GONE
+
             val playlistSongAdapter = HorizontalPlaylistAdapter(context, songs, controller)
             playlistRv.adapter = playlistSongAdapter
             val linearLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL,
