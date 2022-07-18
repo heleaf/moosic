@@ -13,7 +13,9 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.ProgressBar
 import android.widget.Toast
+
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.adapters.HomeFeedItemAdapter
 import com.dev.moosic.adapters.TaggedContactAdapter
@@ -39,6 +41,7 @@ import kaaes.spotify.webapi.android.models.*
 import retrofit.Callback
 import retrofit.RetrofitError
 import retrofit.client.Response
+
 
 private const val TAG = "MainActivity"
 private const val TOAST_FAILED_TO_LINK_SPOTIFY_ACCOUNT
@@ -137,6 +140,13 @@ class MainActivity : AppCompatActivity(){
             getString(Util.INTENT_KEY_SPOTIFY_ACCESS_TOKEN).toString()
         spotifyApi.setAccessToken(spotifyApiAuthToken)
         bottomNavigationView = findViewById(R.id.bottomNavBar)
+
+        val toolbar = findViewById<Toolbar>(R.id.mainToolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.setHomeAsUpIndicator(android.R.drawable.stat_sys_headset)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+
         bottomNavigationView.setOnItemSelectedListener { menuItem : MenuItem ->
             when (menuItem.itemId) {
                 R.id.actionHome -> {
@@ -162,6 +172,7 @@ class MainActivity : AppCompatActivity(){
             }
             return@setOnItemSelectedListener true
         }
+
         progressBar = findViewById(R.id.pbLoadingSearch)
         miniPlayerFragmentContainer = findViewById(R.id.miniPlayerFlContainer)
         setUpCurrentUser()
@@ -535,10 +546,12 @@ class MainActivity : AppCompatActivity(){
                         friendPlaylists.addAll(friendPlaylistList)
 
                         val mergedFriendsPlaylist = getMergedFriendsPlaylist(SONGS_PER_FRIEND_TO_SHOW);
-                        val playlistObject = Pair(Contact(), mergedFriendsPlaylist)
-                        homeFeedItems.add(Pair(playlistObject, HomeFeedItemAdapter.TAG_FRIEND_PLAYLIST))
-                        topTracksDisplayed.clear()
+                        if (mergedFriendsPlaylist.size > 0) {
+                            val playlistObject = Pair(Contact(), mergedFriendsPlaylist)
+                            homeFeedItems.add(Pair(playlistObject, HomeFeedItemAdapter.TAG_FRIEND_PLAYLIST))
+                        }
 
+                        topTracksDisplayed.clear()
                         for (track in recommendedTracks){
                             homeFeedItems.add(Pair(track, HomeFeedItemAdapter.TAG_TRACK))
                         }

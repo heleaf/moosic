@@ -1,10 +1,14 @@
 package com.dev.moosic
 
 import android.os.Bundle
+import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import com.parse.ParseUser
 
 private const val TOAST_FAILED_LOGOUT = "Failed to log out"
@@ -19,6 +23,15 @@ class SettingsActivity() : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
+
+        val toolbar = findViewById<Toolbar>(R.id.settingsToolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+        toolbar.setNavigationOnClickListener {
+            setResult(Util.RESULT_CODE_EXIT_SETTINGS)
+            finish()
+        }
 
         username = findViewById(R.id.settingsUsername)
         spotifyAccount = findViewById(R.id.settingsSpotifyAccountUsername)
@@ -49,8 +62,6 @@ class SettingsActivity() : AppCompatActivity() {
                 }
             }
         }
-        // backButton.setOnClickListener
-        // -- set a result code as having not logged out, then finish myself
-
     }
+
 }

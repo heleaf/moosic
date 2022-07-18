@@ -5,11 +5,11 @@
       <map>
         <entry key="app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/ic_launcher_background.xml" value="0.1" />
-        <entry key="app/src/main/res/layout/activity_get_interests.xml" value="0.25" />
+        <entry key="app/src/main/res/layout/activity_get_interests.xml" value="0.46377410888671877" />
         <entry key="app/src/main/res/layout/activity_login.xml" value="0.3177257525083612" />
-        <entry key="app/src/main/res/layout/activity_main.xml" value="0.21321258544921878" />
+        <entry key="app/src/main/res/layout/activity_main.xml" value="0.40103302001953123" />
         <entry key="app/src/main/res/layout/activity_mini_player_detail.xml" value="0.49391727493917276" />
-        <entry key="app/src/main/res/layout/activity_settings.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/activity_settings.xml" value="0.2065155029296875" />
         <entry key="app/src/main/res/layout/activity_sign_up.xml" value="0.3173990293990734" />
         <entry key="app/src/main/res/layout/fragment_friends.xml" value="0.19832402234636873" />
         <entry key="app/src/main/res/layout/fragment_home_feed.xml" value="0.26769561767578126" />
