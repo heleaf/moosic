@@ -109,6 +109,7 @@ class LoginActivity : AppCompatActivity() {
         val intent = Intent(this, MainActivity::class.java)
         intent.putExtra(Util.INTENT_KEY_SPOTIFY_ACCESS_TOKEN, accessToken)
         startActivityForResult(intent, LOGGED_OUT_REQUEST_CODE)
+        finish()
     }
 
 }
