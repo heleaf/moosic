@@ -119,20 +119,6 @@ class SongAdapter(
                 }
             }
 
-//            itemView.setOnLongClickListener {
-//                if (track != null) {
-//                    mainActivitySongController.addToPlaylist(track, object: Callback<Unit> {
-//                        override fun success(t: Unit?, response: Response?) {
-//                        }
-//
-//                        override fun failure(error: RetrofitError?) {
-//                        }
-//
-//                    } )
-//                }
-//                return@setOnLongClickListener true
-//            }
-
             try {
                 val albumCoverImgUri = song.getImageUri()
                 albumCover.setImageURI(albumCoverImgUri);

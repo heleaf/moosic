@@ -1,20 +1,9 @@
 package com.dev.moosic
 
-import android.util.Log
-import android.view.View
-import android.widget.ImageView
-import android.widget.TextView
-import androidx.recyclerview.widget.RecyclerView
-import com.dev.moosic.adapters.*
-import com.dev.moosic.controllers.SongController
-import com.facebook.drawee.view.SimpleDraweeView
-import kaaes.spotify.webapi.android.models.Track
-import retrofit.Callback
 import retrofit.RetrofitError
 import retrofit.client.Header
 import retrofit.client.Response
 import retrofit.mime.TypedString
-import java.lang.Exception
 
 class Util {
     companion object {
@@ -71,77 +60,6 @@ class Util {
         const val REQUEST_CODE_SETTINGS = 2000
         const val RESULT_CODE_LOG_OUT = 2001
         const val RESULT_CODE_EXIT_SETTINGS = 2002
-
-        fun bind_single_track_item(track: Track, position: Int,
-                                   itemView: View, trackTitle: TextView, artistName: TextView, albumCover: SimpleDraweeView,
-                                   heartButton: ImageView, controller: SongController, adapter: SongAdapter) {
-            itemView.setOnClickListener {
-                controller.playSongOnSpotify(track.uri, track.id)
-            }
-
-            val trackTitleText = track.name
-            trackTitle.setText(trackTitleText)
-
-            val artistNameText = track.artists.fold(
-                ""
-            ) { accumulator, artist ->
-                if (artist.name == track.artists.get(0).name) artist.name else
-                    "$accumulator, ${artist.name}"
-            }
-            artistName.setText(artistNameText)
-
-            try {
-                val albumCoverImgUri = track.album.images.get(0).url
-                albumCover.setImageURI(albumCoverImgUri);
-            } catch (e : Exception) { }
-
-            heartButton.visibility = View.VISIBLE
-
-            var isInPlaylist = false
-            controller.isInPlaylist(track, object: Callback<Boolean> {
-                override fun success(t: Boolean?, response: Response?) {
-                    if (t==null) {heartButton.visibility = View.GONE; return }
-                    val heartIcon = if (t == true) R.drawable.ufi_heart_active else R.drawable.ufi_heart
-                    heartButton.setImageResource(heartIcon)
-                    isInPlaylist = t
-                }
-                override fun failure(error: RetrofitError?) {
-                    heartButton.visibility = View.GONE
-                }
-            })
-
-//            heartButton.setOnClickListener(View.OnClickListener {
-//                if (isInPlaylist) {
-//                    controller.removeFromPlaylist(track, object: Callback<Unit> {
-//                        override fun success(t: Unit?, response: Response?) {
-//                            isInPlaylist = !isInPlaylist
-//                            removeFromPlaylistSuccess(heartButton, adapter)
-//                        }
-//                        override fun failure(error: RetrofitError?) {}
-//                    })
-//                } else {
-//                    controller.addToPlaylist(track, object: Callback<Unit> {
-//                        override fun success(t: Unit?, response: Response?) {
-//                            isInPlaylist = !isInPlaylist
-//                            heartButton.setImageResource(R.drawable.ufi_heart_active)
-//                        }
-//                        override fun failure(error: RetrofitError?) {}
-//                    })
-//                }
-//            })
-        }
-
-        fun bind_single_track_item(track: Track, position: Int, viewholder: RecyclerView.ViewHolder,
-                                   trackLayout: View, trackTitle: TextView, artistName: TextView, albumCover: SimpleDraweeView,
-                                   heartButton: ImageView, controller: SongController, adapter: TrackAdapter) {
-        }
-
-
-//        fun bind_single_track_item(track: Track, position: Int, viewholder: RecyclerView.ViewHolder,
-//                                   trackLayout: View, trackTitle: TextView, artistName: TextView, albumCover: SimpleDraweeView,
-//                                   heartButton: ImageView, controller: SongController, adapter: HomeFeedItemAdapter) {
-//        }
-
 
     }
 }

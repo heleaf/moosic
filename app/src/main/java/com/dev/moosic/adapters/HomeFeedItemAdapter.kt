@@ -204,16 +204,6 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
                 controller.playSongOnSpotify(track.uri, track.id)
             }
 
-//            addToPlaylistButton.visibility = View.VISIBLE
-//            addToPlaylistButton.setOnClickListener {
-//                controller.addToPlaylist(track, object: Callback<Unit> {
-//                    override fun success(t: Unit?, response: Response?) {
-//                    }
-//                    override fun failure(error: RetrofitError?) {
-//                    }
-//                })
-//            }
-
         }
     }
 
