@@ -13,6 +13,14 @@ class InterestVectorUnitTest {
         "danceability" to 0.0, "energy" to 0.0,
         "instrumentalness" to 0.0, "liveness" to 0.0,
         "speechiness" to 0.0, "valence" to 0.0)
+    val vec3 = mapOf("acousticness" to 0.0,
+        "danceability" to 0.9, "energy" to 0.0,
+        "instrumentalness" to 0.0, "liveness" to 0.0,
+        "speechiness" to 0.0, "valence" to 0.0)
+    val vec4 = mapOf("acousticness" to 0.0,
+        "danceability" to 0.0, "energy" to 0.0,
+        "instrumentalness" to 0.4, "liveness" to 0.1,
+        "speechiness" to 0.0, "valence" to 0.0)
 
     val epsilon = (10.0).pow(-6)
 
@@ -33,6 +41,14 @@ class InterestVectorUnitTest {
         assertTrue(SongFeatures.magnitude(vec2) >= 0.0)
     }
 
+    @Test
+    fun cosineSimilarity_isCorrect() {
+        assertTrue(SongFeatures.computeVectorSimilarityScore(vec1, vec1) - 1.0 < epsilon)
+        assertTrue(SongFeatures.computeVectorSimilarityScore(vec2, vec2) - 1.0 < epsilon)
+        assertTrue(SongFeatures.computeVectorSimilarityScore(vec2, vec3) < epsilon)
+        assertTrue(SongFeatures.computeVectorSimilarityScore(vec2, vec4) < epsilon)
+    }
+
     fun getTestMagnitude(vec : Map<String, Double>): Double {
         val values = vec.values
         val magnitude = sqrt(
@@ -49,6 +65,5 @@ class InterestVectorUnitTest {
         return (v1values.indices.toList()).fold(
             0.0
         ) { accumulator, index -> accumulator + (v1values.get(index) * v2values.get(index))}
-
     }
 }
