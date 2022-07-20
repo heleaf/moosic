@@ -33,6 +33,15 @@ class Util {
 
         const val SPOTIFY_URI_PREFIX = "spotify:track:"
 
+        fun getSpotifyIdFromUri(uri: String) : String {
+            if (uri.length < SPOTIFY_URI_PREFIX.length) { return "" }
+            return uri.slice(IntRange(SPOTIFY_URI_PREFIX.length, uri.length - 1))
+        }
+
+        fun getSpotifyUriFromSpotifyId(spotifyId: String) : String {
+            return "${SPOTIFY_URI_PREFIX}$spotifyId"
+        }
+
         const val DUMMY_URL = "url"
         private const val DUMMY_STATUS = 200
         private const val DUMMY_REASON = "reason"

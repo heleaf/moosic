@@ -227,18 +227,13 @@ class MainActivity : AppCompatActivity(){
 
     }
 
-    private fun getSpotifyIdFromUri(uri: String) : String {
-        if (uri.length < URI_PREFIX_LENGTH) { return "" }
-        return uri.slice(IntRange(URI_PREFIX_LENGTH, uri.length - 1))
-    }
-
+    // add this to userRepository / controller ?
     fun connectToPlayerState() {
         playerStateSubscription = spotifyAppRemote!!.playerApi.subscribeToPlayerState()
-
         playerStateSubscription?.setEventCallback { playerState: PlayerState ->
             val track: com.spotify.protocol.types.Track? = playerState.track
             if (track != null) {
-                val id = getSpotifyIdFromUri(track.uri)
+                val id = Util.getSpotifyIdFromUri(track.uri)
                 if (track.name != currentTrack?.name && currentTrack != null) {
                     mainActivitySongController.logTrackInModel(id, WEIGHT_PLAYED_SONG)
                 }
@@ -669,6 +664,7 @@ class MainActivity : AppCompatActivity(){
     private fun launchSettingsActivity() {
         val intent = Intent(this, SettingsActivity::class.java)
         startActivityForResult(intent, Util.REQUEST_CODE_SETTINGS)
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -1616,19 +1612,17 @@ class MainActivity : AppCompatActivity(){
         }
 
         override fun playSong(songId: String) {
-            spotifyAppRemote?.playerApi?.play(songIdToUri(songId))
+            spotifyAppRemote?.playerApi?.play(Util.getSpotifyUriFromSpotifyId(songId))
         }
-
         override fun pauseSong() {
             spotifyAppRemote?.playerApi?.pause()
         }
-
         override fun resumeSong() {
             spotifyAppRemote?.playerApi?.resume()
         }
 
-        private fun songIdToUri(songId: String): String {
-            return "${Util.SPOTIFY_URI_PREFIX}$songId"
+        override fun connectToPlayerState() {
+//            this@MainActivity.connectToPlayerState()
         }
 
         private fun getSongWithId(id: String): UserRepositorySong? {

@@ -16,4 +16,6 @@ interface UserRepositoryInterface {
     fun getCurrentSongIsPlaying() : Boolean?
     fun pauseSong()
     fun resumeSong()
+
+    fun connectToPlayerState()
 }

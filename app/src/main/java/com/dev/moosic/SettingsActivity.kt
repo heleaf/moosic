@@ -31,6 +31,7 @@ class SettingsActivity() : AppCompatActivity() {
         toolbar.setNavigationOnClickListener {
             setResult(Util.RESULT_CODE_EXIT_SETTINGS)
             finish()
+            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
         }
 
         username = findViewById(R.id.settingsUsername)
@@ -62,6 +63,11 @@ class SettingsActivity() : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
     }
 
 }

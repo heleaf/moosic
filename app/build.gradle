@@ -66,8 +66,6 @@ dependencies {
     // swipe to refresh
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
 
-//    implementation 'com.github.smhdk:KM-Recyclerview-Sticky-Header:v1.0.0'
-
     implementation 'com.jakewharton:butterknife:10.0.0'
     annotationProcessor 'com.jakewharton:butterknife-compiler:10.0.0'
     implementation 'com.google.android.material:material:1.7.0-alpha02'
@@ -76,31 +74,30 @@ dependencies {
 
     testImplementation "io.mockk:mockk:1.12.4"
 
-//    implementation 'org.mockito.mockito-core:2.19.0'
+    implementation("androidx.room:room-runtime:2.4.2")
+    annotationProcessor("androidx.room:room-compiler:2.4.2")
 
-    // Core library
-//    androidTestImplementation("androidx.test:core:$androidXTestVersion")
-//
-//    // AndroidJUnitRunner and JUnit Rules
-//    androidTestImplementation("androidx.test:runner:$testRunnerVersion")
-//    androidTestImplementation("androidx.test:rules:$testRulesVersion")
-//
-//    // Assertions
-//    androidTestImplementation("androidx.test.ext:junit:$testJunitVersion")
-//    androidTestImplementation("androidx.test.ext:truth:$truthVersion")
-//
-//    // Espresso dependencies
-//    androidTestImplementation( "androidx.test.espresso:espresso-core:$espressoVersion")
-//    androidTestImplementation( "androidx.test.espresso:espresso-contrib:$espressoVersion")
-//    androidTestImplementation( "androidx.test.espresso:espresso-intents:$espressoVersion")
-//    androidTestImplementation( "androidx.test.espresso:espresso-accessibility:$espressoVersion")
-//    androidTestImplementation( "androidx.test.espresso:espresso-web:$espressoVersion")
-//    androidTestImplementation( "androidx.test.espresso.idling:idling-concurrent:$espressoVersion")
-//
-//    // The following Espresso dependency can be either "implementation",
-//    // or "androidTestImplementation", depending on whether you want the
-//    // dependency to appear on your APK"s compile classpath or the test APK
-//    // classpath.
-//    androidTestImplementation( "androidx.test.espresso:espresso-idling-resource:$espressoVersion")
+    // To use Kotlin annotation processing tool (kapt)
+//    kapt("androidx.room:room-compiler:2.4.2")
+//    // To use Kotlin Symbolic Processing (KSP)
+//    ksp("androidx.room:room-compiler:2.4.2")
+
+    // optional - Kotlin Extensions and Coroutines support for Room
+    implementation("androidx.room:room-ktx:2.4.2")
+
+    // optional - RxJava2 support for Room
+    implementation("androidx.room:room-rxjava2:2.4.2")
+
+    // optional - RxJava3 support for Room
+    implementation("androidx.room:room-rxjava3:2.4.2")
+
+    // optional - Guava support for Room, including Optional and ListenableFuture
+    implementation("androidx.room:room-guava:2.4.2")
+
+    // optional - Test helpers
+    testImplementation("androidx.room:room-testing:2.4.2")
+
+    // optional - Paging 3 Integration
+    implementation("androidx.room:room-paging:2.5.0-alpha02")
 
 }
