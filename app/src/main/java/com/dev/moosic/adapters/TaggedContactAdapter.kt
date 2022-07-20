@@ -1,6 +1,7 @@
 package com.dev.moosic.adapters
 
 import android.content.Context
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -67,6 +68,10 @@ class TaggedContactAdapter (context: Context,
                 followButton.visibility = View.GONE
             }
             similarityField.visibility = View.GONE
+            itemView.setOnClickListener{
+                Log.d("TaggedContactAdapter", "launch friend detail view")
+                friendsController.launchDetailView(contactPair.first)
+            }
         }
     }
 }

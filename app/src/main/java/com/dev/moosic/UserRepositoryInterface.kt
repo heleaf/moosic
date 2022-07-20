@@ -9,4 +9,11 @@ interface UserRepositoryInterface {
     fun removeSongFromUserPlaylist(songId: String)
     fun logSongInModel(song: UserRepositorySong, weight: Int)
     fun isInUserPlaylist(songId: String): Boolean
+
+    fun setCurrentSong(song: UserRepositorySong)
+    fun playSong(songId: String)
+    fun getCurrentSong() : UserRepositorySong?
+    fun getCurrentSongIsPlaying() : Boolean?
+    fun pauseSong()
+    fun resumeSong()
 }

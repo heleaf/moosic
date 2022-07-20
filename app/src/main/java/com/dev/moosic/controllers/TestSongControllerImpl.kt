@@ -18,4 +18,22 @@ class TestSongControllerImpl(private val userRepository: UserRepositoryInterface
             userRepository.removeSongFromUserPlaylist(song.id)
         }
     }
+
+    override fun playSong(songId: String) {
+        userRepository.playSong(songId)
+    }
+
+    override fun pauseSong() {
+        if (userRepository.getCurrentSong() != null
+            && userRepository.getCurrentSongIsPlaying() == true){
+            userRepository.pauseSong()
+        }
+    }
+
+    override fun resumeSong() {
+        if (userRepository.getCurrentSong() != null
+            && userRepository.getCurrentSongIsPlaying() == false){
+            userRepository.resumeSong()
+        }
+    }
 }

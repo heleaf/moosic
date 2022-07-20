@@ -31,6 +31,8 @@ class Util {
         const val SPOTIFY_QUERY_PARAM_OFFSET = "offset"
         const val SPOTIFY_QUERY_PARAM_LIMIT = "limit"
 
+        const val SPOTIFY_URI_PREFIX = "spotify:track:"
+
         const val DUMMY_URL = "url"
         private const val DUMMY_STATUS = 200
         private const val DUMMY_REASON = "reason"
@@ -41,6 +43,7 @@ class Util {
             DUMMY_REASON, DUMMY_HEADER_LIST,
             TypedString(DUMMY_BODY_STRING)
         )
+
         const val THROWABLE_NULL_SUCCESS_MESSAGE = "Objects on success are null"
         val NULL_SUCCESS_ERROR: RetrofitError = retrofit.RetrofitError.unexpectedError(
             DUMMY_URL, Throwable(THROWABLE_NULL_SUCCESS_MESSAGE))
@@ -54,6 +57,7 @@ class Util {
         const val INTENT_KEY_USERNAME_TEXT = "usernameText"
         const val INTENT_KEY_PASSWORD_TEXT = "passwordText"
         const val INTENT_KEY_NEW_USER = "user"
+        const val INTENT_KEY_DETAIL_VIEW_USER = "detailUser"
 
         const val REQUEST_CODE_USER_AUTH = 1337
         const val REQUEST_CODE_GET_INTERESTS = 1999

@@ -25,6 +25,13 @@ class SongControllerUnitTest {
             val songIds = userRepositorySongs.map{song -> song.id}
             return songId in songIds
         }
+
+        override fun setCurrentSong(song: UserRepositorySong) {}
+        override fun playSong(songId: String) {}
+        override fun getCurrentSong(): UserRepositorySong? { return null }
+        override fun getCurrentSongIsPlaying(): Boolean? { return null }
+        override fun pauseSong() {}
+        override fun resumeSong() {}
     }
 
     @Test

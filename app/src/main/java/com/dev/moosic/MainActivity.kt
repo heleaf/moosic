@@ -80,7 +80,7 @@ const val DEFAULT_LOAD_ITEM_OFFSET = 0
 const val DEFAULT_LOAD_NUMBER_ITEMS = 10
 
 class MainActivity : AppCompatActivity(){
-    var mSpotifyAppRemote : SpotifyAppRemote? = null
+    var spotifyAppRemote : SpotifyAppRemote? = null
 
     val spotifyApi = SpotifyApi()
 
@@ -216,7 +216,7 @@ class MainActivity : AppCompatActivity(){
         SpotifyAppRemote.connect(this, connectionParams,
             object : Connector.ConnectionListener {
                 override fun onConnected(spotifyAppRemote: SpotifyAppRemote) {
-                    mSpotifyAppRemote = spotifyAppRemote
+                    this@MainActivity.spotifyAppRemote = spotifyAppRemote
                     connectToPlayerState()
                 }
                 override fun onFailure(throwable: Throwable) {
@@ -233,7 +233,7 @@ class MainActivity : AppCompatActivity(){
     }
 
     fun connectToPlayerState() {
-        playerStateSubscription = mSpotifyAppRemote!!.playerApi.subscribeToPlayerState()
+        playerStateSubscription = spotifyAppRemote!!.playerApi.subscribeToPlayerState()
 
         playerStateSubscription?.setEventCallback { playerState: PlayerState ->
             val track: com.spotify.protocol.types.Track? = playerState.track
@@ -281,7 +281,7 @@ class MainActivity : AppCompatActivity(){
 
     override fun onStop() {
         super.onStop()
-        SpotifyAppRemote.disconnect(mSpotifyAppRemote);
+        SpotifyAppRemote.disconnect(spotifyAppRemote);
     }
 
     private fun setUpCurrentUser() {
@@ -572,7 +572,10 @@ class MainActivity : AppCompatActivity(){
             if (songsPerFriend != null) {
                 var songListIdx = 0
                 while (songListIdx < songList.size && songListIdx < songsPerFriend) {
-                    mergedList.add(songList.get(songListIdx))
+                    val currSong = songList.get(songListIdx)
+                    if (currSong.getSpotifyId() !in mergedList.map{song -> song.getSpotifyId()}){
+                        mergedList.add(currSong)
+                    }
                     songListIdx += 1
                 }
             } else {
@@ -1331,7 +1334,7 @@ class MainActivity : AppCompatActivity(){
         }
 
         override fun playSongOnSpotify(uri: String, spotifyId: String) {
-            mSpotifyAppRemote?.playerApi?.play(uri);
+            spotifyAppRemote?.playerApi?.play(uri);
             logTrackInModel(spotifyId, WEIGHT_PLAYED_SONG)
             spotifyApi.service.getTrack(spotifyId, object: Callback<Track> {
                 override fun success(track: Track?, response: Response?) {
@@ -1352,11 +1355,11 @@ class MainActivity : AppCompatActivity(){
         }
 
         override fun pauseSongOnSpotify() {
-            mSpotifyAppRemote?.playerApi?.pause()
+            spotifyAppRemote?.playerApi?.pause()
         }
 
         override fun resumeSongOnSpotify() {
-            mSpotifyAppRemote?.playerApi?.resume()
+            spotifyAppRemote?.playerApi?.resume()
         }
 
         override fun goToMiniPlayerDetailView() {
@@ -1506,11 +1509,12 @@ class MainActivity : AppCompatActivity(){
 
     inner class UserRepository(): UserRepositoryInterface {
         private var userPlaylistSongs : ArrayList<UserRepositorySong> = ArrayList()
+        private var currentSong: UserRepositorySong? = null
+        private var currentSongIsPlaying: Boolean? = null
 
         override fun getUserPlaylistSongs(): ArrayList<UserRepositorySong> {
             return userPlaylistSongs
         }
-
         override fun addSongToUserPlaylist(song: UserRepositorySong) {
             val gson = Gson()
             val track = gson.fromJson(song.trackJsonData, Track::class.java)
@@ -1537,7 +1541,6 @@ class MainActivity : AppCompatActivity(){
                 }
             }
         }
-
         override fun removeSongFromUserPlaylist(songId: String) {
             val songToRemove = getSongWithId(songId)
             if (songToRemove != null) {
@@ -1572,7 +1575,6 @@ class MainActivity : AppCompatActivity(){
                     }
                 }
         }
-
         override fun logSongInModel(song: UserRepositorySong, weight: Int) {
             val gson = Gson()
             val track = gson.fromJson(song.trackJsonData, Track::class.java)
@@ -1596,10 +1598,37 @@ class MainActivity : AppCompatActivity(){
                 }
             })
         }
-
         override fun isInUserPlaylist(songId: String): Boolean {
             val ids = userPlaylistSongs.map{song -> song.id}
             return songId in ids
+        }
+
+        override fun setCurrentSong(song: UserRepositorySong) {
+            currentSong = song
+        }
+
+        override fun getCurrentSong(): UserRepositorySong? {
+            return currentSong
+        }
+
+        override fun getCurrentSongIsPlaying(): Boolean? {
+            return currentSongIsPlaying
+        }
+
+        override fun playSong(songId: String) {
+            spotifyAppRemote?.playerApi?.play(songIdToUri(songId))
+        }
+
+        override fun pauseSong() {
+            spotifyAppRemote?.playerApi?.pause()
+        }
+
+        override fun resumeSong() {
+            spotifyAppRemote?.playerApi?.resume()
+        }
+
+        private fun songIdToUri(songId: String): String {
+            return "${Util.SPOTIFY_URI_PREFIX}$songId"
         }
 
         private fun getSongWithId(id: String): UserRepositorySong? {

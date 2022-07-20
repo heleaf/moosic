@@ -19,30 +19,33 @@
         android:theme="@style/Theme.Moosic"
         tools:targetApi="31">
         <activity
+            android:name=".UserDetailActivity"
+            android:exported="false" />
+        <activity
             android:name=".SettingsActivity"
             android:exported="false"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait" />
         <activity
             android:name=".GetInterestsActivity"
             android:configChanges="orientation|screenSize"
             android:exported="false"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait" />
         <activity
             android:name=".SignUpActivity"
             android:configChanges="orientation|screenSize"
             android:exported="false"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait" />
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize"
             android:exported="false"
             android:screenOrientation="portrait"
-            />
+            android:windowSoftInputMode="adjustNothing" />
         <activity
             android:name=".LoginActivity"
             android:configChanges="orientation|screenSize"
-            android:screenOrientation="portrait"
-            android:exported="true">
+            android:exported="true"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

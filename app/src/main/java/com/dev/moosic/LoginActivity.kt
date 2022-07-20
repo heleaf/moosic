@@ -25,24 +25,24 @@ private const val DEFAULT_USERNAME_TEXT = ""
 private const val DEFAULT_PASSWORD_TEXT = ""
 
 class LoginActivity : AppCompatActivity() {
-    lateinit var mEtUsername : EditText
-    lateinit var mEtPassword : EditText
-    lateinit var mLoginButton : Button
-    lateinit var mSignUpButton : Button
+    lateinit var etUsername : EditText
+    lateinit var etPassword : EditText
+    lateinit var etLoginButton : Button
+    lateinit var etSignupButton : Button
     var accessToken : String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
-        mEtUsername = findViewById(R.id.etLoginUsername)
-        mEtPassword = findViewById(R.id.etLoginPassword)
-        mLoginButton = findViewById(R.id.loginLoginButton)
-        mSignUpButton = findViewById(R.id.loginSignUpButton)
+        etUsername = findViewById(R.id.etLoginUsername)
+        etPassword = findViewById(R.id.etLoginPassword)
+        etLoginButton = findViewById(R.id.loginLoginButton)
+        etSignupButton = findViewById(R.id.loginSignUpButton)
 
-        mLoginButton.setOnClickListener(View.OnClickListener {
-            val usernameText = mEtUsername.text;
-            val passwordText = mEtPassword.text;
+        etLoginButton.setOnClickListener(View.OnClickListener {
+            val usernameText = etUsername.text;
+            val passwordText = etPassword.text;
             if (usernameText.toString().isEmpty()){
                 Toast.makeText(this, TOAST_USERNAME_EMPTY, Toast.LENGTH_LONG).show()
             } else if (passwordText.toString().isEmpty()){
@@ -51,10 +51,10 @@ class LoginActivity : AppCompatActivity() {
             else logInUser(usernameText.toString(), passwordText.toString())
         })
 
-        mSignUpButton.setOnClickListener(View.OnClickListener {
+        etSignupButton.setOnClickListener(View.OnClickListener {
             val intent = Intent(this, SignUpActivity::class.java)
-            val usernameText = mEtUsername.text.toString();
-            val passwordText = mEtPassword.text.toString();
+            val usernameText = etUsername.text.toString();
+            val passwordText = etPassword.text.toString();
             intent.putExtra(Util.INTENT_KEY_USERNAME_TEXT, usernameText)
             intent.putExtra(Util.INTENT_KEY_PASSWORD_TEXT, passwordText)
             intent.putExtra(Util.INTENT_KEY_SPOTIFY_ACCESS_TOKEN, accessToken)
@@ -66,7 +66,6 @@ class LoginActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         if (ParseUser.getCurrentUser() != null){
-            // authorize
             SpotifyAuthController(this).authorizeUser()
         }
     }
@@ -88,8 +87,8 @@ class LoginActivity : AppCompatActivity() {
                 else -> { Log.d(TAG, response.type.toString()) }
             }
         } else if (requestCode == LOGGED_OUT_REQUEST_CODE) {
-            mEtUsername.setText(DEFAULT_USERNAME_TEXT)
-            mEtPassword.setText(DEFAULT_PASSWORD_TEXT)
+            etUsername.setText(DEFAULT_USERNAME_TEXT)
+            etPassword.setText(DEFAULT_PASSWORD_TEXT)
         }
     }
 

@@ -22,29 +22,29 @@ private const val ARTIST_STR_SEPARATOR = ", "
 class TrackAdapter(context : Context, tracks : ArrayList<Track>,
                    controller : MainActivity.MainActivitySongController)
     : RecyclerView.Adapter<TrackAdapter.ViewHolder>() {
-    var mContext : Context
-    var mTracks : ArrayList<Track> = ArrayList()
+    var context : Context
+    var tracks : ArrayList<Track> = ArrayList()
     val mainActivitySongController : MainActivity.MainActivitySongController = controller
     val adapter = this
 
     init {
-        this.mContext = context
-        this.mTracks = tracks
+        this.context = context
+        this.tracks = tracks
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TrackAdapter.ViewHolder {
-        val view = LayoutInflater.from(this.mContext)
+        val view = LayoutInflater.from(this.context)
             .inflate(R.layout.single_track_item, parent, false)
         return ViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: TrackAdapter.ViewHolder, position: Int) {
-        val track = this.mTracks.get(position)
+        val track = this.tracks.get(position)
         holder.bind(track, position)
     }
 
     override fun getItemCount(): Int {
-        return this.mTracks.size
+        return this.tracks.size
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

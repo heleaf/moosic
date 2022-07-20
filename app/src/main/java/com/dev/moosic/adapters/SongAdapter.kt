@@ -5,7 +5,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -35,30 +34,30 @@ class SongAdapter(
 )
     : RecyclerView.Adapter<SongAdapter.ViewHolder>(){
 
-    var mContext: Context
-    var mSongs: ArrayList<Song> = ArrayList()
+    var context: Context
+    var songs: ArrayList<Song> = ArrayList()
     val mainActivitySongController : MainActivity.MainActivitySongController = controller
-    var mShowAddButton = false
-    var mShowDeleteButton = false
-    var mShowHeartButton = false
-    var mSpotifyUserId : String? = null
+    var showAddButton = false
+    var showDeleteButton = false
+    var showHeartButton = false
+    var spotifyUserId : String? = null
     var emptyPlaylistText: TextView?
 
     init {
-        this.mContext = context
-        this.mSongs = songs
+        this.context = context
+        this.songs = songs
         for (str in buttonsToShow){
             when (str) {
-                Util.FLAG_ADD_BUTTON -> mShowAddButton = true
-                Util.FLAG_DELETE_BUTTON -> mShowDeleteButton = true
-                Util.FLAG_HEART_BUTTON -> mShowHeartButton = true
+                Util.FLAG_ADD_BUTTON -> showAddButton = true
+                Util.FLAG_DELETE_BUTTON -> showDeleteButton = true
+                Util.FLAG_HEART_BUTTON -> showHeartButton = true
                 else -> {}
             }
         }
         val currentParseUser = ParseUser.getCurrentUser()
-        this.mSpotifyUserId = currentParseUser.getString(Util.PARSEUSER_KEY_SPOTIFY_ACCOUNT_USERNAME)
+        this.spotifyUserId = currentParseUser.getString(Util.PARSEUSER_KEY_SPOTIFY_ACCOUNT_USERNAME)
         this.emptyPlaylistText = emptyPlaylistText
-        if (this.mSongs.isEmpty()) {
+        if (this.songs.isEmpty()) {
             showEmptyPlaylistText()
         }
     }
@@ -68,18 +67,18 @@ class SongAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(this.mContext).inflate(
+        val view = LayoutInflater.from(this.context).inflate(
             R.layout.single_track_item, parent, false)
         return ViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val song = this.mSongs.get(position)
+        val song = this.songs.get(position)
         holder.bind(song, position)
     }
 
     override fun getItemCount(): Int {
-        return this.mSongs.size
+        return this.songs.size
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -147,8 +146,8 @@ class SongAdapter(
                             heartButton.setImageResource(R.drawable.ufi_heart)
                             isInPlaylist = !isInPlaylist
                             this@SongAdapter.notifyItemRemoved(position)
-                            this@SongAdapter.notifyItemRangeChanged(position, mSongs.size)
-                            if (mSongs.isEmpty()) {
+                            this@SongAdapter.notifyItemRangeChanged(position, songs.size)
+                            if (songs.isEmpty()) {
                                 showEmptyPlaylistText()
                             }
                         }

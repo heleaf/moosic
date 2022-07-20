@@ -12,9 +12,7 @@ private val AUTH_SCOPE_ARRAY = arrayOf(AUTH_STREAMING, AUTH_USER_TOP_READ)
 
 class SpotifyAuthController(activity: Activity) : AuthorizationController {
     var currentActivity : Activity
-    init {
-        currentActivity = activity
-    }
+    init { currentActivity = activity }
     override fun authorizeUser() {
         val builder: AuthorizationRequest.Builder = AuthorizationRequest.Builder(
             CLIENT_ID,

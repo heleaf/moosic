@@ -28,7 +28,7 @@ class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>, contro
     val context: Context
     private val songs: ArrayList<Song>
     val controller: OldSongController
-    val testSongController: TestSongControllerInterface
+    private val testSongController: TestSongControllerInterface
 
     init {
         this.context = context
@@ -72,15 +72,15 @@ class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>, contro
             val track = gson.fromJson(song.getJsonDataString(), Track::class.java)
 
             itemView.setOnLongClickListener {
-                  testSongController.addToPlaylist(UserRepositorySong(song.getSpotifyId()!!,
-                    song.getJsonDataString()!!))
+//                  testSongController.addToPlaylist(UserRepositorySong(song.getSpotifyId()!!,
+//                    song.getJsonDataString()!!))
 
-//                controller.addToPlaylist(track, object: Callback<Unit> {
-//                    override fun success(t: Unit?, response: Response?) {
-//                    }
-//                    override fun failure(error: RetrofitError?) {
-//                    }
-//                })
+                controller.addToPlaylist(track, object: Callback<Unit> {
+                    override fun success(t: Unit?, response: Response?) {
+                    }
+                    override fun failure(error: RetrofitError?) {
+                    }
+                })
                 return@setOnLongClickListener true
             }
 
