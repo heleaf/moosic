@@ -168,6 +168,7 @@ class MainActivity : AppCompatActivity(){
                     displayingProfileFragment = false
                     displayingFriendsFragment = false
                     supportActionBar?.setDisplayShowTitleEnabled(false)
+                    searchMenuItem?.collapseActionView()
                     goToHomeFragment()
                 }
                 R.id.actionSearch -> {
@@ -182,12 +183,14 @@ class MainActivity : AppCompatActivity(){
                     displayingProfileFragment = true
                     displayingFriendsFragment = false
                     supportActionBar?.setDisplayShowTitleEnabled(false)
+                    searchMenuItem?.collapseActionView()
                     goToProfilePlaylistFragment()
                 }
                 R.id.actionFriends -> {
                     displayingProfileFragment = false
                     displayingFriendsFragment = true
                     supportActionBar?.setDisplayShowTitleEnabled(false)
+                    searchMenuItem?.collapseActionView()
                     goToFriendsFragment() }
                 else -> {}
             }
@@ -439,7 +442,12 @@ class MainActivity : AppCompatActivity(){
         searchView.onActionViewExpanded()
         searchView.requestFocus()
 
-        searchMenuItem?.expandActionView()
+        if (mostRecentSearchQuery == null){
+            searchMenuItem?.expandActionView()
+        } else {
+            searchView.setQuery(mostRecentSearchQuery, false)
+        }
+
         searchView.setOnQueryTextListener(object
             : androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
