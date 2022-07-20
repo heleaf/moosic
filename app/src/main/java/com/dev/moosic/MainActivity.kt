@@ -1391,7 +1391,12 @@ class MainActivity : AppCompatActivity(){
                         = MiniPlayerDetailFragment.newInstance(currentTrack!!,
                     this,
                     currentTrackIsPaused!!)
-                fragmentManager.beginTransaction().replace(R.id.miniPlayerDetailFlContainer,
+                fragmentManager.beginTransaction()
+                    .setCustomAnimations(
+                        androidx.appcompat.R.anim.abc_slide_in_bottom,
+                        androidx.appcompat.R.anim.abc_slide_out_top
+                    )
+                    .add(R.id.miniPlayerDetailFlContainer,
                     miniPlayerDetailFragment).commit()
                 bottomNavigationView.visibility = View.GONE
                 supportActionBar?.hide()
@@ -1403,7 +1408,10 @@ class MainActivity : AppCompatActivity(){
             val miniPlayerDetailFragment
             = fragmentManager.findFragmentById(R.id.miniPlayerDetailFlContainer)
             if (miniPlayerDetailFragment != null){
-                fragmentManager.beginTransaction().remove(miniPlayerDetailFragment).commit()
+                fragmentManager.beginTransaction()
+                    .setCustomAnimations(androidx.appcompat.R.anim.abc_slide_in_top,
+                    androidx.appcompat.R.anim.abc_slide_out_bottom)
+                    .remove(miniPlayerDetailFragment).commit()
                 bottomNavigationView.visibility = View.VISIBLE
                 supportActionBar?.show()
                 showMiniPlayerDetailFragment = false
@@ -1526,20 +1534,6 @@ class MainActivity : AppCompatActivity(){
         }
 
         override fun launchDetailView(contact: Contact, animate : Boolean) {
-
-            // make a fragment..
-//            val parseUsername = contact.parseUsername
-//            val parseUserId = contact.parseUserId
-//            val intent = Intent(this@MainActivity, UserDetailActivity::class.java)
-//            if (parseUsername != null) {
-//                intent.putExtra(Util.INTENT_KEY_DETAIL_VIEW_USERNAME, parseUsername)
-//                if (parseUserId != null) {
-//                    intent.putExtra(Util.INTENT_KEY_DETAIL_VIEW_PARSEUSERID, parseUserId)
-//                }
-//                startActivityForResult(intent, Util.RESULT_CODE_ADDED_SONGS_FROM_DETAIL_PLAYLIST)
-//                // animation
-//            }
-
             showProgressBar()
             if (currentContact == null) {
                 currentContact = contact
@@ -1592,7 +1586,6 @@ class MainActivity : AppCompatActivity(){
 
         override fun exitDetailView() {
             if (currentContact != null && displayingFriendsFragment) {
-                // trigger back button
                 val fragment = fragmentManager.findFragmentById(R.id.flContainer)
                 if (fragment != null) {
                     fragmentManager.beginTransaction()
@@ -1610,6 +1603,13 @@ class MainActivity : AppCompatActivity(){
             }
         }
 
+    }
+
+    override fun onBackPressed() {
+        if (currentContact != null && displayingFriendsFragment) {
+            mainActivityFriendsController.exitDetailView()
+        }
+        else { super.onBackPressed() }
     }
 
     inner class UserRepository(): UserRepositoryInterface {
