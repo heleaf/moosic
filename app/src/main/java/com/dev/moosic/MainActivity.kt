@@ -125,7 +125,7 @@ class MainActivity : AppCompatActivity(){
 
     var searchMenuItem : MenuItem? = null
     var settingsMenuItem : MenuItem? = null
-    var progressBar: ProgressBar? = null
+    lateinit var progressBar: ProgressBar
 
     val context = this
 
@@ -417,6 +417,8 @@ class MainActivity : AppCompatActivity(){
         val searchView = (searchMenuItem?.actionView) as androidx.appcompat.widget.SearchView
         searchView.onActionViewExpanded()
         searchView.requestFocus()
+
+        searchMenuItem?.expandActionView()
         searchView.setOnQueryTextListener(object
             : androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
@@ -442,12 +444,15 @@ class MainActivity : AppCompatActivity(){
                 mainActivitySongController)
             fragmentManager.beginTransaction().replace(R.id.flContainer, searchFragment)
                 .commit()
+
         } else {
             Toast.makeText(
                 this@MainActivity, TOAST_SETTING_UP_SEARCH_PAGE,
                 Toast.LENGTH_LONG
             ).show()
         }
+
+
     }
 
     private fun fetchQueryAndSendToFragment(query: String, itemOffset: Int, numberItems: Int) {
