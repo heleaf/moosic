@@ -10,7 +10,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.R
-import com.dev.moosic.controllers.SongController
+import com.dev.moosic.controllers.OldSongController
+import com.dev.moosic.controllers.TestSongControllerInterface
 import com.dev.moosic.models.Contact
 import com.dev.moosic.models.Song
 import com.facebook.drawee.view.SimpleDraweeView
@@ -23,7 +24,7 @@ import java.lang.Exception
 private const val TAG = "HomeFeedAdapter"
 
 class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String>>,
-    controller: SongController) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    controller: OldSongController, testSongController: TestSongControllerInterface) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     companion object {
         const val TAG_TRACK = "track"
         const val TAG_FRIEND_PLAYLIST = "friendPlaylist"
@@ -31,14 +32,16 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
         const val INT_CODE_FRIEND_PLAYLIST = 1
         const val INT_CODE_UNKNOWN = 2
     }
-    var itemList: ArrayList<Pair<Any, String>>
-    var context: Context
-    var controller: SongController
+    val itemList: ArrayList<Pair<Any, String>>
+    val context: Context
+    val controller: OldSongController
+    val testSongController: TestSongControllerInterface
 
     init {
         this.itemList = itemList
         this.context = context
         this.controller = controller
+        this.testSongController = testSongController
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -102,7 +105,7 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
             val songs = pair.second
             usernameField.visibility = View.GONE
 
-            val playlistSongAdapter = HorizontalPlaylistAdapter(context, songs, controller)
+            val playlistSongAdapter = HorizontalPlaylistAdapter(context, songs, controller, testSongController)
             playlistRv.adapter = playlistSongAdapter
             val linearLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL,
                 false)

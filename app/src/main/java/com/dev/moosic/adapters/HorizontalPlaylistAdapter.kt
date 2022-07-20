@@ -8,8 +8,10 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.R
-import com.dev.moosic.controllers.SongController
+import com.dev.moosic.controllers.OldSongController
+import com.dev.moosic.controllers.TestSongControllerInterface
 import com.dev.moosic.models.Song
+import com.dev.moosic.models.UserRepositorySong
 import com.facebook.drawee.view.SimpleDraweeView
 import com.google.gson.Gson
 import kaaes.spotify.webapi.android.models.Track
@@ -19,17 +21,20 @@ import retrofit.client.Response
 import java.lang.Exception
 
 private const val TAG = "HorizontalPlaylistAdapter"
-class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>, controller: SongController)
+class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>, controller: OldSongController,
+    testSongController: TestSongControllerInterface)
     : RecyclerView.Adapter<HorizontalPlaylistAdapter.ViewHolder>() {
 
     val context: Context
     private val songs: ArrayList<Song>
-    val controller: SongController
+    val controller: OldSongController
+    val testSongController: TestSongControllerInterface
 
     init {
         this.context = context
         this.songs = songs
         this.controller = controller
+        this.testSongController = testSongController
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -67,14 +72,15 @@ class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>, contro
             val track = gson.fromJson(song.getJsonDataString(), Track::class.java)
 
             itemView.setOnLongClickListener {
-                controller.addToPlaylist(track, object: Callback<Unit> {
-                    override fun success(t: Unit?, response: Response?) {
-                    }
+                  testSongController.addToPlaylist(UserRepositorySong(song.getSpotifyId()!!,
+                    song.getJsonDataString()!!))
 
-                    override fun failure(error: RetrofitError?) {
-                    }
-
-                })
+//                controller.addToPlaylist(track, object: Callback<Unit> {
+//                    override fun success(t: Unit?, response: Response?) {
+//                    }
+//                    override fun failure(error: RetrofitError?) {
+//                    }
+//                })
                 return@setOnLongClickListener true
             }
 

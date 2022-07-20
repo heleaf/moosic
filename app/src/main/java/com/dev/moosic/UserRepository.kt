@@ -1,19 +1,25 @@
 package com.dev.moosic
 
-import com.dev.moosic.controllers.SongController
-import com.dev.moosic.models.Song
-
-class UserRepository {
-    var userPlaylistSongs : ArrayList<Song> = ArrayList()
-
-
-    fun addSongToUserPlaylist(song: Song) {
-
-    }
-
-    fun removeSongFromUserPlaylist(song: Song) {
-
-    }
-
-
-}
+//
+//class UserRepository(): UserRepositoryInterface {
+//    private var userPlaylistSongs : ArrayList<UserRepositorySong> = ArrayList()
+//
+//    override fun getUserPlaylistSongs(): ArrayList<UserRepositorySong> {
+//        return userPlaylistSongs
+//    }
+//
+//    override fun addSongToUserPlaylist(song: UserRepositorySong) {
+//        val gson = Gson()
+//        val track = gson.fromJson(song.trackJsonData, Track::class.java)
+//        // add to parse
+//    }
+//
+//    override fun removeSongFromUserPlaylist(song: UserRepositorySong) {
+//
+//    }
+//
+//    override fun logSongInModel(song: UserRepositorySong, weight: Int) {
+//        val gson = Gson()
+//        val track = gson.fromJson(song.trackJsonData, Track::class.java)
+//    }
+//}
