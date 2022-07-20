@@ -33,7 +33,8 @@ class FriendsFragment(private var friendsController: FriendsController) : Fragme
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            taggedContactList = Parcels.unwrap(it.getParcelable(ARG_TAGGED_CONTACT_LIST))
+            taggedContactList = it.getSerializable(ARG_TAGGED_CONTACT_LIST) as ArrayList<Pair<Contact, String>>
+//            taggedContactList = Parcels.unwrap(it.getParcelable(ARG_TAGGED_CONTACT_LIST))
         }
     }
 
@@ -50,7 +51,8 @@ class FriendsFragment(private var friendsController: FriendsController) : Fragme
             controller: FriendsController) =
             FriendsFragment(controller).apply {
                 arguments = Bundle().apply {
-                    putParcelable(ARG_TAGGED_CONTACT_LIST, Parcels.wrap(taggedContactList))
+                    putSerializable(ARG_TAGGED_CONTACT_LIST, taggedContactList)
+//                    putParcelable(ARG_TAGGED_CONTACT_LIST, Parcels.wrap(taggedContactList))
                 }
             }
     }

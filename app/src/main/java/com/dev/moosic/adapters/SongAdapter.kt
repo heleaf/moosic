@@ -8,9 +8,9 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.dev.moosic.MainActivity
 import com.dev.moosic.R
 import com.dev.moosic.Util
+import com.dev.moosic.controllers.OldSongController
 import com.dev.moosic.models.Song
 import com.facebook.drawee.view.SimpleDraweeView
 import com.google.gson.Gson
@@ -28,7 +28,7 @@ private const val ARTIST_STR_SEPARATOR = ", "
 class SongAdapter(
     context: Context,
     songs: ArrayList<Song>,
-    controller: MainActivity.MainActivitySongController,
+    controller: OldSongController,
     buttonsToShow: List<String>,
     emptyPlaylistText: TextView?
 )
@@ -36,7 +36,7 @@ class SongAdapter(
 
     var context: Context
     var songs: ArrayList<Song> = ArrayList()
-    val mainActivitySongController : MainActivity.MainActivitySongController = controller
+    val songController : OldSongController = controller
     var showAddButton = false
     var showDeleteButton = false
     var showHeartButton = false
@@ -114,7 +114,7 @@ class SongAdapter(
                 val id = song.getSpotifyId()
                 if (id != null){
                     song.getSpotifyUri()
-                        ?.let { uri -> mainActivitySongController.playSongOnSpotify(uri, id) }
+                        ?.let { uri -> songController.playSongOnSpotify(uri, id) }
                 }
             }
 
@@ -127,7 +127,7 @@ class SongAdapter(
 
             heartButton.visibility = View.VISIBLE
             var isInPlaylist = false
-            mainActivitySongController.isInPlaylist(track, object: Callback<Boolean> {
+            songController.isInPlaylist(track, object: Callback<Boolean> {
                 override fun success(t: Boolean?, response: Response?) {
                     if (t==null) {heartButton.visibility = View.GONE; return }
                     val heartIcon = if (t == true) R.drawable.ufi_heart_active else R.drawable.ufi_heart
@@ -141,7 +141,7 @@ class SongAdapter(
 
             heartButton.setOnClickListener(View.OnClickListener {
                 if (isInPlaylist) {
-                    mainActivitySongController.removeFromPlaylist(track, object: Callback<Unit> {
+                    songController.removeFromPlaylist(track, object: Callback<Unit> {
                         override fun success(t: Unit?, response: Response?) {
                             heartButton.setImageResource(R.drawable.ufi_heart)
                             isInPlaylist = !isInPlaylist
@@ -154,7 +154,7 @@ class SongAdapter(
                         override fun failure(error: RetrofitError?) {}
                     })
                 } else {
-                    mainActivitySongController.addToPlaylist(track, object: Callback<Unit> {
+                    songController.addToPlaylist(track, object: Callback<Unit> {
                         override fun success(t: Unit?, response: Response?) {
                             isInPlaylist = !isInPlaylist
                             heartButton.setImageResource(R.drawable.ufi_heart_active)

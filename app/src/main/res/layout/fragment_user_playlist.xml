@@ -6,29 +6,30 @@
     android:layout_height="match_parent"
     android:background="#FFFFFF"
     android:padding="5dp"
-    tools:context=".fragments.FriendsFragment">
+    tools:context=".fragments.FriendPlaylistFragment">
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvContacts"
-        android:layout_width="0dp"
+        android:id="@+id/userDetailSongsRv"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/emptyFriendsDescription"
+        android:id="@+id/emptyUserPlaylistText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="100dp"
         android:layout_marginEnd="100dp"
         android:layout_marginBottom="100dp"
-        android:text="Friends you follow will show up here!"
+        android:text="This playlist is empty."
         android:textAlignment="center"
         android:textSize="20sp"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

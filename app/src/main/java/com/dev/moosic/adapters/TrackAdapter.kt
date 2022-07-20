@@ -6,8 +6,8 @@ import android.view.*
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.dev.moosic.MainActivity
 import com.dev.moosic.R
+import com.dev.moosic.controllers.OldSongController
 import com.facebook.drawee.view.SimpleDraweeView
 import kaaes.spotify.webapi.android.models.Track
 import retrofit.Callback
@@ -20,11 +20,11 @@ private const val EMPTY_STR = ""
 private const val ARTIST_STR_SEPARATOR = ", "
 
 class TrackAdapter(context : Context, tracks : ArrayList<Track>,
-                   controller : MainActivity.MainActivitySongController)
+                   controller : OldSongController)
     : RecyclerView.Adapter<TrackAdapter.ViewHolder>() {
     var context : Context
     var tracks : ArrayList<Track> = ArrayList()
-    val mainActivitySongController : MainActivity.MainActivitySongController = controller
+    val songController : OldSongController = controller
     val adapter = this
 
     init {
@@ -82,7 +82,7 @@ class TrackAdapter(context : Context, tracks : ArrayList<Track>,
             heartButton.visibility = View.VISIBLE
 
             var isInPlaylist = false
-            mainActivitySongController.isInPlaylist(track, object: Callback<Boolean> {
+            songController.isInPlaylist(track, object: Callback<Boolean> {
                 override fun success(t: Boolean?, response: Response?) {
                     if (t==null) {heartButton.visibility = View.GONE; return }
                     val heartIcon = if (t == true) R.drawable.ufi_heart_active else R.drawable.ufi_heart
@@ -106,14 +106,14 @@ class TrackAdapter(context : Context, tracks : ArrayList<Track>,
 
             heartButton.setOnClickListener(View.OnClickListener {
                 if (isInPlaylist) {
-                    mainActivitySongController.removeFromPlaylist(track, object: Callback<Unit> {
+                    songController.removeFromPlaylist(track, object: Callback<Unit> {
                         override fun success(t: Unit?, response: Response?) {
                             removeFromPlaylistSuccess()
                         }
                         override fun failure(error: RetrofitError?) {}
                     })
                 } else {
-                    mainActivitySongController.addToPlaylist(track, object: Callback<Unit> {
+                    songController.addToPlaylist(track, object: Callback<Unit> {
                         override fun success(t: Unit?, response: Response?) {
                             addToPlaylistSuccess()
                         }
@@ -125,7 +125,7 @@ class TrackAdapter(context : Context, tracks : ArrayList<Track>,
             })
 
             itemView.setOnLongClickListener {
-                mainActivitySongController.addToParsePlaylist(track, object: Callback<Unit> {
+                songController.addToPlaylist(track, object: Callback<Unit> {
                     override fun success(t: Unit?, response: Response?) {
                         addToPlaylistSuccess()
                     }
@@ -135,7 +135,7 @@ class TrackAdapter(context : Context, tracks : ArrayList<Track>,
             }
 
             itemView.setOnClickListener {
-                mainActivitySongController.playSongOnSpotify(track.uri, track.id)
+                songController.playSongOnSpotify(track.uri, track.id)
             }
 
         }

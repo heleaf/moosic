@@ -135,6 +135,9 @@ class MainActivity : AppCompatActivity(){
 
     var showMiniPlayerDetailFragment: Boolean = false
 
+    var currentContact: Contact? = null
+    var currentContactPlaylist: ArrayList<Track> = ArrayList()
+
     val testSongController: TestSongControllerInterface =
         TestSongControllerImpl(UserRepository())
     // TODO: update this so that the user repository's parse playlist
@@ -154,26 +157,37 @@ class MainActivity : AppCompatActivity(){
         supportActionBar?.setHomeAsUpIndicator(android.R.drawable.stat_sys_headset)
         supportActionBar?.setDisplayShowTitleEnabled(false)
 
+        toolbar.setNavigationOnClickListener {
+            mainActivityFriendsController.exitDetailView()
+        }
+
         bottomNavigationView.setOnItemSelectedListener { menuItem : MenuItem ->
             when (menuItem.itemId) {
                 R.id.actionHome -> {
+                    supportActionBar?.setHomeAsUpIndicator(android.R.drawable.stat_sys_headset)
                     displayingProfileFragment = false
                     displayingFriendsFragment = false
+                    supportActionBar?.setDisplayShowTitleEnabled(false)
                     goToHomeFragment()
                 }
                 R.id.actionSearch -> {
+                    supportActionBar?.setHomeAsUpIndicator(android.R.drawable.stat_sys_headset)
                     displayingProfileFragment = false
                     displayingFriendsFragment = false
+                    supportActionBar?.setDisplayShowTitleEnabled(false)
                     goToSearchFragment()
                 }
                 R.id.actionProfile -> {
+                    supportActionBar?.setHomeAsUpIndicator(android.R.drawable.stat_sys_headset)
                     displayingProfileFragment = true
                     displayingFriendsFragment = false
+                    supportActionBar?.setDisplayShowTitleEnabled(false)
                     goToProfilePlaylistFragment()
                 }
                 R.id.actionFriends -> {
                     displayingProfileFragment = false
                     displayingFriendsFragment = true
+                    supportActionBar?.setDisplayShowTitleEnabled(false)
                     goToFriendsFragment() }
                 else -> {}
             }
@@ -405,9 +419,16 @@ class MainActivity : AppCompatActivity(){
         }
         searchMenuItem?.isVisible = false
         settingsMenuItem?.isVisible = false
+
         val newFragment = FriendsFragment.newInstance(taggedContactList,
             mainActivityFriendsController)
         fragmentManager.beginTransaction().replace(R.id.flContainer, newFragment).commit()
+
+        if (currentContact != null) {
+            supportActionBar?.setDisplayShowTitleEnabled(true)
+            mainActivityFriendsController.launchDetailView(currentContact!!, false)
+        }
+
     }
 
     private fun goToSearchFragment() {
@@ -1129,6 +1150,7 @@ class MainActivity : AppCompatActivity(){
     }
 
     inner class MainActivitySongController() : OldSongController {
+
         override fun logTrackInModel(trackId: String, weight: Int) {
             spotifyApi.service.getTrackAudioFeatures(trackId, object: Callback<AudioFeaturesTrack> {
                 override fun success(t: AudioFeaturesTrack?, response: Response?) {
@@ -1501,11 +1523,85 @@ class MainActivity : AppCompatActivity(){
             }
         }
 
-        override fun launchDetailView(contact: Contact) {
+        override fun launchDetailView(contact: Contact, animate : Boolean) {
+
+            // make a fragment..
+//            val parseUsername = contact.parseUsername
+//            val parseUserId = contact.parseUserId
 //            val intent = Intent(this@MainActivity, UserDetailActivity::class.java)
-//            intent.putExtra(Util.INTENT_KEY_DETAIL_VIEW_USER, Parcels.wrap(contact))
-//            startActivity(intent)
+//            if (parseUsername != null) {
+//                intent.putExtra(Util.INTENT_KEY_DETAIL_VIEW_USERNAME, parseUsername)
+//                if (parseUserId != null) {
+//                    intent.putExtra(Util.INTENT_KEY_DETAIL_VIEW_PARSEUSERID, parseUserId)
+//                }
+//                startActivityForResult(intent, Util.RESULT_CODE_ADDED_SONGS_FROM_DETAIL_PLAYLIST)
+//                // animation
+//            }
+
+            showProgressBar()
+            if (currentContact == null) {
+                currentContact = contact
+                val user = ParseUser.getQuery().get(currentContact!!.parseUserId)
+                user.getParseObject(Util.PARSEUSER_KEY_PARSE_PLAYLIST)?.
+                getRelation<Song>(Util.PARSEPLAYLIST_KEY_SONGS)?.query?.
+                findInBackground { songs, parseException ->
+                    if (parseException != null) {
+                        Toast.makeText(this@MainActivity,
+                            "Error looking up ${user.username}'s songs: ${parseException.message}",
+                        Toast.LENGTH_SHORT).show()
+                    } else if (songs == null) {
+                        Toast.makeText(this@MainActivity,
+                            "Error looking up ${user.username}'s songs",
+                            Toast.LENGTH_SHORT).show()
+                    } else {
+                        val gson = Gson()
+                        currentContactPlaylist.clear()
+                        currentContactPlaylist.addAll(
+                            songs.map{song -> gson.fromJson(song.getJsonDataString(), Track::class.java)}
+                        )
+                        goToFriendsPlaylistFragment(contact, animate)
+                        hideProgressBar()
+                    }
+                }
+            } else {
+                goToFriendsPlaylistFragment(contact, animate)
+                hideProgressBar()
+            }
         }
+
+        private fun goToFriendsPlaylistFragment(contact: Contact, animate: Boolean) {
+            val newFragment = FriendPlaylistFragment.newInstance(currentContactPlaylist, mainActivitySongController)
+            if (animate) {
+                fragmentManager.beginTransaction()
+                    .setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left,
+                        R.anim.slide_in_right, R.anim.slide_out_left)
+                    .add(R.id.flContainer, newFragment).commit()
+            }
+            else {
+                fragmentManager.beginTransaction().add(R.id.flContainer, newFragment).commit()
+            }
+            supportActionBar?.setHomeAsUpIndicator(androidx.appcompat.R.drawable.abc_ic_ab_back_material)
+            supportActionBar?.setDisplayShowTitleEnabled(true)
+            supportActionBar?.title = "${contact.parseUsername}'s playlist"
+        }
+
+        override fun exitDetailView() {
+            if (currentContact != null && displayingFriendsFragment) {
+                // trigger back button
+                val fragment = fragmentManager.findFragmentById(R.id.flContainer)
+                if (fragment != null) {
+                    fragmentManager.beginTransaction()
+                        .setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_right,
+                            R.anim.slide_in_left, R.anim.slide_out_right)
+                        .remove(fragment).commit()
+                }
+                currentContact = null
+                supportActionBar?.setHomeAsUpIndicator(android.R.drawable.stat_sys_headset)
+                supportActionBar?.setDisplayShowTitleEnabled(false)
+                supportActionBar?.title = ""
+            }
+        }
+
     }
 
     inner class UserRepository(): UserRepositoryInterface {
