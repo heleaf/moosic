@@ -1411,19 +1411,21 @@ class MainActivity : AppCompatActivity(){
         }
 
         fun showMiniPlayerPreview(){
-            val fragmentToShow = fragmentManager.findFragmentById(R.id.miniPlayerFlContainer)
-            if (fragmentToShow != null) {
-                fragmentManager.beginTransaction().show(fragmentToShow).commit()
-                miniPlayerFragmentContainer?.visibility = View.VISIBLE
-                showMiniPlayerFragment = true
+            if (! (currentContact != null && displayingFriendsFragment)){
+                val fragmentToShow = fragmentManager.findFragmentById(R.id.miniPlayerFlContainer)
+                if (fragmentToShow != null) {
+                    fragmentManager.beginTransaction().show(fragmentToShow).commit()
+                    miniPlayerFragmentContainer?.visibility = View.VISIBLE
+                    showMiniPlayerFragment = true
+                }
             }
         }
 
-        fun hideMiniPlayerPreview(){
+        fun hideMiniPlayerPreview(pauseSong: Boolean = true){
             val fragmentToHide = fragmentManager.findFragmentById(R.id.miniPlayerFlContainer)
             if (fragmentToHide != null) {
                 fragmentManager.beginTransaction().hide(fragmentToHide).commit()
-                pauseSongOnSpotify()
+                if (pauseSong) { pauseSongOnSpotify() }
                 showMiniPlayerFragment = false
             }
             miniPlayerFragmentContainer?.visibility = View.GONE
@@ -1567,6 +1569,9 @@ class MainActivity : AppCompatActivity(){
                 goToFriendsPlaylistFragment(contact, animate)
                 hideProgressBar()
             }
+
+            bottomNavigationView.visibility = View.GONE
+            mainActivitySongController.hideMiniPlayerPreview(false)
         }
 
         private fun goToFriendsPlaylistFragment(contact: Contact, animate: Boolean) {
@@ -1599,6 +1604,9 @@ class MainActivity : AppCompatActivity(){
                 supportActionBar?.setHomeAsUpIndicator(android.R.drawable.stat_sys_headset)
                 supportActionBar?.setDisplayShowTitleEnabled(false)
                 supportActionBar?.title = ""
+
+                bottomNavigationView.visibility = View.VISIBLE
+                mainActivitySongController.showMiniPlayerPreview()
             }
         }
 
