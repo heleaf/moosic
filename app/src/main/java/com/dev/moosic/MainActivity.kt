@@ -16,6 +16,7 @@ import android.widget.Toast
 
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.room.Room
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.adapters.HomeFeedItemAdapter
 import com.dev.moosic.adapters.TaggedContactAdapter
@@ -25,6 +26,8 @@ import com.dev.moosic.controllers.OldSongController
 import com.dev.moosic.controllers.TestSongControllerImpl
 import com.dev.moosic.controllers.TestSongControllerInterface
 import com.dev.moosic.fragments.*
+import com.dev.moosic.localdb.LocalDatabase
+import com.dev.moosic.localdb.LocalDbUtil
 import com.dev.moosic.models.Contact
 import com.dev.moosic.models.Song
 import com.dev.moosic.models.SongFeatures
@@ -143,9 +146,17 @@ class MainActivity : AppCompatActivity(){
     // TODO: update this so that the user repository's parse playlist
     // is synced with the global one i'm currently using
 
+    lateinit var db : LocalDatabase
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        db = Room.databaseBuilder(
+            applicationContext,
+            LocalDatabase::class.java, LocalDbUtil.DATABASE_NAME
+        ).build()
+
         spotifyApiAuthToken = getIntent().getExtras()?.
             getString(Util.INTENT_KEY_SPOTIFY_ACCESS_TOKEN).toString()
         spotifyApi.setAccessToken(spotifyApiAuthToken)
