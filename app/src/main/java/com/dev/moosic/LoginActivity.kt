@@ -17,9 +17,9 @@ import com.spotify.sdk.android.auth.AuthorizationResponse
 private const val TAG = "LoginActivity"
 private const val LOGGED_OUT_REQUEST_CODE = 1338
 
-private const val TOAST_USERNAME_EMPTY = "username cannot be empty"
-private const val TOAST_PASSWORD_EMPTY = "password cannot be empty"
-private const val TOAST_LOGIN_ISSUE = "issue with login: "
+private const val TOAST_USERNAME_EMPTY = "Username cannot be empty"
+private const val TOAST_PASSWORD_EMPTY = "Password cannot be empty"
+private const val TOAST_LOGIN_ISSUE = "Issue with login: "
 
 private const val DEFAULT_USERNAME_TEXT = ""
 private const val DEFAULT_PASSWORD_TEXT = ""
@@ -83,6 +83,10 @@ class LoginActivity : AppCompatActivity() {
                 }
                 AuthorizationResponse.Type.ERROR -> {
                     Log.e(TAG, response.error)
+                    Toast.makeText(this, response.error, Toast.LENGTH_LONG).show()
+                    if (ParseUser.getCurrentUser() != null) {
+                        goMainActivity();
+                    }
                 }
                 else -> { Log.d(TAG, response.type.toString()) }
             }

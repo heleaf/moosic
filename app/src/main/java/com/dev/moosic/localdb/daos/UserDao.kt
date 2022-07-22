@@ -11,18 +11,18 @@ interface UserDao {
             LocalDbUtil.SAVEDUSER_TABLE_NAME + " WHERE " +
             "parseUsername" + " = :username"
     )
-    fun getUserSavedSongs(username: String): List<String>
+    suspend fun getUserSavedSongs(username: String): List<String>
 
     @Query("SELECT * FROM " + LocalDbUtil.SAVEDUSER_TABLE_NAME + " WHERE "  +
             "parseUsername" + " = :username")
-    fun getUser(username: String) : SavedUser
+    suspend fun getUser(username: String) : SavedUser
 
     @Insert
-    fun insertUserInfo(vararg user: SavedUser)
+    suspend fun insertUserInfo(vararg user: SavedUser)
 
     @Update
-    fun updateUserInfo(vararg user: SavedUser)
+    suspend fun updateUserInfo(vararg user: SavedUser)
 
     @Delete
-    fun deleteUserInfo(vararg user: SavedUser)
+    suspend fun deleteUserInfo(vararg user: SavedUser)
 }

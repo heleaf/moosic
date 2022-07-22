@@ -15,8 +15,7 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.get
+import androidx.lifecycle.viewModelScope
 import androidx.room.Room
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.adapters.HomeFeedItemAdapter
@@ -29,11 +28,13 @@ import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import com.dev.moosic.fragments.*
 import com.dev.moosic.localdb.LocalDatabase
 import com.dev.moosic.localdb.LocalDbUtil
+import com.dev.moosic.localdb.daos.UserDao
+import com.dev.moosic.localdb.entities.SavedUser
 import com.dev.moosic.models.Contact
 import com.dev.moosic.models.Song
 import com.dev.moosic.models.SongFeatures
 import com.dev.moosic.models.UserRepositorySong
-import com.dev.moosic.viewmodels.SongViewModel
+import com.dev.moosic.viewmodels.TestViewModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.gson.Gson
 import com.parse.ParseQuery
@@ -46,6 +47,7 @@ import com.spotify.protocol.client.Subscription
 import com.spotify.protocol.types.PlayerState
 import kaaes.spotify.webapi.android.SpotifyApi
 import kaaes.spotify.webapi.android.models.*
+import kotlinx.coroutines.launch
 import retrofit.Callback
 import retrofit.RetrofitError
 import retrofit.client.Response
@@ -145,20 +147,50 @@ class MainActivity : AppCompatActivity(){
         TestSongControllerImpl(UserRepository())
 
     private lateinit var db : LocalDatabase
+    private lateinit var userDao: UserDao
 
-    private lateinit var savedSongModel : SongViewModel
+    private val savedSongModel = TestViewModel()
+    private var displayingCachedSongs = true
+
+    private fun saveTopTenSongs() {
+        savedSongModel.viewModelScope.launch {
+            val gson = Gson()
+            val savedSongsObject = gson.toJson(savedSongModel.songs)
+            val currentUsername = ParseUser.getCurrentUser().username
+            val currentUserId = ParseUser.getCurrentUser().objectId
+            val user = userDao.getUser(currentUsername)
+            if (user == null) {
+                userDao.insertUserInfo(SavedUser(currentUsername, currentUserId, savedSongsObject))
+            } else {
+                userDao.updateUserInfo(SavedUser(currentUsername, currentUserId, savedSongsObject))
+            }
+        }
+    }
+
+    private fun extractTopTenSongs() {
+        savedSongModel.viewModelScope.launch {
+            val user = db.userDao().getUser(ParseUser.getCurrentUser().username)
+            if (user != null) {
+                val gson = Gson()
+                val songStr = user.savedSongs
+                val songList : Array<UserRepositorySong> = gson.fromJson(songStr,
+                    Array<UserRepositorySong>::class.java)
+                savedSongModel.songs.addAll(songList)
+                goToHomeFragment()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        savedSongModel = ViewModelProvider(this) [SongViewModel::class.java]
-//        savedSongModel.songs = playlistController.getUserPlaylist()
-
         db = Room.databaseBuilder(
             applicationContext,
             LocalDatabase::class.java, LocalDbUtil.DATABASE_NAME
         ).build()
+
+        userDao = db.userDao()
 
         spotifyApiAuthToken = getIntent().getExtras()?.
             getString(Util.INTENT_KEY_SPOTIFY_ACCESS_TOKEN).toString()
@@ -213,6 +245,10 @@ class MainActivity : AppCompatActivity(){
 
         progressBar = findViewById(R.id.pbLoadingSearch)
         miniPlayerFragmentContainer = findViewById(R.id.miniPlayerFlContainer)
+
+        extractTopTenSongs()
+        mainActivitySongController.hideMiniPlayerPreview()
+
         setUpCurrentUser()
         fetchTaggedContacts()
         setUpUserRecommendedTracks()
@@ -251,14 +287,13 @@ class MainActivity : AppCompatActivity(){
                     connectToPlayerState()
                 }
                 override fun onFailure(throwable: Throwable) {
-                    Log.e(TAG, throwable.message, throwable)
+                    Log.e(TAG, "error connecting to spotify app remote " + throwable.message, throwable)
                     mainActivitySongController.hideMiniPlayerPreview()
                 }
             })
 
     }
 
-    // add this to userRepository / controller ?
     fun connectToPlayerState() {
         playerStateSubscription = spotifyAppRemote!!.playerApi.subscribeToPlayerState()
         playerStateSubscription?.setEventCallback { playerState: PlayerState ->
@@ -284,7 +319,7 @@ class MainActivity : AppCompatActivity(){
                             }
                         }
                         override fun failure(error: RetrofitError?) {
-                            error?.message?.let { Log.e(TAG, it) }
+                            error?.message?.let { Log.e(TAG, "error getting track: " + it) }
                         }
                     })
                 }
@@ -308,8 +343,6 @@ class MainActivity : AppCompatActivity(){
     override fun onStop() {
         super.onStop()
         SpotifyAppRemote.disconnect(spotifyAppRemote);
-
-        // log to local db?
     }
 
     private fun setUpCurrentUser() {
@@ -326,7 +359,7 @@ class MainActivity : AppCompatActivity(){
                     }
                 }
                 override fun failure(error: RetrofitError?) {
-                    error?.message?.let { Log.e(TAG, it) }
+                    error?.message?.let { Log.e(TAG, "error getting me: " + it) }
                     Toast.makeText(this@MainActivity,
                         TOAST_FAILED_TO_LINK_SPOTIFY_ACCOUNT, Toast.LENGTH_LONG).show()
                 }
@@ -421,19 +454,20 @@ class MainActivity : AppCompatActivity(){
                                     recommendedTracks.addAll(t.tracks)
                                     filledRecommendedSongs = true
                                     if (filledFollowedFriends && displayingHomeFragment) {
+                                        displayingCachedSongs = false
                                         goToHomeFragment()
                                     }
                                 }
                             }
                             override fun failure(error: RetrofitError?) {
-                                error?.message?.let { Log.e(TAG, it) }
+                                error?.message?.let { Log.e(TAG, "error getting recs: " + it) }
                             }
                         }
                     )
                 }
             }
             override fun failure(error: RetrofitError?) {
-                error?.message?.let { Log.e(TAG, it) }
+                error?.message?.let { Log.e(TAG, "error getting top tracks: " + it) }
             }
         })
     }
@@ -586,12 +620,27 @@ class MainActivity : AppCompatActivity(){
         searchMenuItem?.isVisible = false
         settingsMenuItem?.isVisible = false
 
+        if (displayingCachedSongs) {
+            if (homeFeedItems.size == 0) {
+                val gson = Gson()
+                for (song in savedSongModel.songs){
+                    val track = gson.fromJson(song.trackJsonData, Track::class.java)
+                    homeFeedItems.add(Pair(track, HomeFeedItemAdapter.TAG_TRACK))
+                }
+            }
+            val newFragment = MixedHomeFeedFragment.newInstance(homeFeedItems, topTracksDisplayed, mainActivitySongController,
+                playlistController)
+            fragmentManager.beginTransaction()
+                .replace(R.id.flContainer, newFragment).commit()
+            return
+        }
+
         if (!filledFollowedFriends || !filledRecommendedSongs) {
             showProgressBar()
             return
         }
 
-        if (homeFeedItems.size > 0) {
+        if (homeFeedItems.size > savedSongModel.songs.size) {
             hideProgressBar()
             val newFragment = MixedHomeFeedFragment.newInstance(homeFeedItems, topTracksDisplayed, mainActivitySongController,
                 playlistController)
@@ -600,7 +649,6 @@ class MainActivity : AppCompatActivity(){
             return
         }
 
-        homeFeedItems.clear()
         friendPlaylists.clear()
         showProgressBar()
 
@@ -621,9 +669,19 @@ class MainActivity : AppCompatActivity(){
                         }
 
                         topTracksDisplayed.clear()
+
+                        val gson = Gson()
+                        savedSongModel.songs.clear()
+                        var count = 0
                         for (track in recommendedTracks){
                             homeFeedItems.add(Pair(track, HomeFeedItemAdapter.TAG_TRACK))
+                            if (count < 10) {
+                                val userRepoSong = UserRepositorySong(track.id, gson.toJson(track))
+                                savedSongModel.songs.add(userRepoSong)
+                                count += 1
+                            }
                         }
+                        saveTopTenSongs()
 
                         hideProgressBar()
                         val newFragment = MixedHomeFeedFragment.newInstance(homeFeedItems, topTracksDisplayed, mainActivitySongController,
@@ -634,7 +692,7 @@ class MainActivity : AppCompatActivity(){
 
                 }
                 override fun failure(error: RetrofitError?) {
-                    Log.e(TAG, error?.message.toString())
+                    Log.e(TAG, "error getting friend playlists: " + error?.message.toString())
                 }
             })
     }
@@ -705,7 +763,7 @@ class MainActivity : AppCompatActivity(){
                 return Triple(trackSeed, artistSeed, genreSeed)
             }
         } catch (e: Exception) {
-            e.message?.let { Log.e(TAG, it) }
+            e.message?.let { Log.e(TAG, "error preparing recs: " + it) }
             return Triple(DUMMY_SEED, DUMMY_SEED, DUMMY_SEED)
         }
     }
@@ -786,7 +844,7 @@ class MainActivity : AppCompatActivity(){
                         hideProgressBar()
                     }
                     override fun failure(error: RetrofitError?) {
-                        error?.message?.let { Log.e(TAG, it) }
+                        error?.message?.let { Log.e(TAG, "error filling contacts list: " + it) }
                     }
                 })
             } else {
@@ -812,7 +870,7 @@ class MainActivity : AppCompatActivity(){
                     hideProgressBar()
                 }
                 override fun failure(error: RetrofitError?) {
-                    error?.message?.let { Log.e(TAG, it) }
+                    error?.message?.let { Log.e(TAG, "error fetching all contacts: " + it) }
                 }
             })
         }
@@ -1080,6 +1138,7 @@ class MainActivity : AppCompatActivity(){
                         filledFollowedFriends = true
 
                         if (filledRecommendedSongs && displayingHomeFragment) {
+                            displayingCachedSongs = false
                             goToHomeFragment()
                         }
 
@@ -1209,7 +1268,7 @@ class MainActivity : AppCompatActivity(){
                     }
                 }
                 override fun failure(error: RetrofitError?) {
-                    error?.message?.let { Log.e(TAG, it) }
+                    error?.message?.let { Log.e(TAG, "error logging track in model: " + it) }
                 }
             })
         }
@@ -1325,7 +1384,7 @@ class MainActivity : AppCompatActivity(){
             removeFromParsePlaylist(track, position, object: Callback<Unit> {
                 override fun success(t: Unit?, response: Response?) { }
                 override fun failure(error: RetrofitError?) {
-                    error?.message?.let { Log.e(TAG, it) }
+                    error?.message?.let { Log.e(TAG, "error removing at index: " + it) }
                 }
             })
         }
@@ -1384,7 +1443,7 @@ class MainActivity : AppCompatActivity(){
                     }
 
                     override fun failure(error: RetrofitError?) {
-                        Log.e(TAG, error?.message.toString())
+                        Log.e(TAG, "error getting top trackz: " + error?.message.toString())
                         swipeContainer?.isRefreshing = false
                     }
                 })
@@ -1406,7 +1465,7 @@ class MainActivity : AppCompatActivity(){
                     }
                 }
                 override fun failure(error: RetrofitError?) {
-                    error?.message?.let { Log.e(TAG, it) }
+                    error?.message?.let { Log.e(TAG, "error fetching track to play: " + it) }
                 }
             })
         }
@@ -1497,7 +1556,7 @@ class MainActivity : AppCompatActivity(){
             contactQuery.whereEqualTo(Contact.KEY_PHONE_NUMBER, contact.phoneNumber)
             contactQuery.findInBackground { objects, e ->
                 if (e != null) {
-                    e.message?.let { Log.e(TAG, it) }
+                    e.message?.let { Log.e(TAG, "error folllowing contact: " +  it) }
                     return@findInBackground
                 }
                 if (objects != null) {
@@ -1506,7 +1565,7 @@ class MainActivity : AppCompatActivity(){
                         currentUserFollowedRelation.add(userToFollow)
                         currentUser.saveInBackground{
                             if (it != null) {
-                                it.message?.let { it1 -> Log.e(TAG, it1) }
+                                it.message?.let { it1 -> Log.e(TAG, "error saving curr user" + it1) }
                             }
                             else {
                                 taggedContactList.removeAt(position)
@@ -1543,7 +1602,7 @@ class MainActivity : AppCompatActivity(){
             contactQuery.whereEqualTo(Contact.KEY_PHONE_NUMBER, contact.phoneNumber)
             contactQuery.findInBackground { objects, e ->
                 if (e != null) {
-                    e.message?.let { Log.e(TAG, it) }
+                    e.message?.let { Log.e(TAG, "error unfollowing: " + it) }
                     return@findInBackground
                 }
                 if (objects != null) {
