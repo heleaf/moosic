@@ -9,17 +9,22 @@
         <entry key="app/src/main/res/layout/activity_login.xml" value="0.3177257525083612" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.21321258544921878" />
         <entry key="app/src/main/res/layout/activity_mini_player_detail.xml" value="0.49391727493917276" />
-        <entry key="app/src/main/res/layout/activity_sign_up.xml" value="0.18586606351317125" />
+        <entry key="app/src/main/res/layout/activity_sign_up.xml" value="0.3173990293990734" />
+        <entry key="app/src/main/res/layout/fragment_friends.xml" value="0.19832402234636873" />
         <entry key="app/src/main/res/layout/fragment_home_feed.xml" value="0.26769561767578126" />
         <entry key="app/src/main/res/layout/fragment_liked_song.xml" value="0.1" />
         <entry key="app/src/main/res/layout/fragment_liked_songs.xml" value="0.1" />
-        <entry key="app/src/main/res/layout/fragment_mini_player.xml" value="0.36905822753906253" />
+        <entry key="app/src/main/res/layout/fragment_mini_player.xml" value="0.4547775268554688" />
         <entry key="app/src/main/res/layout/fragment_mini_player_detail.xml" value="0.2698272705078125" />
+        <entry key="app/src/main/res/layout/fragment_mixed_home_feed.xml" value="0.15416666666666667" />
         <entry key="app/src/main/res/layout/fragment_parse_playlist.xml" value="0.19927536231884058" />
         <entry key="app/src/main/res/layout/fragment_profile_library.xml" value="0.31009368896484374" />
         <entry key="app/src/main/res/layout/fragment_search.xml" value="0.1" />
         <entry key="app/src/main/res/layout/fragment_settings.xml" value="0.20652173913043478" />
         <entry key="app/src/main/res/layout/fragment_test.xml" value="0.10733695652173914" />
+        <entry key="app/src/main/res/layout/friend_playlist_display_item.xml" value="0.3283050537109375" />
+        <entry key="app/src/main/res/layout/single_contact_item.xml" value="0.38812103271484377" />
+        <entry key="app/src/main/res/layout/single_friend_playlist_song_item.xml" value="0.15305633544921876" />
         <entry key="app/src/main/res/layout/single_interest_item.xml" value="0.30415191650390627" />
         <entry key="app/src/main/res/layout/single_track_item.xml" value="0.37704772949218757" />
         <entry key="app/src/main/res/layout/test_header.xml" value="0.46667785644531257" />
@@ -28,6 +33,7 @@
         <entry key="app/src/main/res/menu/menu_bottom_navigation.xml" value="0.3075927734375" />
         <entry key="app/src/main/res/menu/menu_get_interests.xml" value="0.45900726318359375" />
         <entry key="app/src/main/res/menu/search_menu.xml" value="0.1" />
+        <entry key="app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.1" />
       </map>
     </option>
   </component>

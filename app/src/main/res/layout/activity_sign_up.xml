@@ -52,14 +52,27 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/etSignUpPhone" />
 
-    <EditText
+    <com.google.android.material.textfield.TextInputEditText
         android:id="@+id/etSignUpPassword"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:ems="10"
         android:hint="Password"
         android:inputType="textPassword"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/showHidePasswordButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/etSignUpUsername" />
+
+    <ImageButton
+        android:id="@+id/showHidePasswordButton"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:backgroundTint="#00FFFFFF"
+        android:tint="#673AB7"
+        app:layout_constraintBottom_toBottomOf="@+id/etSignUpPassword"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/etSignUpPassword"
+        app:srcCompat="@android:drawable/ic_menu_view" />
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

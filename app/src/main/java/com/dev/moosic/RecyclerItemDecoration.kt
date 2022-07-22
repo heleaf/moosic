@@ -50,6 +50,7 @@ isSticky: Boolean, callback: SectionCallback) : RecyclerView.ItemDecoration() {
         if (headerView == null){
             headerView = inflateHeader(parent)
             title = headerView?.findViewById(R.id.testHeaderTitle)
+
             fixLayoutSize(headerView!!, parent)
         }
         var prevTitle = ""
@@ -57,6 +58,7 @@ isSticky: Boolean, callback: SectionCallback) : RecyclerView.ItemDecoration() {
             val child = parent.getChildAt(i)
             val childPos = parent.getChildAdapterPosition(child)
             val titleText = sectionCallback.getSectionHeaderName(childPos)
+            title?.setText(titleText)
             if (!prevTitle.equals(titleText, ignoreCase = true) || sectionCallback.isHeader(childPos)){
                 drawHeader(c, child, headerView!!)
                 prevTitle = titleText

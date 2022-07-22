@@ -9,7 +9,7 @@
     android:layout_marginTop = "100dp">
 
     <com.facebook.drawee.view.SimpleDraweeView
-        android:id="@+id/topTrackImg"
+        android:id="@+id/singleFriendPlaylistSongImage"
         android:layout_width="120dp"
         android:layout_height="120dp"
         app:layout_constraintStart_toStartOf="parent"
@@ -24,8 +24,8 @@
         android:layout_marginEnd="10dp"
         android:textSize="18sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toStartOf="@+id/addToPlaylistButton"
-        app:layout_constraintStart_toEndOf="@+id/topTrackImg"
+        app:layout_constraintEnd_toStartOf="@+id/dummyButtonView"
+        app:layout_constraintStart_toEndOf="@+id/singleFriendPlaylistSongImage"
         app:layout_constraintTop_toTopOf="parent"
         tools:text="Title" />
 
@@ -84,8 +84,15 @@
         android:text="Log Out"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@+id/addToPlaylistButton"
-        app:layout_constraintStart_toStartOf="@+id/topTrackImg"
+        app:layout_constraintEnd_toEndOf="@+id/dummyButtonView"
+        app:layout_constraintStart_toStartOf="@+id/singleFriendPlaylistSongImage"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:id="@+id/dummyButtonView"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/heartButton" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

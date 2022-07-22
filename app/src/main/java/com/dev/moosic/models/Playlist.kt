@@ -4,16 +4,16 @@ import android.util.Log
 import com.parse.*
 import org.parceler.Parcel
 
+private const val KEY_NAME = "name"
+private const val KEY_DESCRIPTION = "description"
+private const val KEY_AUTHOR = "author"
+private const val KEY_PLAYLIST_SONGS = "playlistSongs"
+private const val KEY_SPOTIFYURI = "spotifyUri"
+private const val KEY_IMAGEURI = "coverImageUri"
+
 @Parcel
 @ParseClassName("Playlist")
 class Playlist() : ParseObject() {
-    final val KEY_NAME = "name"
-    final val KEY_DESCRIPTION = "description"
-    final val KEY_AUTHOR = "author"
-    final val KEY_PLAYLIST_SONGS = "playlistSongs"
-    final val KEY_SPOTIFYURI = "spotifyUri"
-    final val KEY_IMAGEURI = "coverImageUri"
-
     fun getName(): String? {
         return getString(KEY_NAME)
     }
@@ -58,37 +58,4 @@ class Playlist() : ParseObject() {
         return getRelation(KEY_PLAYLIST_SONGS)
     }
 
-    companion object {
-        val TAG = "Playlist"
-        fun fromKaaesPlaylist(name: String, playlist: kaaes.spotify.webapi.android.models.Playlist) {
-            var newPlaylist = Playlist()
-            newPlaylist.setName(name)
-            newPlaylist.setDescription(playlist.description)
-            newPlaylist.setAuthor(ParseUser.getCurrentUser())
-            newPlaylist.setSpotifyUri(playlist.uri)
-
-            val playlistSongsRelation = newPlaylist.getPlaylistSongs()
-
-            for (playlistTrack in playlist.tracks.items){
-                val queryTracks : ParseQuery<Song> = ParseQuery.getQuery("Song")
-                queryTracks.whereEqualTo("spotifyUri", playlistTrack.track.uri)
-                val matchedSongs : List<Song>  = queryTracks.find() // already synchronous
-                if (matchedSongs.size > 0) {
-                    // already exists in database
-                    playlistSongsRelation.add(matchedSongs[0])
-                } else {
-                    // add it to the database
-                    val newSong = Song.fromTrack(playlistTrack.track)
-                    // might need to make this asynchronous
-                    newSong.saveInBackground { e ->
-                        if (e != null) {
-                            Log.d(TAG, "failed to save " + playlistTrack.track.name + " : " +
-                                    e.message)
-                        }
-                    }
-                    playlistSongsRelation.add(newSong)
-                }
-            }
-        }
-    }
 }

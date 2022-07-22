@@ -3,12 +3,10 @@ package com.dev.moosic
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.adapters.InterestItemAdapter
 import kaaes.spotify.webapi.android.SpotifyApi
@@ -18,48 +16,51 @@ import retrofit.Callback
 import retrofit.RetrofitError
 import retrofit.client.Response
 
-class GetInterestsActivity : AppCompatActivity() {
-    val TAG = "GetInterestActivity"
+private const val TAG = "GetInterestActivity"
+private const val ACTION_BAR_TITLE = "Favorite Genres"
 
-    var rvGenres : RecyclerView? = null
+private const val GRID_ADAPTER_SPAN_COUNT = 2
+
+private const val TOAST_FAILED_TO_GET_GENRES = "Failed to pull genres from Spotify api, " +
+        "please restart the app and authorize your Spotify account."
+private const val TOAST_PICK_AT_LEAST_ONE_GENRE = "Please pick at least one genre to continue"
+
+class GetInterestsActivity : AppCompatActivity() {
+    lateinit var rvGenres : RecyclerView
     var genreList : ArrayList<String> = ArrayList()
-    var adapter: InterestItemAdapter? = null
+    lateinit var adapter: InterestItemAdapter
     val context = this
-    var accessToken: String? = null
+    lateinit var accessToken: String
     var userPickedGenres : ArrayList<String> = ArrayList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_get_interests)
 
-        setTitle("Favorite Genres")
+        title = ACTION_BAR_TITLE
         rvGenres = findViewById(R.id.rvGenres)
 
         adapter = InterestItemAdapter(context, genreList, userPickedGenres)
-        rvGenres?.adapter = adapter
-        val gridLayoutManager = GridLayoutManager(context, 2)
-        rvGenres?.layoutManager = gridLayoutManager
+        rvGenres.adapter = adapter
+        val gridLayoutManager = GridLayoutManager(context, GRID_ADAPTER_SPAN_COUNT)
+        rvGenres.layoutManager = gridLayoutManager
 
-        accessToken = intent.getStringExtra("accessToken")
+        accessToken = intent.getStringExtra(Util.INTENT_KEY_SPOTIFY_ACCESS_TOKEN).toString()
 
         val api = SpotifyApi()
         api.setAccessToken(accessToken)
         api.service.getSeedsGenres(object: Callback<SeedsGenres> {
-            override fun success(t: SeedsGenres?, response: Response?) {
-                Log.d(TAG, "got seed genres successfully")
-                if (t != null){
-                    genreList.addAll(t.genres)
-                    adapter?.notifyDataSetChanged()
+            override fun success(seedGenreObject: SeedsGenres?, response: Response?) {
+                if (seedGenreObject != null){
+                    genreList.addAll(seedGenreObject.genres)
+                    adapter.notifyDataSetChanged()
                 }
             }
+
             override fun failure(error: RetrofitError?) {
-                Log.d(TAG, "failed to get seed genres: " + error?.message)
                 Toast.makeText(this@GetInterestsActivity,
-                    "Failed to pull genres from Spotify api, " +
-                            "please restart the app and authorize your Spotify account.",
+                    TOAST_FAILED_TO_GET_GENRES,
                 Toast.LENGTH_LONG).show()
-//                TODO: authorize here?
-            //    SpotifyAuthController(this@GetInterestsActivity).authorizeUser()
             }
         })
     }
@@ -75,20 +76,18 @@ class GetInterestsActivity : AppCompatActivity() {
         when (item.itemId) {
             R.id.finishPickingGenres -> {
                 if (userPickedGenres.size == 0){
-                    Toast.makeText(context, "Please pick at least one genre to continue",
+                    Toast.makeText(context, TOAST_PICK_AT_LEAST_ONE_GENRE,
                     Toast.LENGTH_LONG).show()
                     return true
                 }
                 val data = Intent()
-                data.putExtra("userPickedGenres", Parcels.wrap(userPickedGenres))
+                data.putExtra(Util.INTENT_KEY_USER_PICKED_GENRES, Parcels.wrap(userPickedGenres))
                 setResult(RESULT_OK, data)
                 finish()
             }
-            else -> {
-            }
+            else -> {}
         }
         return super.onOptionsItemSelected(item)
     }
-
 
 }

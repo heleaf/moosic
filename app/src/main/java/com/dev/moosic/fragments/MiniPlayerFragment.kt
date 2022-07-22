@@ -6,60 +6,36 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import com.dev.moosic.MainActivity
-import com.dev.moosic.PlaylistController
 import com.dev.moosic.R
 import com.facebook.drawee.view.SimpleDraweeView
 import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
 
-private const val ARG_PARAM1 = "currentSong"
-private const val ARG_PARAM2 = "isPaused"
-private const val ARG_PARAM3 = "controller"
+private const val ARG_CURRENT_TRACK = "currentTrack"
+private const val ARG_IS_PAUSED = "isPaused"
+private const val TAG = "MiniPlayerFragment"
 
-/**
- * A simple [Fragment] subclass.
- * Use the [MiniPlayerFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
-class MiniPlayerFragment(controller: MainActivity.MainActivityController) : Fragment() {
-    val TAG = "MiniPlayerFragment"
-    private var currentTrack: Track? = null
-
-//    lateinit var mainActivityController : MainActivity.MainActivityController
-////
-//    constructor(controller: MainActivity.MainActivityController) : this() {
-//        mainActivityController = controller
-//    }
-
-    val mainActivityController = controller
-//    constructor() : this() {
-//        mainActivityController = null
-//    }
-
-    var trackTitle: TextView? = null
-    var trackArtist: TextView? = null
-    var trackAlbumCover: SimpleDraweeView? = null
-    var playPauseButton: ImageView? = null
-    var layout: ConstraintLayout? = null
-
-    var closeMiniPlayerButton: ImageButton? = null
-
+class MiniPlayerFragment(controller: MainActivity.MainActivitySongController) : Fragment() {
+    private lateinit var currentTrack: Track
+    private val mainActivityController = controller
+    private lateinit var trackTitle: TextView
+    lateinit var trackArtist: TextView
+    lateinit var trackAlbumCover: SimpleDraweeView
+    lateinit var playPauseButton: ImageButton
+    lateinit var layout: ConstraintLayout
+    lateinit var closeMiniPlayerButton: ImageButton
+    lateinit var addToPlaylistButton: ImageButton
     var isPaused: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            currentTrack = Parcels.unwrap(it.getParcelable(ARG_PARAM1))
-            Log.d(TAG, "got current track: " + currentTrack?.name)
-            val id = currentTrack?.uri?.slice(IntRange(14, currentTrack!!.uri.length - 1))
-            Log.d(TAG, "uri: " + currentTrack?.uri)
-            Log.d(TAG, "id: " + id)
-            isPaused = it.getBoolean(ARG_PARAM2)
+            currentTrack = Parcels.unwrap(it.getParcelable(ARG_CURRENT_TRACK))
+            isPaused = it.getBoolean(ARG_IS_PAUSED)
         }
     }
 
@@ -71,19 +47,13 @@ class MiniPlayerFragment(controller: MainActivity.MainActivityController) : Frag
     }
 
     companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         */
         @JvmStatic
-        fun newInstance(currentTrack: Track, controller: MainActivity.MainActivityController,
-        isPaused: Boolean) =
+        fun newInstance(currentTrack: Track, controller: MainActivity.MainActivitySongController,
+                        isPaused: Boolean) =
             MiniPlayerFragment(controller).apply {
                 arguments = Bundle().apply {
-                    putParcelable(ARG_PARAM1, Parcels.wrap(currentTrack))
-                    putBoolean(ARG_PARAM2, isPaused)
-//                    putParcelable(ARG_PARAM3, Parcels.wrap(controller))
-
+                    putParcelable(ARG_CURRENT_TRACK, Parcels.wrap(currentTrack))
+                    putBoolean(ARG_IS_PAUSED, isPaused)
                 }
             }
     }
@@ -96,16 +66,21 @@ class MiniPlayerFragment(controller: MainActivity.MainActivityController) : Frag
         playPauseButton = view.findViewById(R.id.miniPlayerPlayPauseButton)
         layout = view.findViewById(R.id.miniPlayerConstraintLayout)
         closeMiniPlayerButton = view.findViewById(R.id.closeMiniPlayerButton)
+        addToPlaylistButton = view.findViewById(R.id.miniPlayerPreviewAddToPlaylistButton)
 
-        closeMiniPlayerButton?.setOnClickListener {
+        addToPlaylistButton.setOnClickListener {
+            currentTrack.let { it1 -> mainActivityController.addToParsePlaylist(it1) }
+        }
+
+        closeMiniPlayerButton.setOnClickListener {
             mainActivityController.hideMiniPlayerPreview()
         }
 
         if (isPaused){
-            playPauseButton?.setImageResource(android.R.drawable.ic_media_play)
-        } else playPauseButton?.setImageResource(android.R.drawable.ic_media_pause)
+            playPauseButton.setImageResource(android.R.drawable.ic_media_play)
+        } else playPauseButton.setImageResource(android.R.drawable.ic_media_pause)
 
-        playPauseButton?.setOnClickListener {
+        playPauseButton.setOnClickListener {
             if (isPaused) {
                 mainActivityController.resumeSongOnSpotify()
             } else {
@@ -114,26 +89,26 @@ class MiniPlayerFragment(controller: MainActivity.MainActivityController) : Frag
             isPaused = !isPaused
         }
 
-        layout?.setOnClickListener{
+        layout.setOnClickListener{
             mainActivityController.goToMiniPlayerDetailView()
         }
 
-        trackTitle?.setText(currentTrack?.name)
-        trackTitle?.isSelected = true
-        val artistNameText = currentTrack?.artists?.fold(
+        trackTitle.setText(currentTrack.name)
+        trackTitle.isSelected = true
+        val artistNameText = currentTrack.artists?.fold(
             ""
         ) { accumulator, artist ->
-            if (artist.name == currentTrack?.artists?.get(0)?.name) artist.name else
+            if (artist.name == currentTrack.artists?.get(0)?.name) artist.name else
                 accumulator + ", " + artist.name
         }
-        trackArtist?.setText(artistNameText)
-        trackArtist?.isSelected = true
+        trackArtist.setText(artistNameText)
+        trackArtist.isSelected = true
 
         try {
-            val albumCoverImgUri = currentTrack?.album?.images?.get(0)?.url
-            trackAlbumCover?.setImageURI(albumCoverImgUri);
+            val albumCoverImgUri = currentTrack.album.images.get(0).url
+            trackAlbumCover.setImageURI(albumCoverImgUri);
         } catch (e : Exception) {
-            Log.e(TAG, "error: " + e.message)
+            e.message?.let { Log.e(TAG, it) }
         }
     }
 }

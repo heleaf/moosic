@@ -12,29 +12,28 @@ import com.facebook.drawee.view.SimpleDraweeView
 import kaaes.spotify.webapi.android.models.Track
 import java.lang.Exception
 
-class TrackAdapter(context : Context, tracks : ArrayList<Track>, userId : String, playlistId : String,
-                   controller : MainActivity.MainActivityController, showAddButton : Boolean, showDeleteButton : Boolean)
-    : RecyclerView.Adapter<TrackAdapter.ViewHolder>() {
-    val TAG = "TopTrackAdapter"
-    var mContext : Context? = null
-    var mTracks : ArrayList<Track> = ArrayList()
-    var mUserId : String? = null
-    var mPlaylistId : String? = null
-    val mainActivityController : MainActivity.MainActivityController = controller
+private const val TAG = "TopTrackAdapter"
+private const val EMPTY_STR = ""
+private const val ARTIST_STR_SEPARATOR = ", "
 
+class TrackAdapter(context : Context, tracks : ArrayList<Track>,
+                   controller : MainActivity.MainActivitySongController,
+                   showAddButton : Boolean, showDeleteButton : Boolean)
+    : RecyclerView.Adapter<TrackAdapter.ViewHolder>() {
+    var mContext : Context
+    var mTracks : ArrayList<Track> = ArrayList()
+    val mainActivitySongController : MainActivity.MainActivitySongController = controller
     var mShowDeleteButton = showDeleteButton
     var mShowAddButton = showAddButton
 
     init {
         this.mContext = context
         this.mTracks = tracks
-        this.mUserId = userId
-        this.mPlaylistId = playlistId
-
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TrackAdapter.ViewHolder {
-        val view = LayoutInflater.from(this.mContext).inflate(R.layout.single_track_item, parent, false)
+        val view = LayoutInflater.from(this.mContext)
+            .inflate(R.layout.single_track_item, parent, false)
         return ViewHolder(view)
     }
 
@@ -48,18 +47,15 @@ class TrackAdapter(context : Context, tracks : ArrayList<Track>, userId : String
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var albumCover : SimpleDraweeView? = null
-        var trackTitle : TextView? = null
-        var albumTitle : TextView? = null
-        var artistName : TextView? = null
-
-        var heartButton : ImageView? = null
-        var addToPlaylistButton : ImageView? = null
-
-        val TAG = "TopTrackAdapter"
+        var albumCover : SimpleDraweeView
+        var trackTitle : TextView
+        var albumTitle : TextView
+        var artistName : TextView
+        var heartButton : ImageView
+        var addToPlaylistButton : ImageView
 
         init {
-            albumCover = itemView.findViewById(R.id.topTrackImg)
+            albumCover = itemView.findViewById(R.id.singleFriendPlaylistSongImage)
             trackTitle = itemView.findViewById(R.id.trackTitle)
             albumTitle = itemView.findViewById(R.id.albumTitle)
             artistName = itemView.findViewById(R.id.artistName)
@@ -68,59 +64,54 @@ class TrackAdapter(context : Context, tracks : ArrayList<Track>, userId : String
         }
         fun bind(track: Track, position: Int) {
             itemView.setOnLongClickListener {
-                Log.d(TAG, "adding $track to playlist")
-                mainActivityController.addToParsePlaylist(track)
+                mainActivitySongController.addToParsePlaylist(track)
                 return@setOnLongClickListener true
             }
 
             itemView.setOnClickListener {
-                mainActivityController.playSongOnSpotify(track.uri, track.id)
+                mainActivitySongController.playSongOnSpotify(track.uri, track.id)
             }
 
             val trackTitleText = track.name
-            trackTitle?.setText(trackTitleText)
+            trackTitle.setText(trackTitleText)
 
             val albumTitleText = track.album.name
-            albumTitle?.setText(albumTitleText)
+            albumTitle.setText(albumTitleText)
 
             val artistNameText = track.artists.fold(
-                ""
+                EMPTY_STR
             ) { accumulator, artist ->
                 if (artist.name == track.artists.get(0).name) artist.name else
-                    accumulator + ", " + artist.name
+                    accumulator + ARTIST_STR_SEPARATOR + artist.name
             }
-            artistName?.setText(artistNameText)
+            artistName.setText(artistNameText)
 
             try {
                 val albumCoverImgUri = track.album.images.get(0).url
-                albumCover?.setImageURI(albumCoverImgUri);
+                albumCover.setImageURI(albumCoverImgUri);
             } catch (e : Exception) {
-                Log.e(TAG, "error: " + e.message)
+                e.message?.let { Log.e(TAG, it) }
             }
 
-            heartButton?.visibility = View.GONE
-            heartButton?.setOnClickListener(View.OnClickListener {
-                updateTrackLikedStatus(track, heartButton!!)
-                mainActivityController.addToSavedTracks(track.id)
+            heartButton.visibility = View.GONE
+            heartButton.setOnClickListener(View.OnClickListener {
+                mainActivitySongController.addToSavedTracks(track.id)
             })
 
             if (mShowAddButton) {
-                addToPlaylistButton?.visibility = View.VISIBLE
-                addToPlaylistButton?.setOnClickListener(View.OnClickListener {
-                    mainActivityController.addToPlaylist(this@TrackAdapter.mUserId!!,
-                        this@TrackAdapter.mPlaylistId!!, track)
+                addToPlaylistButton.visibility = View.VISIBLE
+                addToPlaylistButton.setOnClickListener(View.OnClickListener {
+                    mainActivitySongController.addToPlaylist(track)
                 })
             } else {
-                addToPlaylistButton?.visibility = View.GONE
+                addToPlaylistButton.visibility = View.GONE
             }
 
             val deleteButton : ImageView = itemView.findViewById(R.id.deleteFromPlaylistButton)
             if (mShowDeleteButton){
                 deleteButton.visibility = View.VISIBLE
                 deleteButton.setOnClickListener(View.OnClickListener {
-                    Log.d(TAG, "deleting " + track.name + " from playlist")
-                     mainActivityController.removeFromPlaylist(this@TrackAdapter.mUserId!!,
-                         this@TrackAdapter.mPlaylistId!!, track, position)
+                    mainActivitySongController.removeFromPlaylist(track, position)
                     mTracks.removeAt(position)
                     this@TrackAdapter.notifyItemRemoved(position)
                     this@TrackAdapter.notifyItemRangeChanged(position, mTracks.size);
@@ -128,11 +119,6 @@ class TrackAdapter(context : Context, tracks : ArrayList<Track>, userId : String
             } else {
                 deleteButton.visibility = View.GONE
             }
-        }
-
-        // TODO
-        private fun updateTrackLikedStatus(track: Track, heartButton: ImageView) {
-            Log.d(TAG, "updating liked status of " + track.name)
         }
 
     }

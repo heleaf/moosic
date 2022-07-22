@@ -8,6 +8,11 @@
         android:title="Home"
         app:showAsAction="always" />
     <item
+        android:id="@+id/actionFriends"
+        android:icon="@android:drawable/stat_notify_chat"
+        android:title="Friends"
+        app:showAsAction="always" />
+    <item
         android:id="@+id/actionSearch"
         android:icon="?android:attr/actionModeWebSearchDrawable"
         android:title="Search"

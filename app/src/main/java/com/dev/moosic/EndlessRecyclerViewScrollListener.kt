@@ -9,7 +9,9 @@ interface LoadMoreFunction {
     fun onLoadMore(page: Int, totalItemsCount: Int, view: RecyclerView?)
 }
 
-class EndlessRecyclerViewScrollListener(layoutManager: LinearLayoutManager, loadMoreFunction: LoadMoreFunction) :
+private const val NUMBER_ITEMS_PER_LOAD = 20
+
+class EndlessRecyclerViewScrollListener(layoutManager: RecyclerView.LayoutManager, loadMoreFunction: LoadMoreFunction) :
     RecyclerView.OnScrollListener() {
     private var visibleThreshold = 5
     private var currentPage = 0
@@ -17,24 +19,14 @@ class EndlessRecyclerViewScrollListener(layoutManager: LinearLayoutManager, load
     private var loading = true
 
     private val startingPageIndex = 0
-    var mLayoutManager: RecyclerView.LayoutManager? = null
+    var mLayoutManager: RecyclerView.LayoutManager
     private var mLoadMoreFunction = loadMoreFunction
 
     init {
         mLayoutManager = layoutManager
     }
 
-//    constructor(layoutManager: GridLayoutManager) {
-//        mLayoutManager = layoutManager
-//        visibleThreshold = visibleThreshold * layoutManager.spanCount
-//    }
-//
-//    constructor(layoutManager: StaggeredGridLayoutManager) {
-//        mLayoutManager = layoutManager
-//        visibleThreshold = visibleThreshold * layoutManager.spanCount
-//    }
-
-    fun getLastVisibleItem(lastVisibleItemPositions: IntArray): Int {
+    private fun getLastVisibleItem(lastVisibleItemPositions: IntArray): Int {
         var maxSize = 0
         for (i in lastVisibleItemPositions.indices) {
             if (i == 0) {
@@ -48,7 +40,7 @@ class EndlessRecyclerViewScrollListener(layoutManager: LinearLayoutManager, load
 
     override fun onScrolled(view: RecyclerView, dx: Int, dy: Int) {
         var lastVisibleItemPosition = 0
-        val totalItemCount = mLayoutManager?.itemCount
+        val totalItemCount = mLayoutManager.itemCount
         if (mLayoutManager is StaggeredGridLayoutManager) {
             val lastVisibleItemPositions =
                 (mLayoutManager as StaggeredGridLayoutManager).findLastVisibleItemPositions(null)
@@ -61,28 +53,25 @@ class EndlessRecyclerViewScrollListener(layoutManager: LinearLayoutManager, load
                 (mLayoutManager as LinearLayoutManager).findLastVisibleItemPosition()
         }
 
-        if (totalItemCount != null) {
-            if (totalItemCount < previousTotalItemCount) {
-                currentPage = startingPageIndex
-                previousTotalItemCount = totalItemCount
-                if (totalItemCount == 0) {
-                    loading = true
-                }
+        if (totalItemCount < previousTotalItemCount) {
+            currentPage = startingPageIndex
+            previousTotalItemCount = totalItemCount
+            if (totalItemCount == 0) {
+                loading = true
             }
+        }
 
-            if (loading && totalItemCount > previousTotalItemCount) {
-                loading = false
-                previousTotalItemCount = totalItemCount
-            }
-
+        if (loading && totalItemCount > previousTotalItemCount) {
+            loading = false
+            previousTotalItemCount = totalItemCount
+        }
 
         if (!loading && lastVisibleItemPosition + visibleThreshold > totalItemCount) {
             currentPage++
-            mLoadMoreFunction.onLoadMore(currentPage, 20, view)
+            mLoadMoreFunction.onLoadMore(currentPage, NUMBER_ITEMS_PER_LOAD, view)
             loading = true
         }
 
-        }
     }
 
     fun resetState() {
@@ -90,4 +79,5 @@ class EndlessRecyclerViewScrollListener(layoutManager: LinearLayoutManager, load
         previousTotalItemCount = 0
         loading = true
     }
+
     }
