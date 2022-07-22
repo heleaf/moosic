@@ -9,9 +9,13 @@ import com.dev.moosic.localdb.entities.SavedUser
 interface UserDao {
     @Query("SELECT ${LocalDbUtil.SAVEDUSER_COLUMN_KEY_CACHED_SONGS} FROM " +
             LocalDbUtil.SAVEDUSER_TABLE_NAME + " WHERE " +
-            LocalDbUtil.SAVEDUSER_COLUMN_KEY_PARSEUSER_ID + " = :username"
+            "parseUsername" + " = :username"
     )
     fun getUserSavedSongs(username: String): List<String>
+
+    @Query("SELECT * FROM " + LocalDbUtil.SAVEDUSER_TABLE_NAME + " WHERE "  +
+            "parseUsername" + " = :username")
+    fun getUser(username: String) : SavedUser
 
     @Insert
     fun insertUserInfo(vararg user: SavedUser)

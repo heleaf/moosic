@@ -12,9 +12,11 @@ class SongControllerUnitTest {
         override fun getUserPlaylistSongs(): ArrayList<UserRepositorySong> {
             return userRepositorySongs
         }
-        override fun addSongToUserPlaylist(song: UserRepositorySong) {
+
+        override fun addSongToUserPlaylist(song: UserRepositorySong, save: Boolean) {
             userRepositorySongs.add(song)
         }
+
         override fun removeSongFromUserPlaylist(songId: String) {
             for (song in userRepositorySongs) {
                 if (song.id == songId) userRepositorySongs.remove(song); return;
@@ -26,12 +28,14 @@ class SongControllerUnitTest {
             return songId in songIds
         }
 
-        override fun setCurrentSong(song: UserRepositorySong) {}
-        override fun playSong(songId: String) {}
-        override fun getCurrentSong(): UserRepositorySong? { return null }
-        override fun getCurrentSongIsPlaying(): Boolean? { return null }
-        override fun pauseSong() {}
-        override fun resumeSong() {}
+        override fun getSongWithId(id: String): UserRepositorySong? {
+            for (song in userRepositorySongs){
+                if (song.id == id) return song
+            }
+            return null
+        }
+
+        override fun toast(message: String) {}
     }
 
     @Test
@@ -39,12 +43,12 @@ class SongControllerUnitTest {
         val mockUserRepository = spyk<MockUserRepository>()
         val song = UserRepositorySong("1", "{}")
         val controller : UserRepoPlaylistControllerInterface = TestSongControllerImpl(mockUserRepository)
-        controller.addToPlaylist(song)
-        verify(exactly = 1) { mockUserRepository.addSongToUserPlaylist(song) }
+        controller.addToPlaylist(song, false)
+        verify(exactly = 1) { mockUserRepository.addSongToUserPlaylist(song, false) }
         verify(exactly = 1) { mockUserRepository.isInUserPlaylist(song.id) }
 
-        controller.addToPlaylist(song)
-        verify(exactly = 1) { mockUserRepository.addSongToUserPlaylist(song) }
+        controller.addToPlaylist(song, false)
+        verify(exactly = 1) { mockUserRepository.addSongToUserPlaylist(song, false) }
         verify(exactly = 2) { mockUserRepository.isInUserPlaylist(song.id) }
     }
 
@@ -53,10 +57,10 @@ class SongControllerUnitTest {
         val mockUserRepository = spyk<MockUserRepository>()
         val song = UserRepositorySong("1", "{}")
         val controller = TestSongControllerImpl(mockUserRepository)
-        controller.addToPlaylist(song)
+        controller.addToPlaylist(song, false)
         controller.removeFromPlaylist(song)
         verify(exactly = 2) { mockUserRepository.isInUserPlaylist(song.id) }
-        verify(exactly = 1) { mockUserRepository.addSongToUserPlaylist(song) }
+        verify(exactly = 1) { mockUserRepository.addSongToUserPlaylist(song, false) }
         verify(exactly = 1) { mockUserRepository.removeSongFromUserPlaylist(song.id) }
 
         controller.removeFromPlaylist(song)

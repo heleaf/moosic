@@ -13,9 +13,10 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.ProgressBar
 import android.widget.Toast
-
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.get
 import androidx.room.Room
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.adapters.HomeFeedItemAdapter
@@ -32,6 +33,7 @@ import com.dev.moosic.models.Contact
 import com.dev.moosic.models.Song
 import com.dev.moosic.models.SongFeatures
 import com.dev.moosic.models.UserRepositorySong
+import com.dev.moosic.viewmodels.SongViewModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.gson.Gson
 import com.parse.ParseQuery
@@ -144,9 +146,14 @@ class MainActivity : AppCompatActivity(){
 
     private lateinit var db : LocalDatabase
 
+    private lateinit var savedSongModel : SongViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        savedSongModel = ViewModelProvider(this) [SongViewModel::class.java]
+//        savedSongModel.songs = playlistController.getUserPlaylist()
 
         db = Room.databaseBuilder(
             applicationContext,
@@ -1669,6 +1676,7 @@ class MainActivity : AppCompatActivity(){
                         userPlaylistSongs.remove(song)
                     } else {
                         toast("Saved ${track.name} to playlist")
+//                        Log.d(TAG, savedSongModel.songs.map{song -> song.id}.toString())
                     }
                 }
             }
