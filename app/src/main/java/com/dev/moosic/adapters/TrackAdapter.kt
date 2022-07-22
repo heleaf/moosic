@@ -8,7 +8,10 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.R
 import com.dev.moosic.controllers.OldSongController
+import com.dev.moosic.controllers.TestSongControllerInterface
+import com.dev.moosic.models.UserRepositorySong
 import com.facebook.drawee.view.SimpleDraweeView
+import com.google.gson.Gson
 import kaaes.spotify.webapi.android.models.Track
 import retrofit.Callback
 import retrofit.RetrofitError
@@ -20,11 +23,12 @@ private const val EMPTY_STR = ""
 private const val ARTIST_STR_SEPARATOR = ", "
 
 class TrackAdapter(context : Context, tracks : ArrayList<Track>,
-                   controller : OldSongController)
+                   controller : OldSongController, testSongController: TestSongControllerInterface)
     : RecyclerView.Adapter<TrackAdapter.ViewHolder>() {
     var context : Context
     var tracks : ArrayList<Track> = ArrayList()
     val songController : OldSongController = controller
+    val testSongController : TestSongControllerInterface = testSongController
     val adapter = this
 
     init {
@@ -81,62 +85,93 @@ class TrackAdapter(context : Context, tracks : ArrayList<Track>,
 
             heartButton.visibility = View.VISIBLE
 
-            var isInPlaylist = false
-            songController.isInPlaylist(track, object: Callback<Boolean> {
-                override fun success(t: Boolean?, response: Response?) {
-                    if (t==null) {heartButton.visibility = View.GONE; return }
-                    val heartIcon = if (t == true) R.drawable.ufi_heart_active else R.drawable.ufi_heart
-                    heartButton.setImageResource(heartIcon)
-                    isInPlaylist = t
-                }
-                override fun failure(error: RetrofitError?) {
-                    heartButton.visibility = View.GONE
-                }
-            })
+            val heartIcon = if (testSongController.isInPlaylist(track.id)) R.drawable.ufi_heart_active
+            else R.drawable.ufi_heart
+            heartButton.setImageResource(heartIcon)
 
-            fun removeFromPlaylistSuccess() {
-                heartButton.setImageResource(R.drawable.ufi_heart)
-                isInPlaylist = !isInPlaylist
-            }
-
-            fun addToPlaylistSuccess() {
-                heartButton.setImageResource(R.drawable.ufi_heart_active)
-                isInPlaylist = !isInPlaylist
-            }
-
-            heartButton.setOnClickListener(View.OnClickListener {
-                if (isInPlaylist) {
-                    songController.removeFromPlaylist(track, object: Callback<Unit> {
-                        override fun success(t: Unit?, response: Response?) {
-                            removeFromPlaylistSuccess()
-                        }
-                        override fun failure(error: RetrofitError?) {}
-                    })
+            heartButton.setOnClickListener {
+                if (testSongController.isInPlaylist(track.id)) {
+                    testSongController.removeFromPlaylist(track.id)
+                    heartButton.setImageResource(R.drawable.ufi_heart)
                 } else {
-                    songController.addToPlaylist(track, object: Callback<Unit> {
-                        override fun success(t: Unit?, response: Response?) {
-                            addToPlaylistSuccess()
-                        }
-                        override fun failure(error: RetrofitError?) {}
-
-                    })
+                    val gson = Gson()
+                    testSongController.addToPlaylist(
+                        UserRepositorySong(track.id,
+                        gson.toJson(track).toString()), true)
+                    heartButton.setImageResource(R.drawable.ufi_heart_active)
                 }
-
-            })
+            }
 
             itemView.setOnLongClickListener {
-                songController.addToPlaylist(track, object: Callback<Unit> {
-                    override fun success(t: Unit?, response: Response?) {
-                        addToPlaylistSuccess()
-                    }
-                    override fun failure(error: RetrofitError?) {}
-                })
+                val gson = Gson()
+                testSongController.addToPlaylist(
+                    UserRepositorySong(track.id,
+                    gson.toJson(track).toString()), true)
+                heartButton.setImageResource(R.drawable.ufi_heart_active)
                 return@setOnLongClickListener true
             }
 
             itemView.setOnClickListener {
                 songController.playSongOnSpotify(track.uri, track.id)
             }
+
+//
+//            var isInPlaylist = false
+//            songController.isInPlaylist(track, object: Callback<Boolean> {
+//                override fun success(t: Boolean?, response: Response?) {
+//                    if (t==null) {heartButton.visibility = View.GONE; return }
+//                    val heartIcon = if (t == true) R.drawable.ufi_heart_active else R.drawable.ufi_heart
+//                    heartButton.setImageResource(heartIcon)
+//                    isInPlaylist = t
+//                }
+//                override fun failure(error: RetrofitError?) {
+//                    heartButton.visibility = View.GONE
+//                }
+//            })
+//
+//            fun removeFromPlaylistSuccess() {
+//                heartButton.setImageResource(R.drawable.ufi_heart)
+//                isInPlaylist = !isInPlaylist
+//            }
+//
+//            fun addToPlaylistSuccess() {
+//                heartButton.setImageResource(R.drawable.ufi_heart_active)
+//                isInPlaylist = !isInPlaylist
+//            }
+//
+//            heartButton.setOnClickListener(View.OnClickListener {
+//                if (isInPlaylist) {
+//                    songController.removeFromPlaylist(track, object: Callback<Unit> {
+//                        override fun success(t: Unit?, response: Response?) {
+//                            removeFromPlaylistSuccess()
+//                        }
+//                        override fun failure(error: RetrofitError?) {}
+//                    })
+//                } else {
+//                    songController.addToPlaylist(track, object: Callback<Unit> {
+//                        override fun success(t: Unit?, response: Response?) {
+//                            addToPlaylistSuccess()
+//                        }
+//                        override fun failure(error: RetrofitError?) {}
+//
+//                    })
+//                }
+//
+//            })
+//
+//            itemView.setOnLongClickListener {
+//                songController.addToPlaylist(track, object: Callback<Unit> {
+//                    override fun success(t: Unit?, response: Response?) {
+//                        addToPlaylistSuccess()
+//                    }
+//                    override fun failure(error: RetrofitError?) {}
+//                })
+//                return@setOnLongClickListener true
+//            }
+//
+//            itemView.setOnClickListener {
+//                songController.playSongOnSpotify(track.uri, track.id)
+//            }
 
         }
 

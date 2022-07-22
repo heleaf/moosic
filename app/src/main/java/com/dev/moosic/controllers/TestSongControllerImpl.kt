@@ -1,39 +1,50 @@
 package com.dev.moosic.controllers
 
+import android.util.Log
 import com.dev.moosic.UserRepositoryInterface
 import com.dev.moosic.models.UserRepositorySong
 
+private const val TAG = "TestSongControllerImpl"
+private const val TOAST_ALREADY_IN_PLAYLIST = "This song is already in your playlist"
 class TestSongControllerImpl(private val userRepository: UserRepositoryInterface)
     : TestSongControllerInterface{
+
+    override fun getUserPlaylist(): ArrayList<UserRepositorySong> {
+        return userRepository.getUserPlaylistSongs()
+    }
+
     override fun logSongInModel(song: UserRepositorySong, weight: Int) {
         userRepository.logSongInModel(song, weight)
     }
-    override fun addToPlaylist(song: UserRepositorySong) {
+
+    override fun isInPlaylist(songId: String): Boolean {
+        return userRepository.isInUserPlaylist(songId)
+    }
+
+    override fun addToPlaylist(song: UserRepositorySong, save: Boolean) {
         if (!userRepository.isInUserPlaylist(song.id)) {
-            userRepository.addSongToUserPlaylist(song)
+            userRepository.addSongToUserPlaylist(song, save)
+        } else {
+            userRepository.toast(TOAST_ALREADY_IN_PLAYLIST)
         }
     }
+
+    override fun addAllToPlaylist(songs: List<UserRepositorySong>, save: Boolean) {
+        for (song in songs) {
+            addToPlaylist(song, save)
+        }
+    }
+
     override fun removeFromPlaylist(song: UserRepositorySong) {
         if (userRepository.isInUserPlaylist(song.id)){
             userRepository.removeSongFromUserPlaylist(song.id)
         }
     }
 
-    override fun playSong(songId: String) {
-        userRepository.playSong(songId)
-    }
-
-    override fun pauseSong() {
-        if (userRepository.getCurrentSong() != null
-            && userRepository.getCurrentSongIsPlaying() == true){
-            userRepository.pauseSong()
+    override fun removeFromPlaylist(songId: String) {
+        if (userRepository.isInUserPlaylist(songId)) {
+            userRepository.removeSongFromUserPlaylist(songId)
         }
     }
 
-    override fun resumeSong() {
-        if (userRepository.getCurrentSong() != null
-            && userRepository.getCurrentSongIsPlaying() == false){
-            userRepository.resumeSong()
-        }
-    }
 }

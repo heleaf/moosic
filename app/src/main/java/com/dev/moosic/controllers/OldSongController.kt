@@ -27,6 +27,9 @@ interface OldSongController {
     fun goToMiniPlayerDetailView()
     fun exitMiniPlayerDetailView()
 
+    fun showMiniPlayerPreview()
+    fun hideMiniPlayerPreview(pauseSong: Boolean = true)
+
     fun logOutFromParse()
     fun exitSettingsTab()
 }

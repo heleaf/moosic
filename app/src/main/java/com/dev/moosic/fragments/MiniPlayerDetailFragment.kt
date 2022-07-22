@@ -13,6 +13,8 @@ import android.widget.SeekBar
 import android.widget.TextView
 import com.dev.moosic.MainActivity
 import com.dev.moosic.R
+import com.dev.moosic.controllers.OldSongController
+import com.dev.moosic.controllers.TestSongControllerInterface
 import com.facebook.drawee.view.SimpleDraweeView
 import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
@@ -28,7 +30,8 @@ private const val TAG = "MiniPlayerDetailFragment"
 private const val EMPTY_STR = ""
 private const val ARTIST_STR_SEPARATOR = ", "
 
-class MiniPlayerDetailFragment(controller: MainActivity.MainActivitySongController) : Fragment() {
+class MiniPlayerDetailFragment(controller: OldSongController,
+                               testController: TestSongControllerInterface) : Fragment() {
     private lateinit var currentTrack: Track
     lateinit var trackTitle: TextView
     lateinit var trackArtist: TextView
@@ -77,7 +80,7 @@ class MiniPlayerDetailFragment(controller: MainActivity.MainActivitySongControll
         addToPlaylistButton = view.findViewById(R.id.miniPlayerDetailAddToPlaylistButton)
 
         addToPlaylistButton.setOnClickListener {
-            currentTrack.let { it1 -> mainActivityController.addToParsePlaylist(it1, object: Callback<Unit> {
+            currentTrack.let { it1 -> mainActivityController.addToPlaylist(it1, object: Callback<Unit> {
                 override fun success(t: Unit?, response: Response?) {
                 }
 
@@ -133,8 +136,8 @@ class MiniPlayerDetailFragment(controller: MainActivity.MainActivitySongControll
     companion object {
         @JvmStatic
         fun newInstance(track: Track, controller: MainActivity.MainActivitySongController,
-                        isPaused: Boolean) =
-            MiniPlayerDetailFragment(controller).apply {
+                        isPaused: Boolean, testController: TestSongControllerInterface) =
+            MiniPlayerDetailFragment(controller, testController).apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_CURRENT_TRACK, Parcels.wrap(track))
                     putBoolean(ARG_IS_PAUSED, isPaused)

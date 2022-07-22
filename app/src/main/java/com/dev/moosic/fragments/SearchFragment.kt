@@ -13,15 +13,18 @@ import com.dev.moosic.LoadMoreFunction
 import com.dev.moosic.MainActivity
 import com.dev.moosic.R
 import com.dev.moosic.adapters.TrackAdapter
+import com.dev.moosic.controllers.OldSongController
+import com.dev.moosic.controllers.TestSongControllerInterface
 import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
 
 private const val ARG_SEARCHED_TRACKS = "searchedTracks"
 private const val ARG_SEARCHED_QUERY_STR = "searchedQuery"
 
-class SearchFragment(controller: MainActivity.MainActivitySongController) : Fragment() {
+class SearchFragment(controller: OldSongController, testController: TestSongControllerInterface) : Fragment() {
     private var searchedTracks: ArrayList<Track> = ArrayList()
-    private var mainActivityController = controller
+    private val mainActivityController = controller
+    private val testSongController = testController
     private lateinit var currentQuery : String
 
     lateinit var rvSearchedTracks : RecyclerView
@@ -50,8 +53,9 @@ class SearchFragment(controller: MainActivity.MainActivitySongController) : Frag
     companion object {
         @JvmStatic
         fun newInstance(searchedTracks : ArrayList<Track>, searchedQuery: String,
-                        controller : MainActivity.MainActivitySongController) =
-            SearchFragment(controller).apply {
+                        controller : OldSongController,
+                        testController: TestSongControllerInterface) =
+            SearchFragment(controller, testController).apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_SEARCHED_TRACKS, Parcels.wrap(searchedTracks))
                     putString(ARG_SEARCHED_QUERY_STR, searchedQuery)
@@ -63,7 +67,7 @@ class SearchFragment(controller: MainActivity.MainActivitySongController) : Frag
         super.onViewCreated(view, savedInstanceState)
         rvSearchedTracks = view.findViewById(R.id.rvSearchedTracks)
         adapter = TrackAdapter(view.context, searchedTracks,
-            mainActivityController)
+            mainActivityController, testSongController)
 
         rvSearchedTracks.adapter = adapter
         val linearLayoutManager = LinearLayoutManager(context)

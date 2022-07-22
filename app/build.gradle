@@ -3,6 +3,12 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     id("kotlin-parcelize")
     id 'kotlin-kapt'
+
+    // For build.gradle.kts (Kotlin DSL)
+//    kotlin("jvm") version "1.6.21"
+
+    // For build.gradle (Groovy DSL)
+//    id "org.jetbrains.kotlin.jvm" // version "1.6.21"
 }
 
 android {
@@ -79,5 +85,7 @@ dependencies {
 
     implementation("androidx.room:room-runtime:2.4.2")
     kapt("androidx.room:room-compiler:2.4.2")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
 
 }

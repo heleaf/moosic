@@ -13,8 +13,8 @@ import com.dev.moosic.R
 import com.dev.moosic.RecyclerItemDecoration
 import com.dev.moosic.adapters.TaggedContactAdapter
 import com.dev.moosic.controllers.FriendsController
+import com.dev.moosic.controllers.TestSongControllerInterface
 import com.dev.moosic.models.Contact
-import org.parceler.Parcels
 
 private const val ARG_TAGGED_CONTACT_LIST = "taggedContactList"
 private const val STR_NOT_FOLLOWED_CONTACT = "Friends you might know:"
@@ -24,7 +24,7 @@ private const val STR_UNKNOWN_TAG = ""
 private const val STR_INVALID_INDEX = "Invalid index"
 private const val TAG = "FriendsFragment"
 
-class FriendsFragment(private var friendsController: FriendsController) : Fragment() {
+class FriendsFragment(private var friendsController: FriendsController, private var testSongController: TestSongControllerInterface) : Fragment() {
     private lateinit var rvContacts : RecyclerView
     lateinit var adapter : TaggedContactAdapter
     lateinit var emptyFriendsText : TextView
@@ -34,7 +34,6 @@ class FriendsFragment(private var friendsController: FriendsController) : Fragme
         super.onCreate(savedInstanceState)
         arguments?.let {
             taggedContactList = it.getSerializable(ARG_TAGGED_CONTACT_LIST) as ArrayList<Pair<Contact, String>>
-//            taggedContactList = Parcels.unwrap(it.getParcelable(ARG_TAGGED_CONTACT_LIST))
         }
     }
 
@@ -48,11 +47,10 @@ class FriendsFragment(private var friendsController: FriendsController) : Fragme
     companion object {
         @JvmStatic
         fun newInstance(taggedContactList: ArrayList<Pair<Contact, String>>,
-            controller: FriendsController) =
-            FriendsFragment(controller).apply {
+            controller: FriendsController, testSongController: TestSongControllerInterface) =
+            FriendsFragment(controller, testSongController).apply {
                 arguments = Bundle().apply {
                     putSerializable(ARG_TAGGED_CONTACT_LIST, taggedContactList)
-//                    putParcelable(ARG_TAGGED_CONTACT_LIST, Parcels.wrap(taggedContactList))
                 }
             }
     }

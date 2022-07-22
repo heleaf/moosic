@@ -69,7 +69,6 @@ class TaggedContactAdapter (context: Context,
             }
             similarityField.visibility = View.GONE
             itemView.setOnClickListener{
-                Log.d("TaggedContactAdapter", "launch friend detail view")
                 friendsController.launchDetailView(contactPair.first)
             }
         }

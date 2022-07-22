@@ -11,14 +11,16 @@ import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.R
 import com.dev.moosic.adapters.TrackAdapter
 import com.dev.moosic.controllers.OldSongController
+import com.dev.moosic.controllers.TestSongControllerInterface
 import com.dev.moosic.models.Contact
 import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
 
 private const val ARG_TRACKS = "tracks"
 
-class FriendPlaylistFragment(controller: OldSongController) : Fragment() {
+class FriendPlaylistFragment(controller: OldSongController, testSongController: TestSongControllerInterface) : Fragment() {
     private val songController: OldSongController = controller
+    private val testSongController = testSongController
     private var tracks = ArrayList<Track>()
     private lateinit var rvSongs: RecyclerView
     private lateinit var adapter: TrackAdapter
@@ -40,8 +42,9 @@ class FriendPlaylistFragment(controller: OldSongController) : Fragment() {
 
     companion object {
         @JvmStatic
-        fun newInstance(tracks : ArrayList<Track>, controller: OldSongController) =
-            FriendPlaylistFragment(controller).apply {
+        fun newInstance(tracks : ArrayList<Track>, controller: OldSongController,
+                        testSongController: TestSongControllerInterface) =
+            FriendPlaylistFragment(controller, testSongController).apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_TRACKS, Parcels.wrap(tracks))
                 }
@@ -51,7 +54,7 @@ class FriendPlaylistFragment(controller: OldSongController) : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         rvSongs = view.findViewById(R.id.userDetailSongsRv)
-        adapter = TrackAdapter(view.context, tracks, songController)
+        adapter = TrackAdapter(view.context, tracks, songController, testSongController)
         rvSongs.adapter = adapter
 
         val linearLayoutManager = LinearLayoutManager(context)

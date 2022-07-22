@@ -11,6 +11,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import com.dev.moosic.MainActivity
 import com.dev.moosic.R
+import com.dev.moosic.controllers.OldSongController
 import com.facebook.drawee.view.SimpleDraweeView
 import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
@@ -22,7 +23,7 @@ private const val ARG_CURRENT_TRACK = "currentTrack"
 private const val ARG_IS_PAUSED = "isPaused"
 private const val TAG = "MiniPlayerFragment"
 
-class MiniPlayerFragment(controller: MainActivity.MainActivitySongController) : Fragment() {
+class MiniPlayerFragment(controller: OldSongController) : Fragment() {
     private lateinit var currentTrack: Track
     private val mainActivityController = controller
     private lateinit var trackTitle: TextView
@@ -72,7 +73,7 @@ class MiniPlayerFragment(controller: MainActivity.MainActivitySongController) : 
         addToPlaylistButton = view.findViewById(R.id.miniPlayerPreviewAddToPlaylistButton)
 
         addToPlaylistButton.setOnClickListener {
-            currentTrack.let { it1 -> mainActivityController.addToParsePlaylist(it1, object: Callback<Unit>{
+            currentTrack.let { it1 -> mainActivityController.addToPlaylist(it1, object: Callback<Unit>{
                 override fun success(t: Unit?, response: Response?) {
                 }
                 override fun failure(error: RetrofitError?) {

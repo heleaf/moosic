@@ -10,8 +10,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.*
-import com.dev.moosic.MainActivity
 import com.dev.moosic.adapters.SongAdapter
+import com.dev.moosic.controllers.OldSongController
+import com.dev.moosic.controllers.TestSongControllerInterface
 import com.dev.moosic.models.Song
 import org.parceler.Parcels
 
@@ -19,10 +20,11 @@ import org.parceler.Parcels
 private const val ARG_PLAYLIST_SONGS = "playlistSongs"
 private const val ARG_BUTTONS_TO_SHOW = "buttonsToShow"
 
-open class ParsePlaylistFragment(controller : MainActivity.MainActivitySongController) : Fragment() {
+open class ParsePlaylistFragment(controller : OldSongController,
+                                 testController: TestSongControllerInterface) : Fragment() {
     private var songs: ArrayList<Song> = ArrayList()
-    private var mainActivityController = controller
-    private var buttonsToShow: List<String> = ArrayList()
+    private val mainActivityController = controller
+    private val testController = testController
 
     private lateinit var rvPlaylistTracks : RecyclerView
     lateinit var adapter : SongAdapter
@@ -34,7 +36,6 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivitySongContr
         super.onCreate(savedInstanceState)
         arguments?.let {
             songs = Parcels.unwrap(it.getParcelable(ARG_PLAYLIST_SONGS))
-            buttonsToShow = it.getStringArrayList(ARG_BUTTONS_TO_SHOW)!!
         }
     }
 
@@ -48,12 +49,11 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivitySongContr
     companion object {
         @JvmStatic
         fun newInstance(playlistSongs: ArrayList<Song>,
-                        controller: MainActivity.MainActivitySongController,
-                        buttonsToShow: ArrayList<String>) =
-            ParsePlaylistFragment(controller).apply {
+                        controller: OldSongController,
+                        testController: TestSongControllerInterface) =
+            ParsePlaylistFragment(controller, testController).apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_PLAYLIST_SONGS, Parcels.wrap(playlistSongs))
-                    putStringArrayList(ARG_BUTTONS_TO_SHOW, buttonsToShow)
                 }
             }
     }
@@ -67,7 +67,7 @@ open class ParsePlaylistFragment(controller : MainActivity.MainActivitySongContr
         rvPlaylistTracks = view.findViewById(R.id.rvPlaylistTracks)
 
         adapter = SongAdapter(view.context,
-            songs, mainActivityController, buttonsToShow, emptyPlaylistText)
+            songs, mainActivityController, emptyPlaylistText, testController)
 
         rvPlaylistTracks.adapter = adapter
 

@@ -72,15 +72,8 @@ class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>, contro
             val track = gson.fromJson(song.getJsonDataString(), Track::class.java)
 
             itemView.setOnLongClickListener {
-//                  testSongController.addToPlaylist(UserRepositorySong(song.getSpotifyId()!!,
-//                    song.getJsonDataString()!!))
-
-                controller.addToPlaylist(track, object: Callback<Unit> {
-                    override fun success(t: Unit?, response: Response?) {
-                    }
-                    override fun failure(error: RetrofitError?) {
-                    }
-                })
+                testSongController.addToPlaylist(UserRepositorySong(track.id,
+                    gson.toJson(track).toString()), true)
                 return@setOnLongClickListener true
             }
 
