@@ -3,7 +3,7 @@ package com.dev.moosic.controllers
 import com.dev.moosic.models.Song
 import com.dev.moosic.models.UserRepositorySong
 
-interface TestSongControllerInterface {
+interface UserRepoPlaylistControllerInterface {
     fun getUserPlaylist(): ArrayList<UserRepositorySong>
     fun logSongInModel(song: UserRepositorySong, weight: Int)
     fun isInPlaylist(songId: String) : Boolean

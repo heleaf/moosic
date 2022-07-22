@@ -22,9 +22,9 @@ import com.dev.moosic.adapters.HomeFeedItemAdapter
 import com.dev.moosic.adapters.TaggedContactAdapter
 import com.dev.moosic.adapters.TrackAdapter
 import com.dev.moosic.controllers.FriendsController
-import com.dev.moosic.controllers.OldSongController
+import com.dev.moosic.controllers.SongController
 import com.dev.moosic.controllers.TestSongControllerImpl
-import com.dev.moosic.controllers.TestSongControllerInterface
+import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import com.dev.moosic.fragments.*
 import com.dev.moosic.localdb.LocalDatabase
 import com.dev.moosic.localdb.LocalDbUtil
@@ -44,9 +44,6 @@ import com.spotify.protocol.client.Subscription
 import com.spotify.protocol.types.PlayerState
 import kaaes.spotify.webapi.android.SpotifyApi
 import kaaes.spotify.webapi.android.models.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.runInterruptible
 import retrofit.Callback
 import retrofit.RetrofitError
 import retrofit.client.Response
@@ -142,9 +139,7 @@ class MainActivity : AppCompatActivity(){
     var currentContact: Contact? = null
     var currentContactPlaylist: ArrayList<Track> = ArrayList()
 
-    // TODO: update this so that the user repository's parse playlist
-    // is synced with the global one i'm currently using
-    val testSongController: TestSongControllerInterface =
+    val playlistController: UserRepoPlaylistControllerInterface =
         TestSongControllerImpl(UserRepository())
 
     private lateinit var db : LocalDatabase
@@ -271,7 +266,7 @@ class MainActivity : AppCompatActivity(){
                         override fun success(t: Track?, response: Response?) {
                             if (t != null) {
                                 miniPlayerFragment = MiniPlayerFragment.newInstance(t, mainActivitySongController,
-                                playerState.isPaused)
+                                playerState.isPaused, playlistController)
                                 fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
                                 miniPlayerFragment!!).commit()
                                 currentTrack = t
@@ -288,7 +283,7 @@ class MainActivity : AppCompatActivity(){
                 }
                 else if (playerState.isPaused != currentTrackIsPaused) {
                     miniPlayerFragment = MiniPlayerFragment.newInstance(currentTrack!!, mainActivitySongController,
-                        playerState.isPaused)
+                        playerState.isPaused, playlistController)
                     currentTrackIsPaused = playerState.isPaused
                     fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
                         miniPlayerFragment!!).commit()
@@ -364,10 +359,10 @@ class MainActivity : AppCompatActivity(){
                     }
                 }.filterNotNull()
 
-                testSongController.addAllToPlaylist(userRepositorySongs, false)
+                playlistController.addAllToPlaylist(userRepositorySongs, false)
 
                 val gson = Gson()
-                Log.d(TAG, testSongController.getUserPlaylist().map {
+                Log.d(TAG, playlistController.getUserPlaylist().map {
                     song -> gson.fromJson(song.trackJsonData, Track::class.java).name
                 }.toString())
 
@@ -445,7 +440,7 @@ class MainActivity : AppCompatActivity(){
         settingsMenuItem?.isVisible = true
         val newFragment = ParsePlaylistFragment.newInstance(parsePlaylistSongs,
             mainActivitySongController,
-            testSongController
+            playlistController
         )
         fragmentManager.beginTransaction().replace(R.id.flContainer, newFragment).commit()
     }
@@ -458,7 +453,7 @@ class MainActivity : AppCompatActivity(){
         settingsMenuItem?.isVisible = false
 
         val newFragment = FriendsFragment.newInstance(taggedContactList,
-            mainActivityFriendsController, testSongController)
+            mainActivityFriendsController)
         fragmentManager.beginTransaction().replace(R.id.flContainer, newFragment).commit()
 
         if (currentContact != null) {
@@ -504,7 +499,7 @@ class MainActivity : AppCompatActivity(){
         if (currentUserId != null){
             val searchFragment = SearchFragment.newInstance(searchedTracks,
                 (if (mostRecentSearchQuery == null) "" else mostRecentSearchQuery!!),
-                mainActivitySongController, testSongController)
+                mainActivitySongController, playlistController)
             fragmentManager.beginTransaction().replace(R.id.flContainer, searchFragment)
                 .commit()
 
@@ -532,7 +527,7 @@ class MainActivity : AppCompatActivity(){
                     searchedTracks.addAll(tracksPager.tracks.items)
                     if (currentUserId != null){
                         val searchFragment = SearchFragment.newInstance(searchedTracks,
-                            query, mainActivitySongController, testSongController)
+                            query, mainActivitySongController, playlistController)
                         fragmentManager.beginTransaction().replace(R.id.flContainer,
                             searchFragment)
                             .commit()
@@ -592,7 +587,7 @@ class MainActivity : AppCompatActivity(){
         if (homeFeedItems.size > 0) {
             hideProgressBar()
             val newFragment = MixedHomeFeedFragment.newInstance(homeFeedItems, topTracksDisplayed, mainActivitySongController,
-                testSongController)
+                playlistController)
             fragmentManager.beginTransaction()
                 .replace(R.id.flContainer, newFragment).commit()
             return
@@ -625,7 +620,7 @@ class MainActivity : AppCompatActivity(){
 
                         hideProgressBar()
                         val newFragment = MixedHomeFeedFragment.newInstance(homeFeedItems, topTracksDisplayed, mainActivitySongController,
-                            testSongController)
+                            playlistController)
                         fragmentManager.beginTransaction()
                             .replace(R.id.flContainer, newFragment).commit()
                     }
@@ -1196,7 +1191,7 @@ class MainActivity : AppCompatActivity(){
         }
     }
 
-    inner class MainActivitySongController() : OldSongController {
+    inner class MainActivitySongController() : SongController {
 
         override fun logTrackInModel(trackId: String, weight: Int) {
             spotifyApi.service.getTrackAudioFeatures(trackId, object: Callback<AudioFeaturesTrack> {
@@ -1396,7 +1391,8 @@ class MainActivity : AppCompatActivity(){
                     if (track != null) {
                         currentTrack = track
                         miniPlayerFragment = MiniPlayerFragment.newInstance(track,
-                            this@MainActivitySongController, false)
+                            this@MainActivitySongController, false,
+                        playlistController)
                         fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
                             miniPlayerFragment!!).commit()
                         showMiniPlayerPreview()
@@ -1421,7 +1417,7 @@ class MainActivity : AppCompatActivity(){
                 val miniPlayerDetailFragment
                         = MiniPlayerDetailFragment.newInstance(currentTrack!!,
                     this,
-                    currentTrackIsPaused!!, testSongController)
+                    currentTrackIsPaused!!, playlistController)
                 fragmentManager.beginTransaction()
                     .setCustomAnimations(
                         androidx.appcompat.R.anim.abc_slide_in_bottom,
@@ -1600,7 +1596,7 @@ class MainActivity : AppCompatActivity(){
         }
 
         private fun goToFriendsPlaylistFragment(contact: Contact, animate: Boolean) {
-            val newFragment = FriendPlaylistFragment.newInstance(currentContactPlaylist, mainActivitySongController, testSongController)
+            val newFragment = FriendPlaylistFragment.newInstance(currentContactPlaylist, mainActivitySongController, playlistController)
             if (animate) {
                 fragmentManager.beginTransaction()
                     .setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left,

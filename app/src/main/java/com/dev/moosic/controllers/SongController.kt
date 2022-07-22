@@ -8,7 +8,7 @@ import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcel
 import retrofit.Callback
 
-interface OldSongController {
+interface SongController {
     fun logTrackInModel(trackId: String, weight: Int) : Unit
     fun addToPlaylist(track: Track, callback: Callback<Unit>) : Unit
     fun removeFromPlaylist(track: Track, callback: Callback<Unit>)

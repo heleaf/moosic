@@ -1,6 +1,6 @@
 package com.dev.moosic
 import com.dev.moosic.controllers.TestSongControllerImpl
-import com.dev.moosic.controllers.TestSongControllerInterface
+import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import com.dev.moosic.models.UserRepositorySong
 import io.mockk.spyk
 import io.mockk.verify
@@ -38,7 +38,7 @@ class SongControllerUnitTest {
     fun addToPlaylist_creates_no_duplicates(){
         val mockUserRepository = spyk<MockUserRepository>()
         val song = UserRepositorySong("1", "{}")
-        val controller : TestSongControllerInterface = TestSongControllerImpl(mockUserRepository)
+        val controller : UserRepoPlaylistControllerInterface = TestSongControllerImpl(mockUserRepository)
         controller.addToPlaylist(song)
         verify(exactly = 1) { mockUserRepository.addSongToUserPlaylist(song) }
         verify(exactly = 1) { mockUserRepository.isInUserPlaylist(song.id) }

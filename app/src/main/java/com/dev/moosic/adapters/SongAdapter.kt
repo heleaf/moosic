@@ -10,17 +10,13 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.R
 import com.dev.moosic.Util
-import com.dev.moosic.controllers.OldSongController
-import com.dev.moosic.controllers.TestSongControllerInterface
-import com.dev.moosic.models.Song
+import com.dev.moosic.controllers.SongController
+import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import com.dev.moosic.models.UserRepositorySong
 import com.facebook.drawee.view.SimpleDraweeView
 import com.google.gson.Gson
 import com.parse.ParseUser
 import kaaes.spotify.webapi.android.models.Track
-import retrofit.Callback
-import retrofit.RetrofitError
-import retrofit.client.Response
 import java.lang.Exception
 
 private const val TAG = "SongAdapter"
@@ -28,26 +24,23 @@ private const val EMPTY_STR = ""
 private const val ARTIST_STR_SEPARATOR = ", "
 
 class SongAdapter(
-    context: Context,
-    songs: ArrayList<Song>,
-    controller: OldSongController,
+    context: Context, miniPlayerController: SongController,
     emptyPlaylistText: TextView?,
-    testController: TestSongControllerInterface
+    playlistController: UserRepoPlaylistControllerInterface
 )
     : RecyclerView.Adapter<SongAdapter.ViewHolder>(){
 
     var context: Context
-    var songs: ArrayList<UserRepositorySong> = ArrayList() //ArrayList<Song> = ArrayList()
-    val songController : OldSongController = controller
+    var songs: ArrayList<UserRepositorySong> = ArrayList()
+    val miniPlayerController : SongController = miniPlayerController
     var spotifyUserId : String? = null
     var emptyPlaylistText: TextView?
 
-    val testController : TestSongControllerInterface = testController
+    val playlistController : UserRepoPlaylistControllerInterface = playlistController
 
     init {
         this.context = context
-        this.songs = testController.getUserPlaylist()
-        // this.songs = songs
+        this.songs = playlistController.getUserPlaylist()
         val currentParseUser = ParseUser.getCurrentUser()
         this.spotifyUserId = currentParseUser.getString(Util.PARSEUSER_KEY_SPOTIFY_ACCOUNT_USERNAME)
         this.emptyPlaylistText = emptyPlaylistText
@@ -107,7 +100,7 @@ class SongAdapter(
                 val id = track.id
                 if (id != null){
                     track.uri
-                        ?.let { uri -> songController.playSongOnSpotify(uri, id) }
+                        ?.let { uri -> miniPlayerController.playSongOnSpotify(uri, id) }
                 }
             }
 
@@ -120,20 +113,20 @@ class SongAdapter(
 
             heartButton.visibility = View.VISIBLE
 
-            val heartIcon = if (testController.isInPlaylist(track.id)) R.drawable.ufi_heart_active
+            val heartIcon = if (playlistController.isInPlaylist(track.id)) R.drawable.ufi_heart_active
                             else R.drawable.ufi_heart
             heartButton.setImageResource(heartIcon)
 
             heartButton.setOnClickListener {
-                if (testController.isInPlaylist(track.id)) {
-                    testController.removeFromPlaylist(song)
+                if (playlistController.isInPlaylist(track.id)) {
+                    playlistController.removeFromPlaylist(song)
                     this@SongAdapter.notifyItemRemoved(position)
                     this@SongAdapter.notifyItemRangeChanged(position, songs.size)
                     if (songs.isEmpty()) {
                         showEmptyPlaylistText()
                     }
                 } else {
-                    testController.addToPlaylist(song, true)
+                    playlistController.addToPlaylist(song, true)
                 }
             }
 

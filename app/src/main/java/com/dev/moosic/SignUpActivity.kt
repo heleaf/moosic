@@ -24,8 +24,7 @@ private const val TAG = "SignUpActivity"
 private const val TOAST_INVALID_PHONE_NUMBER = "Invalid phone number inputted"
 private const val TOAST_SIGNUP_ERROR = "Error signing up: "
 private const val TOAST_SIGNUP_SUCCESS = "Successfully signed up"
-private const val TOAST_SPOTIFY_AUTH_FAILURE = "Failed to authorize spotify account, " +
-        "please restart the app to try again"
+private const val TOAST_SPOTIFY_AUTH_FAILURE = "Failed to authorize spotify account, please restart the app to try again"
 
 class SignUpActivity : AppCompatActivity() {
     lateinit var etUsername : EditText
@@ -37,7 +36,7 @@ class SignUpActivity : AppCompatActivity() {
     var user : ParseUser = ParseUser()
 
     lateinit var showHidePasswordButton: ImageButton
-    var showingPassword = false
+    var showPassword = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,12 +50,12 @@ class SignUpActivity : AppCompatActivity() {
         signUpButton = findViewById(R.id.signUpSignUpButton)
 
         showHidePasswordButton.setOnClickListener {
-            if (showingPassword) {
+            if (showPassword) {
                 etPassword.transformationMethod = PasswordTransformationMethod.getInstance()
             } else {
                 etPassword.transformationMethod = HideReturnsTransformationMethod.getInstance()
             }
-            showingPassword = !showingPassword
+            showPassword = !showPassword
         }
 
         signUpButton.setOnClickListener(View.OnClickListener {

@@ -1,13 +1,12 @@
 package com.dev.moosic.controllers
 
-import android.util.Log
 import com.dev.moosic.UserRepositoryInterface
 import com.dev.moosic.models.UserRepositorySong
 
 private const val TAG = "TestSongControllerImpl"
 private const val TOAST_ALREADY_IN_PLAYLIST = "This song is already in your playlist"
 class TestSongControllerImpl(private val userRepository: UserRepositoryInterface)
-    : TestSongControllerInterface{
+    : UserRepoPlaylistControllerInterface{
 
     override fun getUserPlaylist(): ArrayList<UserRepositorySong> {
         return userRepository.getUserPlaylistSongs()

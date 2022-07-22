@@ -22,8 +22,7 @@ private const val ACTION_BAR_TITLE = "Favorite Genres"
 
 private const val GRID_ADAPTER_SPAN_COUNT = 2
 
-private const val TOAST_FAILED_TO_GET_GENRES = "Failed to pull genres from Spotify api, " +
-        "please restart the app and authorize your Spotify account."
+private const val TOAST_FAILED_TO_GET_GENRES = "Failed to pull genres from Spotify api, please restart the app and authorize your Spotify account."
 private const val TOAST_PICK_AT_LEAST_ONE_GENRE = "Please pick at least one genre to continue"
 
 class GetInterestsActivity : AppCompatActivity() {

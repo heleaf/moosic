@@ -11,16 +11,14 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.SeekBar
 import android.widget.TextView
-import com.dev.moosic.MainActivity
 import com.dev.moosic.R
-import com.dev.moosic.controllers.OldSongController
-import com.dev.moosic.controllers.TestSongControllerInterface
+import com.dev.moosic.controllers.SongController
+import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
+import com.dev.moosic.models.UserRepositorySong
 import com.facebook.drawee.view.SimpleDraweeView
+import com.google.gson.Gson
 import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
-import retrofit.Callback
-import retrofit.RetrofitError
-import retrofit.client.Response
 import java.lang.Exception
 
 private const val ARG_CURRENT_TRACK = "currentTrack"
@@ -30,8 +28,8 @@ private const val TAG = "MiniPlayerDetailFragment"
 private const val EMPTY_STR = ""
 private const val ARTIST_STR_SEPARATOR = ", "
 
-class MiniPlayerDetailFragment(controller: OldSongController,
-                               testController: TestSongControllerInterface) : Fragment() {
+class MiniPlayerDetailFragment(private val miniPlayerController: SongController,
+                               private val playlistController: UserRepoPlaylistControllerInterface) : Fragment() {
     private lateinit var currentTrack: Track
     lateinit var trackTitle: TextView
     lateinit var trackArtist: TextView
@@ -45,7 +43,6 @@ class MiniPlayerDetailFragment(controller: OldSongController,
     lateinit var totalTime : TextView
 
     var isPaused: Boolean = false
-    private val mainActivityController = controller
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,18 +76,16 @@ class MiniPlayerDetailFragment(controller: OldSongController,
 
         addToPlaylistButton = view.findViewById(R.id.miniPlayerDetailAddToPlaylistButton)
 
+        val gson = Gson()
         addToPlaylistButton.setOnClickListener {
-            currentTrack.let { it1 -> mainActivityController.addToPlaylist(it1, object: Callback<Unit> {
-                override fun success(t: Unit?, response: Response?) {
-                }
-
-                override fun failure(error: RetrofitError?) {
-                }
-            }) }
+            currentTrack.let {
+                playlistController.addToPlaylist(UserRepositorySong(currentTrack.id,
+                gson.toJson(currentTrack).toString()), true)
+            }
         }
 
         backToHome.setOnClickListener {
-            mainActivityController.exitMiniPlayerDetailView()
+            miniPlayerController.exitMiniPlayerDetailView()
         }
 
         if (isPaused){
@@ -104,12 +99,12 @@ class MiniPlayerDetailFragment(controller: OldSongController,
 
         playPauseButton.setOnClickListener {
             if (isPaused) {
-                mainActivityController.resumeSongOnSpotify()
+                miniPlayerController.resumeSongOnSpotify()
                 playPauseButton.setImageResource(android.R.drawable.ic_media_pause)
                 trackAlbumCover.startAnimation(
                     AnimationUtils.loadAnimation(activity, R.anim.rotate_indefinitely) )
             } else {
-                mainActivityController.pauseSongOnSpotify()
+                miniPlayerController.pauseSongOnSpotify()
                 playPauseButton.setImageResource(android.R.drawable.ic_media_play)
                 trackAlbumCover.clearAnimation()
             }
@@ -135,9 +130,9 @@ class MiniPlayerDetailFragment(controller: OldSongController,
 
     companion object {
         @JvmStatic
-        fun newInstance(track: Track, controller: MainActivity.MainActivitySongController,
-                        isPaused: Boolean, testController: TestSongControllerInterface) =
-            MiniPlayerDetailFragment(controller, testController).apply {
+        fun newInstance(track: Track, miniPlayerController: SongController,
+                        isPaused: Boolean, playlistController: UserRepoPlaylistControllerInterface) =
+            MiniPlayerDetailFragment(miniPlayerController, playlistController).apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_CURRENT_TRACK, Parcels.wrap(track))
                     putBoolean(ARG_IS_PAUSED, isPaused)

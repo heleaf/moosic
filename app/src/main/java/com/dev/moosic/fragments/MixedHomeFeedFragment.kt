@@ -11,8 +11,8 @@ import com.dev.moosic.EndlessRecyclerViewScrollListener
 import com.dev.moosic.LoadMoreFunction
 import com.dev.moosic.R
 import com.dev.moosic.adapters.HomeFeedItemAdapter
-import com.dev.moosic.controllers.OldSongController
-import com.dev.moosic.controllers.TestSongControllerInterface
+import com.dev.moosic.controllers.SongController
+import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
 
@@ -21,8 +21,8 @@ private const val ARG_TOP_TRACKS_LIST = "topTracksList"
 
 private const val TAG = "MixedHomeFeedFragment"
 
-class MixedHomeFeedFragment(private var songController: OldSongController,
-    private var testSongController: TestSongControllerInterface) : Fragment() {
+class MixedHomeFeedFragment(private val miniPlayerController: SongController,
+                            private val playlistController: UserRepoPlaylistControllerInterface) : Fragment() {
     private var mixedItemList : ArrayList<Pair<Any, String>> = ArrayList()
     private var topTracksList : ArrayList<Track> = ArrayList()
     private lateinit var mixedItemListRv : RecyclerView
@@ -47,8 +47,8 @@ class MixedHomeFeedFragment(private var songController: OldSongController,
     companion object {
         @JvmStatic
         fun newInstance(mixedItemList: ArrayList<Pair<Any, String>>, topTracks: ArrayList<Track>,
-                        songController: OldSongController, testSongController: TestSongControllerInterface) =
-            MixedHomeFeedFragment(songController, testSongController).apply {
+                        miniPlayerController: SongController, playlistController: UserRepoPlaylistControllerInterface) =
+            MixedHomeFeedFragment(miniPlayerController, playlistController).apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_MIXED_ITEM_LIST, Parcels.wrap(mixedItemList))
                     putParcelable(ARG_TOP_TRACKS_LIST, Parcels.wrap(topTracks))
@@ -59,7 +59,7 @@ class MixedHomeFeedFragment(private var songController: OldSongController,
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         mixedItemListRv = view.findViewById(R.id.mixedItemsRv)
-        adapter = HomeFeedItemAdapter(view.context, mixedItemList, songController, testSongController)
+        adapter = HomeFeedItemAdapter(view.context, mixedItemList, miniPlayerController, playlistController)
 
         mixedItemListRv.adapter = adapter
         val linearLayoutManager = LinearLayoutManager(context)
@@ -68,7 +68,7 @@ class MixedHomeFeedFragment(private var songController: OldSongController,
         scrollListener = EndlessRecyclerViewScrollListener(linearLayoutManager,
             object: LoadMoreFunction {
             override fun onLoadMore(page: Int, totalItemsCount: Int, view: RecyclerView?) {
-                songController.loadMoreMixedHomeFeedItems(topTracksList.size,
+                miniPlayerController.loadMoreMixedHomeFeedItems(topTracksList.size,
                     totalItemsCount, adapter, null)
             }
         })

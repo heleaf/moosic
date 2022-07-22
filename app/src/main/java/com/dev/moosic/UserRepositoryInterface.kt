@@ -12,13 +12,4 @@ interface UserRepositoryInterface {
     fun getSongWithId(id: String): UserRepositorySong?
 
     fun toast(message: String)
-
-//    fun setCurrentSong(song: UserRepositorySong)
-//    fun playSong(songId: String)
-//    fun getCurrentSong() : UserRepositorySong?
-//    fun getCurrentSongIsPlaying() : Boolean?
-//    fun pauseSong()
-//    fun resumeSong()
-//
-//    fun connectToPlayerState()
 }

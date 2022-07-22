@@ -10,23 +10,21 @@ import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.R
-import com.dev.moosic.controllers.OldSongController
-import com.dev.moosic.controllers.TestSongControllerInterface
+import com.dev.moosic.controllers.SongController
+import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import com.dev.moosic.models.Contact
 import com.dev.moosic.models.Song
 import com.dev.moosic.models.UserRepositorySong
 import com.facebook.drawee.view.SimpleDraweeView
 import com.google.gson.Gson
 import kaaes.spotify.webapi.android.models.Track
-import retrofit.Callback
-import retrofit.RetrofitError
-import retrofit.client.Response
 import java.lang.Exception
 
 private const val TAG = "HomeFeedAdapter"
 
 class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String>>,
-    controller: OldSongController, testSongController: TestSongControllerInterface) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+                          miniPlayerController: SongController,
+                          playlistController: UserRepoPlaylistControllerInterface) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     companion object {
         const val TAG_TRACK = "track"
         const val TAG_FRIEND_PLAYLIST = "friendPlaylist"
@@ -36,14 +34,14 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
     }
     val itemList: ArrayList<Pair<Any, String>>
     val context: Context
-    val controller: OldSongController
-    val testSongController: TestSongControllerInterface
+    val miniPlayerController: SongController
+    val playlistController: UserRepoPlaylistControllerInterface
 
     init {
         this.itemList = itemList
         this.context = context
-        this.controller = controller
-        this.testSongController = testSongController
+        this.miniPlayerController = miniPlayerController
+        this.playlistController = playlistController
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -107,7 +105,7 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
             val songs = pair.second
             usernameField.visibility = View.GONE
 
-            val playlistSongAdapter = HorizontalPlaylistAdapter(context, songs, controller, testSongController)
+            val playlistSongAdapter = HorizontalPlaylistAdapter(context, songs, miniPlayerController, playlistController)
             playlistRv.adapter = playlistSongAdapter
             val linearLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL,
                 false)
@@ -149,17 +147,17 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
             }
 
             heartButton.visibility = View.VISIBLE
-            val heartIcon = if (testSongController.isInPlaylist(track.id)) R.drawable.ufi_heart_active
+            val heartIcon = if (playlistController.isInPlaylist(track.id)) R.drawable.ufi_heart_active
             else R.drawable.ufi_heart
             heartButton.setImageResource(heartIcon)
 
             heartButton.setOnClickListener {
-                if (testSongController.isInPlaylist(track.id)) {
-                    testSongController.removeFromPlaylist(track.id)
+                if (playlistController.isInPlaylist(track.id)) {
+                    playlistController.removeFromPlaylist(track.id)
                     heartButton.setImageResource(R.drawable.ufi_heart)
                 } else {
                     val gson = Gson()
-                    testSongController.addToPlaylist(UserRepositorySong(track.id,
+                    playlistController.addToPlaylist(UserRepositorySong(track.id,
                         gson.toJson(track).toString()), true)
                     heartButton.setImageResource(R.drawable.ufi_heart_active)
                 }
@@ -167,14 +165,14 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
 
             itemView.setOnLongClickListener {
                 val gson = Gson()
-                testSongController.addToPlaylist(UserRepositorySong(track.id,
+                playlistController.addToPlaylist(UserRepositorySong(track.id,
                     gson.toJson(track).toString()), true)
                 heartButton.setImageResource(R.drawable.ufi_heart_active)
                 return@setOnLongClickListener true
             }
 
             itemView.setOnClickListener {
-                controller.playSongOnSpotify(track.uri, track.id)
+                miniPlayerController.playSongOnSpotify(track.uri, track.id)
             }
 
         }

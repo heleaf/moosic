@@ -8,33 +8,31 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.R
-import com.dev.moosic.controllers.OldSongController
-import com.dev.moosic.controllers.TestSongControllerInterface
+import com.dev.moosic.controllers.SongController
+import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import com.dev.moosic.models.Song
 import com.dev.moosic.models.UserRepositorySong
 import com.facebook.drawee.view.SimpleDraweeView
 import com.google.gson.Gson
 import kaaes.spotify.webapi.android.models.Track
-import retrofit.Callback
-import retrofit.RetrofitError
-import retrofit.client.Response
 import java.lang.Exception
 
 private const val TAG = "HorizontalPlaylistAdapter"
-class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>, controller: OldSongController,
-    testSongController: TestSongControllerInterface)
+class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>,
+                                miniPlayerController: SongController,
+                                playlistController: UserRepoPlaylistControllerInterface)
     : RecyclerView.Adapter<HorizontalPlaylistAdapter.ViewHolder>() {
 
     val context: Context
     private val songs: ArrayList<Song>
-    val controller: OldSongController
-    private val testSongController: TestSongControllerInterface
+    val miniPlayerController: SongController
+    private val playlistController: UserRepoPlaylistControllerInterface
 
     init {
         this.context = context
         this.songs = songs
-        this.controller = controller
-        this.testSongController = testSongController
+        this.miniPlayerController = miniPlayerController
+        this.playlistController = playlistController
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -72,13 +70,13 @@ class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>, contro
             val track = gson.fromJson(song.getJsonDataString(), Track::class.java)
 
             itemView.setOnLongClickListener {
-                testSongController.addToPlaylist(UserRepositorySong(track.id,
+                playlistController.addToPlaylist(UserRepositorySong(track.id,
                     gson.toJson(track).toString()), true)
                 return@setOnLongClickListener true
             }
 
             itemView.setOnClickListener {
-                controller.playSongOnSpotify(track.uri, track.id)
+                miniPlayerController.playSongOnSpotify(track.uri, track.id)
             }
 
         }
