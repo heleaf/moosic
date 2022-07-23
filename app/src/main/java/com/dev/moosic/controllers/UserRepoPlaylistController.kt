@@ -3,9 +3,8 @@ package com.dev.moosic.controllers
 import com.dev.moosic.UserRepositoryInterface
 import com.dev.moosic.models.UserRepositorySong
 
-private const val TAG = "TestSongControllerImpl"
 private const val TOAST_ALREADY_IN_PLAYLIST = "This song is already in your playlist"
-class TestSongControllerImpl(private val userRepository: UserRepositoryInterface)
+class UserRepoPlaylistController(private val userRepository: UserRepositoryInterface)
     : UserRepoPlaylistControllerInterface{
 
     override fun getUserPlaylist(): ArrayList<UserRepositorySong> {

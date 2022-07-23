@@ -10,16 +10,13 @@ import retrofit.Callback
 
 interface SongController {
     fun logTrackInModel(trackId: String, weight: Int) : Unit
-    fun addToPlaylist(track: Track, callback: Callback<Unit>) : Unit
-    fun removeFromPlaylist(track: Track, callback: Callback<Unit>)
-    fun removeFromPlaylistAtIndex(track : Track, position : Int) : Unit
-    fun isInPlaylist(track: Track, callback: Callback<Boolean>)
 
     fun loadMoreSearchTracks(query: String, offset: Int,
                              numberItemsToLoad: Int, adapter: TrackAdapter)
     fun loadMoreMixedHomeFeedItems(trackOffset: Int,
                                    numberItemsToLoad: Int, adapter: HomeFeedItemAdapter,
                                    swipeContainer: SwipeRefreshLayout?)
+    fun resetHomeFragment(swipeContainer: SwipeRefreshLayout)
 
     fun playSongOnSpotify(uri: String, spotifyId: String)
     fun pauseSongOnSpotify()
@@ -29,7 +26,4 @@ interface SongController {
 
     fun showMiniPlayerPreview()
     fun hideMiniPlayerPreview(pauseSong: Boolean = true)
-
-    fun logOutFromParse()
-    fun exitSettingsTab()
 }

@@ -23,7 +23,7 @@ import com.dev.moosic.adapters.TaggedContactAdapter
 import com.dev.moosic.adapters.TrackAdapter
 import com.dev.moosic.controllers.FriendsController
 import com.dev.moosic.controllers.SongController
-import com.dev.moosic.controllers.TestSongControllerImpl
+import com.dev.moosic.controllers.UserRepoPlaylistController
 import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import com.dev.moosic.fragments.*
 import com.dev.moosic.localdb.LocalDatabase
@@ -144,7 +144,7 @@ class MainActivity : AppCompatActivity(){
     var currentContactPlaylist: ArrayList<Track> = ArrayList()
 
     val playlistController: UserRepoPlaylistControllerInterface =
-        TestSongControllerImpl(UserRepository())
+        UserRepoPlaylistController(UserRepository())
 
     private lateinit var db : LocalDatabase
     private lateinit var userDao: UserDao
@@ -247,8 +247,6 @@ class MainActivity : AppCompatActivity(){
         miniPlayerFragmentContainer = findViewById(R.id.miniPlayerFlContainer)
 
         extractTopTenSongs()
-        mainActivitySongController.hideMiniPlayerPreview()
-
         setUpCurrentUser()
         fetchTaggedContacts()
         setUpUserRecommendedTracks()
@@ -299,19 +297,20 @@ class MainActivity : AppCompatActivity(){
         playerStateSubscription?.setEventCallback { playerState: PlayerState ->
             val track: com.spotify.protocol.types.Track? = playerState.track
             if (track != null) {
+                mainActivitySongController.showMiniPlayerPreview()
                 val id = Util.getSpotifyIdFromUri(track.uri)
                 if (track.name != currentTrack?.name && currentTrack != null) {
                     mainActivitySongController.logTrackInModel(id, WEIGHT_PLAYED_SONG)
                 }
                 if (track.name != currentTrack?.name) {
                     spotifyApi.service.getTrack(id, object: Callback<Track> {
-                        override fun success(t: Track?, response: Response?) {
-                            if (t != null) {
-                                miniPlayerFragment = MiniPlayerFragment.newInstance(t, mainActivitySongController,
+                        override fun success(kaeesTrack: Track?, response: Response?) {
+                            if (kaeesTrack != null) {
+                                miniPlayerFragment = MiniPlayerFragment.newInstance(kaeesTrack, mainActivitySongController,
                                 playerState.isPaused, playlistController)
                                 fragmentManager.beginTransaction().replace(R.id.miniPlayerFlContainer,
                                 miniPlayerFragment!!).commit()
-                                currentTrack = t
+                                currentTrack = kaeesTrack
                                 currentTrackIsPaused = playerState.isPaused
                                 if (!playerState.isPaused) {
                                     mainActivitySongController.showMiniPlayerPreview()
@@ -640,7 +639,7 @@ class MainActivity : AppCompatActivity(){
             return
         }
 
-        if (homeFeedItems.size > savedSongModel.songs.size) {
+        if (homeFeedItems.size > 0) {
             hideProgressBar()
             val newFragment = MixedHomeFeedFragment.newInstance(homeFeedItems, topTracksDisplayed, mainActivitySongController,
                 playlistController)
@@ -896,8 +895,12 @@ class MainActivity : AppCompatActivity(){
                             contact -> Pair(contact, Contact.KEY_FOLLOWED_CONTACT)
                     }
 
+                    val usersToIgnore = ArrayList<Contact>()
+                    usersToIgnore.addAll(friendParseUsers)
+                    usersToIgnore.addAll(nonFriendParseUsers)
+
                     asyncGetRecommendedFriends(false,
-                        friendParseUsers, DEFAULT_NUMBER_RECOMMENDED_USERS,
+                        usersToIgnore, DEFAULT_NUMBER_RECOMMENDED_USERS,
                         object: Callback<List<Pair<Contact, Double>>> {
                             override fun success(
                                 recs: List<Pair<Contact, Double>>?,
@@ -1015,6 +1018,7 @@ class MainActivity : AppCompatActivity(){
         for (contact in contactsToIgnore) {
             contact.parseUsername?.let { usernamesToIgnore.add(it) }
         }
+        Log.d(TAG, "contacts to ignore: " + usernamesToIgnore)
         userQuery.whereNotContainedIn(Util.PARSEUSER_KEY_USERNAME, usernamesToIgnore)
         userQuery.findInBackground { objects, e ->
             if (e != null) {
@@ -1273,142 +1277,6 @@ class MainActivity : AppCompatActivity(){
             })
         }
 
-        fun addToParsePlaylist(track: Track, callback: Callback<Unit>){
-            logTrackInModel(track.id, WEIGHT_ADDED_SONG_TO_PLAYLIST)
-            isInPlaylist(track, object: Callback<Boolean>  {
-                override fun success(trackInPlaylist: Boolean?, response: Response?) {
-                    if (trackInPlaylist == null) {
-                        Toast.makeText(this@MainActivity,
-                            Util.THROWABLE_NULL_SUCCESS_MESSAGE, Toast.LENGTH_LONG
-                        ).show()
-                        callback.failure(Util.NULL_SUCCESS_ERROR)
-                    }
-                    else if (!trackInPlaylist) {
-                        val newSong = Song.fromTrack(track)
-                        newSong.saveInBackground {
-                            if (it != null) {
-                                Log.e(TAG, "error saving " + track.name + " to Parse")
-                                callback.failure(retrofit.RetrofitError.unexpectedError(
-                                    Util.DUMMY_URL, Throwable(it.message)
-                                ))
-                                return@saveInBackground
-                            }
-                            val user = ParseUser.getCurrentUser()
-                            val playlist = user.getParseObject(Util.PARSEUSER_KEY_PARSE_PLAYLIST)
-                            val playlistSongsRelation
-                                    = playlist?.getRelation<Song>(Util.PARSEPLAYLIST_KEY_SONGS)
-                            playlistSongsRelation?.add(newSong)
-                            parsePlaylistSongs.add(newSong)
-                            playlist?.saveInBackground { e ->
-                                if (e != null) {
-                                    Log.e(TAG, "error adding " + track.name +
-                                            " to parse playlist: " + e.message)
-                                    callback.failure(retrofit.RetrofitError.unexpectedError(
-                                        Util.DUMMY_URL, Throwable(e.message)
-                                    ))
-                                }
-                                else {
-                                    Log.d(TAG, "saving " + track.name + " to parse" +
-                                            " playlist...")
-                                    Toast.makeText(this@MainActivity,
-                                        "Added " + track.name + " to playlist",
-                                        Toast.LENGTH_SHORT).show()
-                                    callback.success(Unit, Util.dummyResponse)
-                                }
-                            }
-                        }
-                    } else {
-                        Toast.makeText(this@MainActivity, TOAST_ALREADY_ADDED_SONG_TO_PLAYLIST,
-                                Toast.LENGTH_LONG).show()
-                        callback.success(Unit, Util.dummyResponse)
-                    }
-                }
-                override fun failure(error: RetrofitError?) {
-                    Toast.makeText(this@MainActivity,
-                        "Error checking playlist: ${error?.message}", Toast.LENGTH_LONG).show()
-                    callback.failure(error)
-                }
-            })
-        }
-
-        override fun addToPlaylist(track: Track, callback: Callback<Unit>) {
-            addToParsePlaylist(track, callback)
-            Log.d(TAG, "adding " + track.name + " To parse")
-        }
-
-        override fun removeFromPlaylist(track: Track, callback: Callback<Unit>) {
-            val position = findTrackPositionInParsePlaylist(track)
-            if (position != -1) {
-                removeFromParsePlaylist(track, position, callback)
-            }
-            else callback.failure(Util.INVALID_INDEX_ERROR)
-        }
-
-        private fun findTrackPositionInParsePlaylist(track: Track): Int {
-            for (i in parsePlaylistSongs.indices) {
-                val song = parsePlaylistSongs.get(i)
-                if (song.getSpotifyId() == track.id) {
-                    return i
-                }
-            }
-            return -1
-        }
-
-        private fun removeFromParsePlaylist(track: Track, position: Int, callback: Callback<Unit>){
-            val user = ParseUser.getCurrentUser()
-            val playlist = user.getParseObject(Util.PARSEUSER_KEY_PARSE_PLAYLIST)
-            val playlistSongsRelation = playlist?.getRelation<Song>(Util.PARSEUSER_KEY_FAVORITE_GENRES)
-            if (parsePlaylistSongs.size <= position) {
-                callback.failure(Util.INVALID_INDEX_ERROR)
-                return
-            }
-            val songToDelete = parsePlaylistSongs.get(position)
-            parsePlaylistSongs.removeAt(position)
-            playlistSongsRelation?.remove(songToDelete)
-            playlist?.saveInBackground {
-                if (it != null) {
-                    callback.failure(retrofit.RetrofitError.unexpectedError(
-                        Util.DUMMY_URL, Throwable(it.message)
-                    ))
-                    return@saveInBackground
-                }
-                Toast.makeText(this@MainActivity,
-                    "Removed ${track.name} from playlist",
-                    Toast.LENGTH_LONG).show()
-                callback.success(Unit, Util.dummyResponse)
-                songToDelete.deleteInBackground()
-            }
-        }
-
-        override fun removeFromPlaylistAtIndex(track: Track, position : Int) {
-            removeFromParsePlaylist(track, position, object: Callback<Unit> {
-                override fun success(t: Unit?, response: Response?) { }
-                override fun failure(error: RetrofitError?) {
-                    error?.message?.let { Log.e(TAG, "error removing at index: " + it) }
-                }
-            })
-        }
-
-        override fun isInPlaylist(track: Track, callback: Callback<Boolean>) {
-            val user = ParseUser.getCurrentUser()
-            val playlist = user.getParseObject(Util.PARSEUSER_KEY_PARSE_PLAYLIST)
-            val playlistSongsRelation
-                    = playlist?.getRelation<Song>(Util.PARSEPLAYLIST_KEY_SONGS)
-            val playlistSongsQuery = playlistSongsRelation?.query
-            playlistSongsQuery?.whereEqualTo(Util.PARSESONG_KEY_SPOTIFY_ID, track.id)
-            playlistSongsQuery?.findInBackground { matchedSongs, relationQueryError ->
-                if (relationQueryError != null) {
-                    callback.failure(retrofit.RetrofitError.unexpectedError(Util.DUMMY_URL,
-                        Throwable(relationQueryError.message)
-                    ))
-                }
-                else if (matchedSongs == null) {
-                    callback.failure(Util.NULL_SUCCESS_ERROR)
-                }
-                callback.success(matchedSongs.size > 0, Util.dummyResponse)
-            }
-        }
-
         override fun loadMoreSearchTracks(query: String, offset: Int, numberItemsToLoad: Int,
                                           adapter: TrackAdapter) {
             loadMoreQueryTracks(query, offset, numberItemsToLoad, false, adapter)
@@ -1447,6 +1315,15 @@ class MainActivity : AppCompatActivity(){
                         swipeContainer?.isRefreshing = false
                     }
                 })
+        }
+
+        override fun resetHomeFragment(swipeContainer: SwipeRefreshLayout) {
+            val fragment = fragmentManager.findFragmentById(R.id.flContainer)
+            if (fragment != null) {
+                fragmentManager.beginTransaction().remove(fragment).commit()
+                homeFeedItems.clear()
+                goToHomeFragment()
+            }
         }
 
         override fun playSongOnSpotify(uri: String, spotifyId: String) {
@@ -1512,7 +1389,7 @@ class MainActivity : AppCompatActivity(){
         }
 
         override fun showMiniPlayerPreview(){
-            if (! (currentContact != null && displayingFriendsFragment)){
+            if (!(currentContact != null && displayingFriendsFragment)){
                 val fragmentToShow = fragmentManager.findFragmentById(R.id.miniPlayerFlContainer)
                 if (fragmentToShow != null) {
                     fragmentManager.beginTransaction().show(fragmentToShow).commit()
@@ -1531,19 +1408,6 @@ class MainActivity : AppCompatActivity(){
             }
             miniPlayerFragmentContainer?.visibility = View.GONE
         }
-
-        override fun logOutFromParse(){
-            ParseUser.logOut()
-            finish()
-        }
-
-        override fun exitSettingsTab() {
-            val fragment = fragmentManager.findFragmentById(R.id.flContainer)
-            if (fragment != null) {
-                fragmentManager.beginTransaction().remove(fragment).commit()
-            }
-        }
-
     }
 
     inner class MainActivityFriendsController() : FriendsController {
@@ -1735,20 +1599,18 @@ class MainActivity : AppCompatActivity(){
                         userPlaylistSongs.remove(song)
                     } else {
                         toast("Saved ${track.name} to playlist")
-//                        Log.d(TAG, savedSongModel.songs.map{song -> song.id}.toString())
                     }
                 }
             }
         }
         override fun removeSongFromUserPlaylist(songId: String) {
-
             val songToRemove = getSongWithId(songId)
             if (songToRemove != null) {
                 userPlaylistSongs.remove(songToRemove)
             } else {
-                // log error
+                toast("Error in removing, song not found in playlist")
+                return
             }
-
             val user = ParseUser.getCurrentUser()
             val playlist = user.getParseObject(Util.PARSEUSER_KEY_PARSE_PLAYLIST)
             val playlistSongsRelation = playlist?.getRelation<Song>(Util.PARSEPLAYLIST_KEY_SONGS)
@@ -1757,12 +1619,12 @@ class MainActivity : AppCompatActivity(){
                 ?.findInBackground { matchedSongs, error ->
                     if (error != null || matchedSongs == null) {
                         toast("Failed to fetch user playlist: ${error?.message}")
-                        songToRemove?.let { userPlaylistSongs.add(it) }
+                        songToRemove.let { userPlaylistSongs.add(it) }
                         return@findInBackground
                     }
                     if (matchedSongs.size == 0) {
                         toast("Song not found in playlist")
-                        songToRemove?.let { userPlaylistSongs.add(it) }
+                        songToRemove.let { userPlaylistSongs.add(it) }
                         return@findInBackground
                     }
                     else {
@@ -1771,7 +1633,7 @@ class MainActivity : AppCompatActivity(){
                         playlist.saveInBackground {
                             parseException -> if (parseException != null) {
                                 toast("Failed to save playlist")
-                                songToRemove?.let { userPlaylistSongs.add(it) }
+                                songToRemove.let { userPlaylistSongs.add(it) }
                                 return@saveInBackground
                             }
                             toast("Removed ${parseSongToRemove.getName()} from playlist")
@@ -1793,8 +1655,7 @@ class MainActivity : AppCompatActivity(){
                         }
                     }
                 }
-                override fun failure(error: RetrofitError?) {
-                }
+                override fun failure(error: RetrofitError?) {}
             })
         }
 

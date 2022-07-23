@@ -15,18 +15,16 @@ import com.google.gson.Gson
 import kaaes.spotify.webapi.android.models.Track
 import java.lang.Exception
 
-private const val TAG = "TopTrackAdapter"
+private const val TAG = "TrackAdapter"
 private const val EMPTY_STR = ""
 private const val ARTIST_STR_SEPARATOR = ", "
 
 class TrackAdapter(context : Context, tracks : ArrayList<Track>,
-                   miniPlayerController : SongController,
-                   playlistController: UserRepoPlaylistControllerInterface)
+                   private val miniPlayerController : SongController,
+                   private val playlistController: UserRepoPlaylistControllerInterface)
     : RecyclerView.Adapter<TrackAdapter.ViewHolder>() {
     var context : Context
     var tracks : ArrayList<Track> = ArrayList()
-    val miniPlayerController : SongController = miniPlayerController
-    val playlistCOntroller : UserRepoPlaylistControllerInterface = playlistController
     val adapter = this
 
     init {
@@ -62,7 +60,6 @@ class TrackAdapter(context : Context, tracks : ArrayList<Track>,
             heartButton = itemView.findViewById(R.id.heartButton)
         }
         fun bind(track: Track, position: Int) {
-            Log.d(TAG, "binding " + track.name)
             val trackTitleText = track.name
             trackTitle.setText(trackTitleText)
 
@@ -83,17 +80,17 @@ class TrackAdapter(context : Context, tracks : ArrayList<Track>,
 
             heartButton.visibility = View.VISIBLE
 
-            val heartIcon = if (playlistCOntroller.isInPlaylist(track.id)) R.drawable.ufi_heart_active
+            val heartIcon = if (playlistController.isInPlaylist(track.id)) R.drawable.ufi_heart_active
             else R.drawable.ufi_heart
             heartButton.setImageResource(heartIcon)
 
             heartButton.setOnClickListener {
-                if (playlistCOntroller.isInPlaylist(track.id)) {
-                    playlistCOntroller.removeFromPlaylist(track.id)
+                if (playlistController.isInPlaylist(track.id)) {
+                    playlistController.removeFromPlaylist(track.id)
                     heartButton.setImageResource(R.drawable.ufi_heart)
                 } else {
                     val gson = Gson()
-                    playlistCOntroller.addToPlaylist(
+                    playlistController.addToPlaylist(
                         UserRepositorySong(track.id,
                         gson.toJson(track).toString()), true)
                     heartButton.setImageResource(R.drawable.ufi_heart_active)
@@ -102,7 +99,7 @@ class TrackAdapter(context : Context, tracks : ArrayList<Track>,
 
             itemView.setOnLongClickListener {
                 val gson = Gson()
-                playlistCOntroller.addToPlaylist(
+                playlistController.addToPlaylist(
                     UserRepositorySong(track.id,
                     gson.toJson(track).toString()), true)
                 heartButton.setImageResource(R.drawable.ufi_heart_active)

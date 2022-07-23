@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.EndlessRecyclerViewScrollListener
 import com.dev.moosic.LoadMoreFunction
 import com.dev.moosic.R
@@ -21,7 +22,7 @@ private const val ARG_TOP_TRACKS_LIST = "topTracksList"
 
 private const val TAG = "MixedHomeFeedFragment"
 
-class MixedHomeFeedFragment(private val miniPlayerController: SongController,
+class MixedHomeFeedFragment(private val songController: SongController,
                             private val playlistController: UserRepoPlaylistControllerInterface) : Fragment() {
     private var mixedItemList : ArrayList<Pair<Any, String>> = ArrayList()
     private var topTracksList : ArrayList<Track> = ArrayList()
@@ -59,7 +60,7 @@ class MixedHomeFeedFragment(private val miniPlayerController: SongController,
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         mixedItemListRv = view.findViewById(R.id.mixedItemsRv)
-        adapter = HomeFeedItemAdapter(view.context, mixedItemList, miniPlayerController, playlistController)
+        adapter = HomeFeedItemAdapter(view.context, mixedItemList, songController, playlistController)
 
         mixedItemListRv.adapter = adapter
         val linearLayoutManager = LinearLayoutManager(context)
@@ -68,11 +69,16 @@ class MixedHomeFeedFragment(private val miniPlayerController: SongController,
         scrollListener = EndlessRecyclerViewScrollListener(linearLayoutManager,
             object: LoadMoreFunction {
             override fun onLoadMore(page: Int, totalItemsCount: Int, view: RecyclerView?) {
-                miniPlayerController.loadMoreMixedHomeFeedItems(topTracksList.size,
+                songController.loadMoreMixedHomeFeedItems(topTracksList.size,
                     totalItemsCount, adapter, null)
             }
         })
 
         mixedItemListRv.addOnScrollListener(scrollListener)
+
+        val swipeRefreshLayout : SwipeRefreshLayout = view.findViewById(R.id.homeFeedSwipeContainer)
+        swipeRefreshLayout.setOnRefreshListener {
+            songController.resetHomeFragment(swipeRefreshLayout)
+        }
     }
 }
