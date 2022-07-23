@@ -22,7 +22,7 @@ private const val STR_UNKNOWN_TAG = ""
 private const val STR_INVALID_INDEX = "Invalid index"
 private const val TAG = "FriendsFragment"
 
-class FriendsFragment(private var friendsController: FriendsController) : Fragment() {
+class FriendsFragment(private val friendsController: FriendsController) : Fragment() {
     private lateinit var rvContacts : RecyclerView
     lateinit var adapter : TaggedContactAdapter
     lateinit var emptyFriendsText : TextView

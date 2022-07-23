@@ -14,16 +14,16 @@ import com.dev.moosic.models.Contact
 
 class TaggedContactAdapter (context: Context,
                             contactList: List<Pair<Contact, String>>,
-                            friendsController: FriendsController
+                            private val friendsController: FriendsController
 ) : RecyclerView.Adapter<TaggedContactAdapter.ViewHolder>() {
     var contactList : List<Pair<Contact, String>> = ArrayList()
     var context : Context
-    var friendsController : FriendsController
+
     val adapter = this
+
     init {
         this.context = context
         this.contactList = contactList
-        this.friendsController = friendsController
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {

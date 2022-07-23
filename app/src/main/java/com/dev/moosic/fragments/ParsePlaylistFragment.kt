@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.*
 import com.dev.moosic.adapters.SongAdapter
-import com.dev.moosic.controllers.SongController
+import com.dev.moosic.controllers.MainActivityControllerInterface
 import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import com.dev.moosic.models.Song
 import org.parceler.Parcels
@@ -19,7 +19,7 @@ import org.parceler.Parcels
 
 private const val ARG_PLAYLIST_SONGS = "playlistSongs"
 
-open class ParsePlaylistFragment(private val miniPlayerController : SongController,
+open class ParsePlaylistFragment(private val mainActivitySongController : MainActivityControllerInterface,
                                  private val playlistController: UserRepoPlaylistControllerInterface) : Fragment() {
     private var songs: ArrayList<Song> = ArrayList()
 
@@ -46,9 +46,9 @@ open class ParsePlaylistFragment(private val miniPlayerController : SongControll
     companion object {
         @JvmStatic
         fun newInstance(playlistSongs: ArrayList<Song>,
-                        miniPlayerController: SongController,
+                        mainActivitySongController: MainActivityControllerInterface,
                         playlistController: UserRepoPlaylistControllerInterface) =
-            ParsePlaylistFragment(miniPlayerController, playlistController).apply {
+            ParsePlaylistFragment(mainActivitySongController, playlistController).apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_PLAYLIST_SONGS, Parcels.wrap(playlistSongs))
                 }
@@ -64,7 +64,7 @@ open class ParsePlaylistFragment(private val miniPlayerController : SongControll
         rvPlaylistTracks = view.findViewById(R.id.rvPlaylistTracks)
 
         adapter = SongAdapter(view.context,
-            miniPlayerController, emptyPlaylistText, playlistController)
+            mainActivitySongController, emptyPlaylistText, playlistController)
 
         rvPlaylistTracks.adapter = adapter
 

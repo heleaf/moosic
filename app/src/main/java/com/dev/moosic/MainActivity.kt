@@ -22,7 +22,7 @@ import com.dev.moosic.adapters.HomeFeedItemAdapter
 import com.dev.moosic.adapters.TaggedContactAdapter
 import com.dev.moosic.adapters.TrackAdapter
 import com.dev.moosic.controllers.FriendsController
-import com.dev.moosic.controllers.SongController
+import com.dev.moosic.controllers.MainActivityControllerInterface
 import com.dev.moosic.controllers.UserRepoPlaylistController
 import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import com.dev.moosic.fragments.*
@@ -34,7 +34,7 @@ import com.dev.moosic.models.Contact
 import com.dev.moosic.models.Song
 import com.dev.moosic.models.SongFeatures
 import com.dev.moosic.models.UserRepositorySong
-import com.dev.moosic.viewmodels.TestViewModel
+import com.dev.moosic.viewmodels.SavedSongsViewModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.gson.Gson
 import com.parse.ParseQuery
@@ -144,12 +144,12 @@ class MainActivity : AppCompatActivity(){
     var currentContactPlaylist: ArrayList<Track> = ArrayList()
 
     val playlistController: UserRepoPlaylistControllerInterface =
-        UserRepoPlaylistController(UserRepository())
+        UserRepoPlaylistController(UserPlaylistRepository())
 
     private lateinit var db : LocalDatabase
     private lateinit var userDao: UserDao
 
-    private val savedSongModel = TestViewModel()
+    private val savedSongModel = SavedSongsViewModel()
     private var displayingCachedSongs = true
 
     private fun saveTopTenSongs() {
@@ -811,9 +811,7 @@ class MainActivity : AppCompatActivity(){
                     Util.RESULT_CODE_LOG_OUT -> {
                         finish()
                     }
-                    Util.RESULT_CODE_EXIT_SETTINGS -> {
-                        // do nothing?
-                    }
+                    Util.RESULT_CODE_EXIT_SETTINGS -> { }
                     else -> { }
                 }
             }
@@ -1261,7 +1259,7 @@ class MainActivity : AppCompatActivity(){
         }
     }
 
-    inner class MainActivitySongController() : SongController {
+    inner class MainActivitySongController() : MainActivityControllerInterface {
 
         override fun logTrackInModel(trackId: String, weight: Int) {
             spotifyApi.service.getTrackAudioFeatures(trackId, object: Callback<AudioFeaturesTrack> {
@@ -1283,13 +1281,13 @@ class MainActivity : AppCompatActivity(){
         }
 
         override fun loadMoreMixedHomeFeedItems(
-            topTrackOffset: Int,
+            trackOffset: Int,
             numberItemsToLoad: Int,
             adapter: HomeFeedItemAdapter,
             swipeContainer: SwipeRefreshLayout?
         ) {
             val queryMap = mapOf(Util.SPOTIFY_QUERY_PARAM_LIMIT to numberItemsToLoad,
-                Util.SPOTIFY_QUERY_PARAM_OFFSET to topTrackOffset)
+                Util.SPOTIFY_QUERY_PARAM_OFFSET to trackOffset)
             spotifyApi.service.getTopTracks(
                 queryMap,
                 object : Callback<Pager<kaaes.spotify.webapi.android.models.Track>> {
@@ -1411,8 +1409,8 @@ class MainActivity : AppCompatActivity(){
     }
 
     inner class MainActivityFriendsController() : FriendsController {
-        val currentUser = ParseUser.getCurrentUser()
-        val currentUserFollowedRelation
+        val currentUser: ParseUser = ParseUser.getCurrentUser()
+        private val currentUserFollowedRelation
         = currentUser.getRelation<ParseUser>(Util.PARSEUSER_KEY_USERS_FOLLOWED)
 
         override fun followContact(contact: Contact, position: Int, adapter: TaggedContactAdapter) {
@@ -1526,7 +1524,8 @@ class MainActivity : AppCompatActivity(){
         }
 
         private fun goToFriendsPlaylistFragment(contact: Contact, animate: Boolean) {
-            val newFragment = FriendPlaylistFragment.newInstance(currentContactPlaylist, mainActivitySongController, playlistController)
+            val newFragment = FriendPlaylistFragment.newInstance(currentContactPlaylist,
+                mainActivitySongController, playlistController)
             if (animate) {
                 fragmentManager.beginTransaction()
                     .setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left,
@@ -1569,7 +1568,7 @@ class MainActivity : AppCompatActivity(){
         else { super.onBackPressed() }
     }
 
-    inner class UserRepository(): UserRepositoryInterface {
+    inner class UserPlaylistRepository(): UserRepositoryInterface {
         private var userPlaylistSongs : ArrayList<UserRepositorySong> = ArrayList()
 
         override fun getUserPlaylistSongs(): ArrayList<UserRepositorySong> {

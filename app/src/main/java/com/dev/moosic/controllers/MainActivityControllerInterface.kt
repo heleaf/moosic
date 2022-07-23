@@ -8,7 +8,7 @@ import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcel
 import retrofit.Callback
 
-interface SongController {
+interface MainActivityControllerInterface {
     fun logTrackInModel(trackId: String, weight: Int) : Unit
 
     fun loadMoreSearchTracks(query: String, offset: Int,

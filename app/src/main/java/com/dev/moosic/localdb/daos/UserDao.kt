@@ -2,7 +2,6 @@ package com.dev.moosic.localdb.daos
 
 import androidx.room.*
 import com.dev.moosic.localdb.LocalDbUtil
-import com.dev.moosic.localdb.entities.SavedSong
 import com.dev.moosic.localdb.entities.SavedUser
 
 @Dao

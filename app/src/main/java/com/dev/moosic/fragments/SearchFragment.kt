@@ -12,7 +12,7 @@ import com.dev.moosic.EndlessRecyclerViewScrollListener
 import com.dev.moosic.LoadMoreFunction
 import com.dev.moosic.R
 import com.dev.moosic.adapters.TrackAdapter
-import com.dev.moosic.controllers.SongController
+import com.dev.moosic.controllers.MainActivityControllerInterface
 import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
@@ -20,7 +20,7 @@ import org.parceler.Parcels
 private const val ARG_SEARCHED_TRACKS = "searchedTracks"
 private const val ARG_SEARCHED_QUERY_STR = "searchedQuery"
 
-class SearchFragment(private val miniPlayerController: SongController,
+class SearchFragment(private val mainActivitySongController: MainActivityControllerInterface,
                      private val playlistController: UserRepoPlaylistControllerInterface
 ) : Fragment() {
     private var searchedTracks: ArrayList<Track> = ArrayList()
@@ -52,9 +52,9 @@ class SearchFragment(private val miniPlayerController: SongController,
     companion object {
         @JvmStatic
         fun newInstance(searchedTracks : ArrayList<Track>, searchedQuery: String,
-                        miniPlayerController : SongController,
+                        mainActivitySongController : MainActivityControllerInterface,
                         playlistController: UserRepoPlaylistControllerInterface) =
-            SearchFragment(miniPlayerController, playlistController).apply {
+            SearchFragment(mainActivitySongController, playlistController).apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_SEARCHED_TRACKS, Parcels.wrap(searchedTracks))
                     putString(ARG_SEARCHED_QUERY_STR, searchedQuery)
@@ -66,7 +66,7 @@ class SearchFragment(private val miniPlayerController: SongController,
         super.onViewCreated(view, savedInstanceState)
         rvSearchedTracks = view.findViewById(R.id.rvSearchedTracks)
         adapter = TrackAdapter(view.context, searchedTracks,
-            miniPlayerController, playlistController)
+            mainActivitySongController, playlistController)
 
         rvSearchedTracks.adapter = adapter
         val linearLayoutManager = LinearLayoutManager(context)
@@ -76,7 +76,7 @@ class SearchFragment(private val miniPlayerController: SongController,
             scrollListener = EndlessRecyclerViewScrollListener(linearLayoutManager,
                 object: LoadMoreFunction {
                 override fun onLoadMore(page: Int, totalItemsCount: Int, view: RecyclerView?) {
-                    miniPlayerController.loadMoreSearchTracks(currentQuery, searchedTracks.size,
+                    mainActivitySongController.loadMoreSearchTracks(currentQuery, searchedTracks.size,
                         totalItemsCount, adapter)
                 }
             })

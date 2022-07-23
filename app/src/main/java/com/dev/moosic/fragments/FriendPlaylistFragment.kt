@@ -10,14 +10,15 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.R
 import com.dev.moosic.adapters.TrackAdapter
-import com.dev.moosic.controllers.SongController
+import com.dev.moosic.controllers.MainActivityControllerInterface
 import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
 
 private const val ARG_TRACKS = "tracks"
 
-class FriendPlaylistFragment(private val miniPlayerController: SongController, private val playlistController: UserRepoPlaylistControllerInterface) : Fragment() {
+class FriendPlaylistFragment(private val mainActivitySongController: MainActivityControllerInterface,
+                             private val playlistController: UserRepoPlaylistControllerInterface) : Fragment() {
     private var tracks = ArrayList<Track>()
     private lateinit var rvSongs: RecyclerView
     private lateinit var adapter: TrackAdapter
@@ -39,9 +40,9 @@ class FriendPlaylistFragment(private val miniPlayerController: SongController, p
 
     companion object {
         @JvmStatic
-        fun newInstance(tracks : ArrayList<Track>, miniPlayerController: SongController,
+        fun newInstance(tracks : ArrayList<Track>, mainActivitySongController: MainActivityControllerInterface,
                         playlistController: UserRepoPlaylistControllerInterface) =
-            FriendPlaylistFragment(miniPlayerController, playlistController).apply {
+            FriendPlaylistFragment(mainActivitySongController, playlistController).apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_TRACKS, Parcels.wrap(tracks))
                 }
@@ -51,7 +52,7 @@ class FriendPlaylistFragment(private val miniPlayerController: SongController, p
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         rvSongs = view.findViewById(R.id.userDetailSongsRv)
-        adapter = TrackAdapter(view.context, tracks, miniPlayerController, playlistController)
+        adapter = TrackAdapter(view.context, tracks, mainActivitySongController, playlistController)
         rvSongs.adapter = adapter
 
         val linearLayoutManager = LinearLayoutManager(context)

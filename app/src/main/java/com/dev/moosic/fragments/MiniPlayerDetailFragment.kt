@@ -12,7 +12,7 @@ import android.widget.ImageView
 import android.widget.SeekBar
 import android.widget.TextView
 import com.dev.moosic.R
-import com.dev.moosic.controllers.SongController
+import com.dev.moosic.controllers.MainActivityControllerInterface
 import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import com.dev.moosic.models.UserRepositorySong
 import com.facebook.drawee.view.SimpleDraweeView
@@ -28,7 +28,7 @@ private const val TAG = "MiniPlayerDetailFragment"
 private const val EMPTY_STR = ""
 private const val ARTIST_STR_SEPARATOR = ", "
 
-class MiniPlayerDetailFragment(private val miniPlayerController: SongController,
+class MiniPlayerDetailFragment(private val mainActivitySongController: MainActivityControllerInterface,
                                private val playlistController: UserRepoPlaylistControllerInterface) : Fragment() {
     private lateinit var currentTrack: Track
     lateinit var trackTitle: TextView
@@ -85,7 +85,7 @@ class MiniPlayerDetailFragment(private val miniPlayerController: SongController,
         }
 
         backToHome.setOnClickListener {
-            miniPlayerController.exitMiniPlayerDetailView()
+            mainActivitySongController.exitMiniPlayerDetailView()
         }
 
         if (isPaused){
@@ -99,12 +99,12 @@ class MiniPlayerDetailFragment(private val miniPlayerController: SongController,
 
         playPauseButton.setOnClickListener {
             if (isPaused) {
-                miniPlayerController.resumeSongOnSpotify()
+                mainActivitySongController.resumeSongOnSpotify()
                 playPauseButton.setImageResource(android.R.drawable.ic_media_pause)
                 trackAlbumCover.startAnimation(
                     AnimationUtils.loadAnimation(activity, R.anim.rotate_indefinitely) )
             } else {
-                miniPlayerController.pauseSongOnSpotify()
+                mainActivitySongController.pauseSongOnSpotify()
                 playPauseButton.setImageResource(android.R.drawable.ic_media_play)
                 trackAlbumCover.clearAnimation()
             }
@@ -130,9 +130,9 @@ class MiniPlayerDetailFragment(private val miniPlayerController: SongController,
 
     companion object {
         @JvmStatic
-        fun newInstance(track: Track, miniPlayerController: SongController,
+        fun newInstance(track: Track, mainActivitySongController: MainActivityControllerInterface,
                         isPaused: Boolean, playlistController: UserRepoPlaylistControllerInterface) =
-            MiniPlayerDetailFragment(miniPlayerController, playlistController).apply {
+            MiniPlayerDetailFragment(mainActivitySongController, playlistController).apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_CURRENT_TRACK, Parcels.wrap(track))
                     putBoolean(ARG_IS_PAUSED, isPaused)

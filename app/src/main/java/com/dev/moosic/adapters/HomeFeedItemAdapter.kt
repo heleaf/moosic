@@ -10,7 +10,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.R
-import com.dev.moosic.controllers.SongController
+import com.dev.moosic.controllers.MainActivityControllerInterface
 import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import com.dev.moosic.models.Contact
 import com.dev.moosic.models.Song
@@ -23,8 +23,8 @@ import java.lang.Exception
 private const val TAG = "HomeFeedAdapter"
 
 class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String>>,
-                          miniPlayerController: SongController,
-                          playlistController: UserRepoPlaylistControllerInterface) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+                          private val mainActivitySongController: MainActivityControllerInterface,
+                          private val playlistController: UserRepoPlaylistControllerInterface) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     companion object {
         const val TAG_TRACK = "track"
         const val TAG_FRIEND_PLAYLIST = "friendPlaylist"
@@ -34,14 +34,10 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
     }
     val itemList: ArrayList<Pair<Any, String>>
     val context: Context
-    val miniPlayerController: SongController
-    val playlistController: UserRepoPlaylistControllerInterface
 
     init {
         this.itemList = itemList
         this.context = context
-        this.miniPlayerController = miniPlayerController
-        this.playlistController = playlistController
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -105,7 +101,8 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
             val songs = pair.second
             usernameField.visibility = View.GONE
 
-            val playlistSongAdapter = HorizontalPlaylistAdapter(context, songs, miniPlayerController, playlistController)
+            val playlistSongAdapter = HorizontalPlaylistAdapter(context, songs,
+                this@HomeFeedItemAdapter.mainActivitySongController, playlistController)
             playlistRv.adapter = playlistSongAdapter
             val linearLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL,
                 false)
@@ -172,7 +169,7 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
             }
 
             itemView.setOnClickListener {
-                miniPlayerController.playSongOnSpotify(track.uri, track.id)
+                this@HomeFeedItemAdapter.mainActivitySongController.playSongOnSpotify(track.uri, track.id)
             }
 
         }

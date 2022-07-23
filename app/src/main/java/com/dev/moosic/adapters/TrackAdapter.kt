@@ -7,7 +7,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.R
-import com.dev.moosic.controllers.SongController
+import com.dev.moosic.controllers.MainActivityControllerInterface
 import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import com.dev.moosic.models.UserRepositorySong
 import com.facebook.drawee.view.SimpleDraweeView
@@ -20,7 +20,7 @@ private const val EMPTY_STR = ""
 private const val ARTIST_STR_SEPARATOR = ", "
 
 class TrackAdapter(context : Context, tracks : ArrayList<Track>,
-                   private val miniPlayerController : SongController,
+                   private val miniPlayerController : MainActivityControllerInterface,
                    private val playlistController: UserRepoPlaylistControllerInterface)
     : RecyclerView.Adapter<TrackAdapter.ViewHolder>() {
     var context : Context

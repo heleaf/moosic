@@ -10,7 +10,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.R
 import com.dev.moosic.Util
-import com.dev.moosic.controllers.SongController
+import com.dev.moosic.controllers.MainActivityControllerInterface
 import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import com.dev.moosic.models.UserRepositorySong
 import com.facebook.drawee.view.SimpleDraweeView
@@ -24,19 +24,16 @@ private const val EMPTY_STR = ""
 private const val ARTIST_STR_SEPARATOR = ", "
 
 class SongAdapter(
-    context: Context, miniPlayerController: SongController,
+    context: Context, private val mainActivitySongController: MainActivityControllerInterface,
     emptyPlaylistText: TextView?,
-    playlistController: UserRepoPlaylistControllerInterface
+    private val playlistController: UserRepoPlaylistControllerInterface
 )
     : RecyclerView.Adapter<SongAdapter.ViewHolder>(){
 
     var context: Context
     var songs: ArrayList<UserRepositorySong> = ArrayList()
-    val miniPlayerController : SongController = miniPlayerController
     var spotifyUserId : String? = null
     var emptyPlaylistText: TextView?
-
-    val playlistController : UserRepoPlaylistControllerInterface = playlistController
 
     init {
         this.context = context
@@ -100,7 +97,7 @@ class SongAdapter(
                 val id = track.id
                 if (id != null){
                     track.uri
-                        ?.let { uri -> miniPlayerController.playSongOnSpotify(uri, id) }
+                        ?.let { uri -> mainActivitySongController.playSongOnSpotify(uri, id) }
                 }
             }
 

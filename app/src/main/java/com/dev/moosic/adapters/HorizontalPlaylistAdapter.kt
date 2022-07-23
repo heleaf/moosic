@@ -8,7 +8,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.R
-import com.dev.moosic.controllers.SongController
+import com.dev.moosic.controllers.MainActivityControllerInterface
 import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import com.dev.moosic.models.Song
 import com.dev.moosic.models.UserRepositorySong
@@ -19,20 +19,16 @@ import java.lang.Exception
 
 private const val TAG = "HorizontalPlaylistAdapter"
 class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>,
-                                miniPlayerController: SongController,
-                                playlistController: UserRepoPlaylistControllerInterface)
+                                private val miniPlayerController: MainActivityControllerInterface,
+                                private val playlistController: UserRepoPlaylistControllerInterface)
     : RecyclerView.Adapter<HorizontalPlaylistAdapter.ViewHolder>() {
 
     val context: Context
     private val songs: ArrayList<Song>
-    val miniPlayerController: SongController
-    private val playlistController: UserRepoPlaylistControllerInterface
 
     init {
         this.context = context
         this.songs = songs
-        this.miniPlayerController = miniPlayerController
-        this.playlistController = playlistController
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
