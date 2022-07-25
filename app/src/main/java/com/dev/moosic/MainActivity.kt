@@ -152,35 +152,6 @@ class MainActivity : AppCompatActivity(){
     private val savedSongModel = SavedSongsViewModel()
     private var displayingCachedSongs = true
 
-    private fun saveTopTenSongs() {
-        savedSongModel.viewModelScope.launch {
-            val gson = Gson()
-            val savedSongsObject = gson.toJson(savedSongModel.songs)
-            val currentUsername = ParseUser.getCurrentUser().username
-            val currentUserId = ParseUser.getCurrentUser().objectId
-            val user = userDao.getUser(currentUsername)
-            if (user == null) {
-                userDao.insertUserInfo(SavedUser(currentUsername, currentUserId, savedSongsObject))
-            } else {
-                userDao.updateUserInfo(SavedUser(currentUsername, currentUserId, savedSongsObject))
-            }
-        }
-    }
-
-    private fun extractTopTenSongs() {
-        savedSongModel.viewModelScope.launch {
-            val user = db.userDao().getUser(ParseUser.getCurrentUser().username)
-            if (user != null) {
-                val gson = Gson()
-                val songStr = user.savedSongs
-                val songList : Array<UserRepositorySong> = gson.fromJson(songStr,
-                    Array<UserRepositorySong>::class.java)
-                savedSongModel.songs.addAll(songList)
-                goToHomeFragment()
-            }
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -210,33 +181,15 @@ class MainActivity : AppCompatActivity(){
         bottomNavigationView.setOnItemSelectedListener { menuItem : MenuItem ->
             when (menuItem.itemId) {
                 R.id.actionHome -> {
-                    supportActionBar?.setHomeAsUpIndicator(android.R.drawable.stat_sys_headset)
-                    displayingProfileFragment = false
-                    displayingFriendsFragment = false
-                    supportActionBar?.setDisplayShowTitleEnabled(false)
-                    searchMenuItem?.collapseActionView()
                     goToHomeFragment()
                 }
                 R.id.actionSearch -> {
-                    supportActionBar?.setHomeAsUpIndicator(android.R.drawable.stat_sys_headset)
-                    displayingProfileFragment = false
-                    displayingFriendsFragment = false
-                    supportActionBar?.setDisplayShowTitleEnabled(false)
                     goToSearchFragment()
                 }
                 R.id.actionProfile -> {
-                    supportActionBar?.setHomeAsUpIndicator(android.R.drawable.stat_sys_headset)
-                    displayingProfileFragment = true
-                    displayingFriendsFragment = false
-                    supportActionBar?.setDisplayShowTitleEnabled(false)
-                    searchMenuItem?.collapseActionView()
                     goToProfilePlaylistFragment()
                 }
                 R.id.actionFriends -> {
-                    displayingProfileFragment = false
-                    displayingFriendsFragment = true
-                    supportActionBar?.setDisplayShowTitleEnabled(false)
-                    searchMenuItem?.collapseActionView()
                     goToFriendsFragment() }
                 else -> {}
             }
@@ -246,7 +199,9 @@ class MainActivity : AppCompatActivity(){
         progressBar = findViewById(R.id.pbLoadingSearch)
         miniPlayerFragmentContainer = findViewById(R.id.miniPlayerFlContainer)
 
-        extractTopTenSongs()
+        Util.extractTopTenSongs(savedSongModel, db) {
+            if (displayingHomeFragment) goToHomeFragment()
+        }
         setUpCurrentUser()
         fetchTaggedContacts()
         setUpUserRecommendedTracks()
@@ -410,7 +365,9 @@ class MainActivity : AppCompatActivity(){
             }
 
         }
-        goToHomeFragment()
+        if (displayingHomeFragment){
+            goToHomeFragment()
+        }
     }
 
     private fun setUpUserRecommendedTracks() {
@@ -472,6 +429,13 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun goToProfilePlaylistFragment() {
+        supportActionBar?.setHomeAsUpIndicator(android.R.drawable.stat_sys_headset)
+        displayingProfileFragment = true
+        displayingFriendsFragment = false
+        displayingHomeFragment = false
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+        searchMenuItem?.collapseActionView()
+
         if (!filledUserPlaylist) {
             showProgressBar()
         }
@@ -486,6 +450,12 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun goToFriendsFragment() {
+        displayingProfileFragment = false
+        displayingFriendsFragment = true
+        displayingHomeFragment = false
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+        searchMenuItem?.collapseActionView()
+
         if (!filledContacts) {
             showProgressBar()
         }
@@ -504,6 +474,12 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun goToSearchFragment() {
+        supportActionBar?.setHomeAsUpIndicator(android.R.drawable.stat_sys_headset)
+        displayingProfileFragment = false
+        displayingFriendsFragment = false
+        displayingHomeFragment = false
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+
         hideProgressBar()
         searchMenuItem?.isVisible = true
         settingsMenuItem?.isVisible = false
@@ -616,6 +592,13 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun goToHomeFragment() {
+        supportActionBar?.setHomeAsUpIndicator(android.R.drawable.stat_sys_headset)
+        displayingProfileFragment = false
+        displayingFriendsFragment = false
+        displayingHomeFragment = true
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+        searchMenuItem?.collapseActionView()
+
         searchMenuItem?.isVisible = false
         settingsMenuItem?.isVisible = false
 
@@ -680,7 +663,7 @@ class MainActivity : AppCompatActivity(){
                                 count += 1
                             }
                         }
-                        saveTopTenSongs()
+                        Util.saveTopTenSongs(savedSongModel, db)
 
                         hideProgressBar()
                         val newFragment = MixedHomeFeedFragment.newInstance(homeFeedItems, topTracksDisplayed, mainActivitySongController,

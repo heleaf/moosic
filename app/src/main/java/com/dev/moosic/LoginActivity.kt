@@ -1,6 +1,10 @@
 package com.dev.moosic
 
+import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -20,6 +24,7 @@ private const val LOGGED_OUT_REQUEST_CODE = 1338
 private const val TOAST_USERNAME_EMPTY = "Username cannot be empty"
 private const val TOAST_PASSWORD_EMPTY = "Password cannot be empty"
 private const val TOAST_LOGIN_ISSUE = "Issue with login: "
+private const val TOAST_NOT_CONNECTED_TO_INTERNET = "Cannot log in, no Internet connection found"
 
 private const val DEFAULT_USERNAME_TEXT = ""
 private const val DEFAULT_PASSWORD_TEXT = ""
@@ -52,6 +57,10 @@ class LoginActivity : AppCompatActivity() {
         })
 
         etSignupButton.setOnClickListener(View.OnClickListener {
+            if (!isConnectedToInternet(this)) {
+                Toast.makeText(this, TOAST_NOT_CONNECTED_TO_INTERNET, Toast.LENGTH_LONG).show()
+                return@OnClickListener
+            }
             val intent = Intent(this, SignUpActivity::class.java)
             val usernameText = etUsername.text.toString();
             val passwordText = etPassword.text.toString();
@@ -60,12 +69,15 @@ class LoginActivity : AppCompatActivity() {
             intent.putExtra(Util.INTENT_KEY_SPOTIFY_ACCESS_TOKEN, accessToken)
             startActivity(intent)
         })
-
     }
 
     override fun onStart() {
         super.onStart()
         if (ParseUser.getCurrentUser() != null){
+            if (!isConnectedToInternet(this)) {
+                goOfflineMainActivity()
+                return
+            }
             SpotifyAuthController(this).authorizeUser()
         }
     }
@@ -78,15 +90,16 @@ class LoginActivity : AppCompatActivity() {
                 AuthorizationResponse.Type.TOKEN -> {
                     accessToken = response.accessToken
                     if (ParseUser.getCurrentUser() != null) {
+                        if (!isConnectedToInternet(this)) {
+                            Log.d(TAG, "not connected")
+                            goOfflineMainActivity()
+                        }
+                        Log.d(TAG, "connected")
                         goMainActivity();
                     }
                 }
                 AuthorizationResponse.Type.ERROR -> {
-                    Log.e(TAG, response.error)
                     Toast.makeText(this, response.error, Toast.LENGTH_LONG).show()
-                    if (ParseUser.getCurrentUser() != null) {
-                        goMainActivity();
-                    }
                 }
                 else -> { Log.d(TAG, response.type.toString()) }
             }
@@ -97,6 +110,9 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun logInUser(usernameText: String, passwordText: String) {
+        if (!isConnectedToInternet(this)) {
+            Toast.makeText(this, TOAST_NOT_CONNECTED_TO_INTERNET, Toast.LENGTH_LONG).show()
+        }
         ParseUser.logInInBackground(usernameText, passwordText, LogInCallback { user, e ->
             if (e != null){
                 Toast.makeText(this, TOAST_LOGIN_ISSUE + e.message,
@@ -108,11 +124,36 @@ class LoginActivity : AppCompatActivity() {
         })
     }
 
+    private fun goOfflineMainActivity() {
+        val intent = Intent(this, OfflineMainActivity::class.java)
+        startActivity(intent)
+        finish()
+    }
+
     private fun goMainActivity() {
         val intent = Intent(this, MainActivity::class.java)
         intent.putExtra(Util.INTENT_KEY_SPOTIFY_ACCESS_TOKEN, accessToken)
         startActivityForResult(intent, LOGGED_OUT_REQUEST_CODE)
         finish()
+    }
+
+    private fun isConnectedToInternet(context: Context): Boolean {
+        val connectivityManager
+            = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val network = connectivityManager.activeNetwork ?: return false
+            val activeNetwork = connectivityManager.getNetworkCapabilities(network) ?: return false
+            return when {
+                activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
+                activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
+                else -> false
+            }
+        } else {
+            @Suppress("DEPRECATION") val networkInfo =
+                connectivityManager.activeNetworkInfo ?: return false
+            @Suppress("DEPRECATION")
+            return networkInfo.isConnected
+        }
     }
 
 }
