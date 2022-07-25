@@ -10,12 +10,9 @@ import com.parse.ParseQuery
 import com.parse.ParseUser
 import kaaes.spotify.webapi.android.models.AudioFeaturesTrack
 import retrofit.Callback
-import retrofit.RetrofitError
 import retrofit.client.Header
 import retrofit.client.Response
-import retrofit.mime.TypedInput
 import retrofit.mime.TypedString
-import java.io.IOException
 
 @ParseClassName("SongFeatures")
 class SongFeatures() : ParseObject() {
@@ -182,7 +179,7 @@ class SongFeatures() : ParseObject() {
             return dot(vec1, vec2) / (magnitude(vec1) * magnitude(vec2))
         }
 
-        private fun dot(vec1: Map<String, Double>, vec2: Map<String, Double>): Double {
+        fun dot(vec1: Map<String, Double>, vec2: Map<String, Double>): Double {
             var total = 0.0
             for (feature in SongFeatures.FEATURE_KEYS_ARRAY){
                 val v1Entry = vec1.getOrDefault(feature, 0.0)
@@ -195,7 +192,7 @@ class SongFeatures() : ParseObject() {
             return total
         }
 
-        private fun magnitude(vec: Map<String, Double>): Double {
+        fun magnitude(vec: Map<String, Double>): Double {
             var total = 0.0
             for (feature in SongFeatures.FEATURE_KEYS_ARRAY) {
                 val entry = vec.getOrDefault(feature, 0.0)

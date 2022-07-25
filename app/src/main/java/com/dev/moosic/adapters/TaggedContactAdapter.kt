@@ -1,6 +1,7 @@
 package com.dev.moosic.adapters
 
 import android.content.Context
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,16 +14,16 @@ import com.dev.moosic.models.Contact
 
 class TaggedContactAdapter (context: Context,
                             contactList: List<Pair<Contact, String>>,
-                            friendsController: FriendsController
+                            private val friendsController: FriendsController
 ) : RecyclerView.Adapter<TaggedContactAdapter.ViewHolder>() {
     var contactList : List<Pair<Contact, String>> = ArrayList()
     var context : Context
-    var friendsController : FriendsController
+
     val adapter = this
+
     init {
         this.context = context
         this.contactList = contactList
-        this.friendsController = friendsController
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -44,7 +45,6 @@ class TaggedContactAdapter (context: Context,
         var nameField : TextView
         var parseUsernameField : TextView
         var similarityField : TextView
-
         var followButton : Button
 
         init {
@@ -68,6 +68,9 @@ class TaggedContactAdapter (context: Context,
                 followButton.visibility = View.GONE
             }
             similarityField.visibility = View.GONE
+            itemView.setOnClickListener{
+                friendsController.launchDetailView(contactPair.first)
+            }
         }
     }
 }

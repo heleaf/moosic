@@ -8,25 +8,27 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.R
-import com.dev.moosic.controllers.SongController
+import com.dev.moosic.controllers.MainActivityControllerInterface
+import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import com.dev.moosic.models.Song
+import com.dev.moosic.models.UserRepositorySong
 import com.facebook.drawee.view.SimpleDraweeView
 import com.google.gson.Gson
 import kaaes.spotify.webapi.android.models.Track
 import java.lang.Exception
 
 private const val TAG = "HorizontalPlaylistAdapter"
-class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>, controller: SongController)
+class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>,
+                                private val miniPlayerController: MainActivityControllerInterface,
+                                private val playlistController: UserRepoPlaylistControllerInterface)
     : RecyclerView.Adapter<HorizontalPlaylistAdapter.ViewHolder>() {
 
     val context: Context
     private val songs: ArrayList<Song>
-    val controller: SongController
 
     init {
         this.context = context
         this.songs = songs
-        this.controller = controller
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -63,14 +65,16 @@ class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>, contro
             val gson = Gson()
             val track = gson.fromJson(song.getJsonDataString(), Track::class.java)
 
-            albumCover.setOnLongClickListener {
-                controller.addToPlaylist(track)
+            itemView.setOnLongClickListener {
+                playlistController.addToPlaylist(UserRepositorySong(track.id,
+                    gson.toJson(track).toString()), true)
                 return@setOnLongClickListener true
             }
 
-            albumCover.setOnClickListener {
-                controller.playSongOnSpotify(track.uri, track.id)
+            itemView.setOnClickListener {
+                miniPlayerController.playSongOnSpotify(track.uri, track.id)
             }
+
         }
     }
 

@@ -3,29 +3,19 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
+        android:id="@+id/searchMenuIcon"
+        android:icon="?android:attr/actionModeWebSearchDrawable"
+        android:iconTint="#FFFFFF"
+        android:title="Search"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"
+        app:showAsAction="ifRoom|collapseActionView" />
+
+    <item
         android:id="@+id/settingsMenuIcon"
+        android:icon="@android:drawable/ic_menu_preferences"
+        android:iconTint="#FFFFFF"
         android:title="Settings"
         android:visible="false"
         app:showAsAction="always" />
-    <item
-        android:id="@+id/backMenuIcon"
-        android:icon="?attr/homeAsUpIndicator"
-        android:title="Back"
-        android:visible="false"
-        app:showAsAction="always" />
-
-    <item
-        android:id="@+id/searchMenuIcon"
-        android:icon="?android:attr/actionModeWebSearchDrawable"
-        app:showAsAction="always"
-        app:actionViewClass="androidx.appcompat.widget.SearchView"
-        android:title="Search" />
-
-<!--    <item-->
-<!--        android:id="@+id/likedSongsButton"-->
-<!--        android:title="Liked Songs" />-->
-<!--    <item-->
-<!--        android:id="@+id/myPlaylistButton"-->
-<!--        android:title="My Playlist" />-->
 
 </menu>

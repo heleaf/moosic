@@ -5,8 +5,7 @@
     android:id="@+id/friendPlaylistRvItemLayout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="5dp"
-    >
+    android:padding="5dp">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/friendPlaylistSongsRv"
@@ -21,8 +20,7 @@
         android:id="@+id/textView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="5dp"
-        android:text="is listening to..."
+        android:text="Your friends are listening to..."
         android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/friendPlaylistDisplayParseUsername"
@@ -34,6 +32,7 @@
         android:layout_height="wrap_content"
         android:textSize="18sp"
         android:textStyle="bold"
+        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:text="leaf" />

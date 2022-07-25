@@ -24,46 +24,45 @@ private const val TAG = "SignUpActivity"
 private const val TOAST_INVALID_PHONE_NUMBER = "Invalid phone number inputted"
 private const val TOAST_SIGNUP_ERROR = "Error signing up: "
 private const val TOAST_SIGNUP_SUCCESS = "Successfully signed up"
-private const val TOAST_SPOTIFY_AUTH_FAILURE = "Failed to authorize spotify account, " +
-        "please restart the app to try again"
+private const val TOAST_SPOTIFY_AUTH_FAILURE = "Failed to authorize spotify account, please restart the app to try again"
 
 class SignUpActivity : AppCompatActivity() {
-    lateinit var mUsername : EditText
-    lateinit var mPassword : EditText
-    lateinit var mEmail : EditText
-    lateinit var mPhoneNumber : EditText
-    lateinit var mSignUpButton : Button
+    lateinit var etUsername : EditText
+    lateinit var etPassword : EditText
+    lateinit var etEmail : EditText
+    lateinit var etPhoneNumber : EditText
+    lateinit var signUpButton : Button
     lateinit var accessToken: String
     var user : ParseUser = ParseUser()
 
     lateinit var showHidePasswordButton: ImageButton
-    var showingPassword = false
+    var showPassword = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sign_up)
 
-        mUsername = findViewById(R.id.etSignUpUsername)
-        mPassword = findViewById(R.id.etSignUpPassword)
+        etUsername = findViewById(R.id.etSignUpUsername)
+        etPassword = findViewById(R.id.etSignUpPassword)
         showHidePasswordButton = findViewById(R.id.showHidePasswordButton)
-        mEmail = findViewById(R.id.etSignUpEmail)
-        mPhoneNumber = findViewById(R.id.etSignUpPhone)
-        mSignUpButton = findViewById(R.id.signUpSignUpButton)
+        etEmail = findViewById(R.id.etSignUpEmail)
+        etPhoneNumber = findViewById(R.id.etSignUpPhone)
+        signUpButton = findViewById(R.id.signUpSignUpButton)
 
         showHidePasswordButton.setOnClickListener {
-            if (showingPassword) {
-                mPassword.transformationMethod = PasswordTransformationMethod.getInstance()
+            if (showPassword) {
+                etPassword.transformationMethod = PasswordTransformationMethod.getInstance()
             } else {
-                mPassword.transformationMethod = HideReturnsTransformationMethod.getInstance()
+                etPassword.transformationMethod = HideReturnsTransformationMethod.getInstance()
             }
-            showingPassword = !showingPassword
+            showPassword = !showPassword
         }
 
-        mSignUpButton.setOnClickListener(View.OnClickListener {
-            val usernameText = mUsername.text
-            val passwordText = mPassword.text
-            val emailText = mEmail.text
-            val phoneText = mPhoneNumber.text
+        signUpButton.setOnClickListener(View.OnClickListener {
+            val usernameText = etUsername.text
+            val passwordText = etPassword.text
+            val emailText = etEmail.text
+            val phoneText = etPhoneNumber.text
             if (!(usernameText == null || passwordText == null ||
                     emailText == null || phoneText == null)) {
                 signUp(usernameText.toString(), passwordText.toString(),
@@ -77,11 +76,11 @@ class SignUpActivity : AppCompatActivity() {
         val passwordText = intent.getStringExtra(Util.INTENT_KEY_PASSWORD_TEXT)
 
         if (usernameText != null){
-            mUsername.setText(usernameText)
+            etUsername.setText(usernameText)
         }
 
         if (passwordText != null){
-            mPassword.setText(passwordText)
+            etPassword.setText(passwordText)
         }
 
     }
@@ -144,6 +143,7 @@ class SignUpActivity : AppCompatActivity() {
                 }
             }
         }
+
         if (requestCode == Util.REQUEST_CODE_GET_INTERESTS) {
             if (resultCode == RESULT_OK){
                 val genres : ArrayList<String>

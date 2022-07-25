@@ -10,17 +10,21 @@ import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.R
-import com.dev.moosic.controllers.SongController
+import com.dev.moosic.controllers.MainActivityControllerInterface
+import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import com.dev.moosic.models.Contact
 import com.dev.moosic.models.Song
+import com.dev.moosic.models.UserRepositorySong
 import com.facebook.drawee.view.SimpleDraweeView
+import com.google.gson.Gson
 import kaaes.spotify.webapi.android.models.Track
 import java.lang.Exception
 
 private const val TAG = "HomeFeedAdapter"
 
 class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String>>,
-    controller: SongController) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+                          private val mainActivitySongController: MainActivityControllerInterface,
+                          private val playlistController: UserRepoPlaylistControllerInterface) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     companion object {
         const val TAG_TRACK = "track"
         const val TAG_FRIEND_PLAYLIST = "friendPlaylist"
@@ -28,14 +32,12 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
         const val INT_CODE_FRIEND_PLAYLIST = 1
         const val INT_CODE_UNKNOWN = 2
     }
-    var itemList: ArrayList<Pair<Any, String>>
-    var context: Context
-    var controller: SongController
+    val itemList: ArrayList<Pair<Any, String>>
+    val context: Context
 
     init {
         this.itemList = itemList
         this.context = context
-        this.controller = controller
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -76,7 +78,7 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
             }
             TAG_TRACK -> {
                 val trackHolder = holder as TrackViewHolder
-                trackHolder.bindTrack(item.first as Track, position)
+                trackHolder.bindTrack(item.first as Track)
             }
             else -> {}
         }
@@ -96,12 +98,11 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
         }
 
         fun bindPlaylist(pair: Pair<Contact, ArrayList<Song>>, position: Int) {
-            val contact = pair.first
             val songs = pair.second
-            if (contact.parseUsername != null) {
-                usernameField.setText(contact.parseUsername)
-            }
-            val playlistSongAdapter = HorizontalPlaylistAdapter(context, songs, controller)
+            usernameField.visibility = View.GONE
+
+            val playlistSongAdapter = HorizontalPlaylistAdapter(context, songs,
+                this@HomeFeedItemAdapter.mainActivitySongController, playlistController)
             playlistRv.adapter = playlistSongAdapter
             val linearLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL,
                 false)
@@ -112,29 +113,20 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
     inner class TrackViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val albumCover : SimpleDraweeView
         private val songTitle : TextView
-        private val albumTitle : TextView
         private val artistName : TextView
 
         private val heartButton : ImageView
-        private val addToPlaylistButton : ImageView
-        private val deleteFromPlaylistButton : ImageView
 
         init{
             albumCover = itemView.findViewById(R.id.singleFriendPlaylistSongImage)
             songTitle = itemView.findViewById(R.id.trackTitle)
-            albumTitle = itemView.findViewById(R.id.albumTitle)
             artistName = itemView.findViewById(R.id.artistName)
             heartButton = itemView.findViewById(R.id.heartButton)
-            addToPlaylistButton = itemView.findViewById(R.id.addToPlaylistButton)
-            deleteFromPlaylistButton = itemView.findViewById(R.id.deleteFromPlaylistButton)
         }
 
-        fun bindTrack(track: Track, position: Int) {
+        fun bindTrack(track: Track) {
             val trackTitleText = track.name
             songTitle.setText(trackTitleText)
-
-            val albumTitleText = track.album.name
-            albumTitle.setText(albumTitleText)
 
             val artistNameText = track.artists.fold(
                 ""
@@ -151,25 +143,37 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
                 e.message?.let { Log.e(TAG, it) }
             }
 
-            listOf(heartButton, deleteFromPlaylistButton).map{
-                button -> button.visibility = View.GONE
+            heartButton.visibility = View.VISIBLE
+            val heartIcon = if (playlistController.isInPlaylist(track.id)) R.drawable.ufi_heart_active
+            else R.drawable.ufi_heart
+            heartButton.setImageResource(heartIcon)
+
+            heartButton.setOnClickListener {
+                if (playlistController.isInPlaylist(track.id)) {
+                    playlistController.removeFromPlaylist(track.id)
+                    heartButton.setImageResource(R.drawable.ufi_heart)
+                } else {
+                    val gson = Gson()
+                    playlistController.addToPlaylist(UserRepositorySong(track.id,
+                        gson.toJson(track).toString()), true)
+                    heartButton.setImageResource(R.drawable.ufi_heart_active)
+                }
             }
 
-            addToPlaylistButton.visibility = View.VISIBLE
-            addToPlaylistButton.setOnClickListener {
-                controller.addToPlaylist(track)
-            }
-
-            albumCover.setOnLongClickListener {
-                controller.addToPlaylist(track)
+            itemView.setOnLongClickListener {
+                val gson = Gson()
+                playlistController.addToPlaylist(UserRepositorySong(track.id,
+                    gson.toJson(track).toString()), true)
+                heartButton.setImageResource(R.drawable.ufi_heart_active)
                 return@setOnLongClickListener true
             }
 
-            albumCover.setOnClickListener {
-                controller.playSongOnSpotify(track.uri, track.id)
+            itemView.setOnClickListener {
+                this@HomeFeedItemAdapter.mainActivitySongController.playSongOnSpotify(track.uri, track.id)
             }
 
         }
+
     }
 
 }

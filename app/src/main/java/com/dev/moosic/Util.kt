@@ -19,6 +19,7 @@ class Util {
         const val PARSEUSER_KEY_FAVORITE_GENRES = "userPickedGenres"
 
         const val PARSEPLAYLIST_KEY_SONGS = "playlistSongs"
+        const val PARSESONG_KEY_SPOTIFY_ID = "spotifyId"
         const val PARSE_KEY_CREATED_AT = "createdAt"
 
         const val SPOTIFY_APK_CLIENT_ID = "7b7fed9bf37945818d20992b055ac63b"
@@ -30,6 +31,17 @@ class Util {
         const val SPOTIFY_QUERY_PARAM_OFFSET = "offset"
         const val SPOTIFY_QUERY_PARAM_LIMIT = "limit"
 
+        const val SPOTIFY_URI_PREFIX = "spotify:track:"
+
+        fun getSpotifyIdFromUri(uri: String) : String {
+            if (uri.length < SPOTIFY_URI_PREFIX.length) { return "" }
+            return uri.slice(IntRange(SPOTIFY_URI_PREFIX.length, uri.length - 1))
+        }
+
+        fun getSpotifyUriFromSpotifyId(spotifyId: String) : String {
+            return "${SPOTIFY_URI_PREFIX}$spotifyId"
+        }
+
         const val DUMMY_URL = "url"
         private const val DUMMY_STATUS = 200
         private const val DUMMY_REASON = "reason"
@@ -40,7 +52,8 @@ class Util {
             DUMMY_REASON, DUMMY_HEADER_LIST,
             TypedString(DUMMY_BODY_STRING)
         )
-        private const val THROWABLE_NULL_SUCCESS_MESSAGE = "Objects on success are null"
+
+        const val THROWABLE_NULL_SUCCESS_MESSAGE = "Objects on success are null"
         val NULL_SUCCESS_ERROR: RetrofitError = retrofit.RetrofitError.unexpectedError(
             DUMMY_URL, Throwable(THROWABLE_NULL_SUCCESS_MESSAGE))
 
@@ -53,9 +66,16 @@ class Util {
         const val INTENT_KEY_USERNAME_TEXT = "usernameText"
         const val INTENT_KEY_PASSWORD_TEXT = "passwordText"
         const val INTENT_KEY_NEW_USER = "user"
+        const val INTENT_KEY_DETAIL_VIEW_USERNAME = "detailUsername"
+        const val INTENT_KEY_DETAIL_VIEW_PARSEUSERID = "detailParseUserId"
+        const val INTENT_KEY_DETAIL_VIEW_SONGCONTROLLER = "detailSongController"
 
         const val REQUEST_CODE_USER_AUTH = 1337
         const val REQUEST_CODE_GET_INTERESTS = 1999
+        const val REQUEST_CODE_SETTINGS = 2000
+        const val RESULT_CODE_LOG_OUT = 2001
+        const val RESULT_CODE_EXIT_SETTINGS = 2002
+        const val RESULT_CODE_ADDED_SONGS_FROM_DETAIL_PLAYLIST = 2003
 
     }
 }

@@ -6,77 +6,62 @@ import android.view.*
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.dev.moosic.MainActivity
 import com.dev.moosic.R
+import com.dev.moosic.controllers.MainActivityControllerInterface
+import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
+import com.dev.moosic.models.UserRepositorySong
 import com.facebook.drawee.view.SimpleDraweeView
+import com.google.gson.Gson
 import kaaes.spotify.webapi.android.models.Track
 import java.lang.Exception
 
-private const val TAG = "TopTrackAdapter"
+private const val TAG = "TrackAdapter"
 private const val EMPTY_STR = ""
 private const val ARTIST_STR_SEPARATOR = ", "
 
 class TrackAdapter(context : Context, tracks : ArrayList<Track>,
-                   controller : MainActivity.MainActivitySongController,
-                   showAddButton : Boolean, showDeleteButton : Boolean)
+                   private val miniPlayerController : MainActivityControllerInterface,
+                   private val playlistController: UserRepoPlaylistControllerInterface)
     : RecyclerView.Adapter<TrackAdapter.ViewHolder>() {
-    var mContext : Context
-    var mTracks : ArrayList<Track> = ArrayList()
-    val mainActivitySongController : MainActivity.MainActivitySongController = controller
-    var mShowDeleteButton = showDeleteButton
-    var mShowAddButton = showAddButton
+    var context : Context
+    var tracks : ArrayList<Track> = ArrayList()
+    val adapter = this
 
     init {
-        this.mContext = context
-        this.mTracks = tracks
+        this.context = context
+        this.tracks = tracks
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TrackAdapter.ViewHolder {
-        val view = LayoutInflater.from(this.mContext)
+        val view = LayoutInflater.from(this.context)
             .inflate(R.layout.single_track_item, parent, false)
         return ViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: TrackAdapter.ViewHolder, position: Int) {
-        val track = this.mTracks.get(position)
+        val track = this.tracks.get(position)
         holder.bind(track, position)
     }
 
     override fun getItemCount(): Int {
-        return this.mTracks.size
+        return this.tracks.size
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var albumCover : SimpleDraweeView
         var trackTitle : TextView
-        var albumTitle : TextView
         var artistName : TextView
         var heartButton : ImageView
-        var addToPlaylistButton : ImageView
 
         init {
             albumCover = itemView.findViewById(R.id.singleFriendPlaylistSongImage)
             trackTitle = itemView.findViewById(R.id.trackTitle)
-            albumTitle = itemView.findViewById(R.id.albumTitle)
             artistName = itemView.findViewById(R.id.artistName)
             heartButton = itemView.findViewById(R.id.heartButton)
-            addToPlaylistButton = itemView.findViewById(R.id.addToPlaylistButton)
         }
         fun bind(track: Track, position: Int) {
-            itemView.setOnLongClickListener {
-                mainActivitySongController.addToParsePlaylist(track)
-                return@setOnLongClickListener true
-            }
-
-            itemView.setOnClickListener {
-                mainActivitySongController.playSongOnSpotify(track.uri, track.id)
-            }
-
             val trackTitleText = track.name
             trackTitle.setText(trackTitleText)
-
-            val albumTitleText = track.album.name
-            albumTitle.setText(albumTitleText)
 
             val artistNameText = track.artists.fold(
                 EMPTY_STR
@@ -93,32 +78,38 @@ class TrackAdapter(context : Context, tracks : ArrayList<Track>,
                 e.message?.let { Log.e(TAG, it) }
             }
 
-            heartButton.visibility = View.GONE
-            heartButton.setOnClickListener(View.OnClickListener {
-                mainActivitySongController.addToSavedTracks(track.id)
-            })
+            heartButton.visibility = View.VISIBLE
 
-            if (mShowAddButton) {
-                addToPlaylistButton.visibility = View.VISIBLE
-                addToPlaylistButton.setOnClickListener(View.OnClickListener {
-                    mainActivitySongController.addToPlaylist(track)
-                })
-            } else {
-                addToPlaylistButton.visibility = View.GONE
+            val heartIcon = if (playlistController.isInPlaylist(track.id)) R.drawable.ufi_heart_active
+            else R.drawable.ufi_heart
+            heartButton.setImageResource(heartIcon)
+
+            heartButton.setOnClickListener {
+                if (playlistController.isInPlaylist(track.id)) {
+                    playlistController.removeFromPlaylist(track.id)
+                    heartButton.setImageResource(R.drawable.ufi_heart)
+                } else {
+                    val gson = Gson()
+                    playlistController.addToPlaylist(
+                        UserRepositorySong(track.id,
+                        gson.toJson(track).toString()), true)
+                    heartButton.setImageResource(R.drawable.ufi_heart_active)
+                }
             }
 
-            val deleteButton : ImageView = itemView.findViewById(R.id.deleteFromPlaylistButton)
-            if (mShowDeleteButton){
-                deleteButton.visibility = View.VISIBLE
-                deleteButton.setOnClickListener(View.OnClickListener {
-                    mainActivitySongController.removeFromPlaylist(track, position)
-                    mTracks.removeAt(position)
-                    this@TrackAdapter.notifyItemRemoved(position)
-                    this@TrackAdapter.notifyItemRangeChanged(position, mTracks.size);
-                })
-            } else {
-                deleteButton.visibility = View.GONE
+            itemView.setOnLongClickListener {
+                val gson = Gson()
+                playlistController.addToPlaylist(
+                    UserRepositorySong(track.id,
+                    gson.toJson(track).toString()), true)
+                heartButton.setImageResource(R.drawable.ufi_heart_active)
+                return@setOnLongClickListener true
             }
+
+            itemView.setOnClickListener {
+                miniPlayerController.playSongOnSpotify(track.uri, track.id)
+            }
+
         }
 
     }

@@ -10,18 +10,20 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.EndlessRecyclerViewScrollListener
 import com.dev.moosic.LoadMoreFunction
-import com.dev.moosic.MainActivity
 import com.dev.moosic.R
 import com.dev.moosic.adapters.TrackAdapter
+import com.dev.moosic.controllers.MainActivityControllerInterface
+import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
 
 private const val ARG_SEARCHED_TRACKS = "searchedTracks"
 private const val ARG_SEARCHED_QUERY_STR = "searchedQuery"
 
-class SearchFragment(controller: MainActivity.MainActivitySongController) : Fragment() {
+class SearchFragment(private val mainActivitySongController: MainActivityControllerInterface,
+                     private val playlistController: UserRepoPlaylistControllerInterface
+) : Fragment() {
     private var searchedTracks: ArrayList<Track> = ArrayList()
-    private var mainActivityController = controller
     private lateinit var currentQuery : String
 
     lateinit var rvSearchedTracks : RecyclerView
@@ -50,8 +52,9 @@ class SearchFragment(controller: MainActivity.MainActivitySongController) : Frag
     companion object {
         @JvmStatic
         fun newInstance(searchedTracks : ArrayList<Track>, searchedQuery: String,
-                        controller : MainActivity.MainActivitySongController) =
-            SearchFragment(controller).apply {
+                        mainActivitySongController : MainActivityControllerInterface,
+                        playlistController: UserRepoPlaylistControllerInterface) =
+            SearchFragment(mainActivitySongController, playlistController).apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_SEARCHED_TRACKS, Parcels.wrap(searchedTracks))
                     putString(ARG_SEARCHED_QUERY_STR, searchedQuery)
@@ -63,7 +66,7 @@ class SearchFragment(controller: MainActivity.MainActivitySongController) : Frag
         super.onViewCreated(view, savedInstanceState)
         rvSearchedTracks = view.findViewById(R.id.rvSearchedTracks)
         adapter = TrackAdapter(view.context, searchedTracks,
-            mainActivityController, true, false)
+            mainActivitySongController, playlistController)
 
         rvSearchedTracks.adapter = adapter
         val linearLayoutManager = LinearLayoutManager(context)
@@ -73,7 +76,7 @@ class SearchFragment(controller: MainActivity.MainActivitySongController) : Frag
             scrollListener = EndlessRecyclerViewScrollListener(linearLayoutManager,
                 object: LoadMoreFunction {
                 override fun onLoadMore(page: Int, totalItemsCount: Int, view: RecyclerView?) {
-                    mainActivityController.loadMoreSearchTracks(currentQuery, searchedTracks.size,
+                    mainActivitySongController.loadMoreSearchTracks(currentQuery, searchedTracks.size,
                         totalItemsCount, adapter)
                 }
             })

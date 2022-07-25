@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
+import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.adapters.InterestItemAdapter
@@ -21,8 +22,7 @@ private const val ACTION_BAR_TITLE = "Favorite Genres"
 
 private const val GRID_ADAPTER_SPAN_COUNT = 2
 
-private const val TOAST_FAILED_TO_GET_GENRES = "Failed to pull genres from Spotify api, " +
-        "please restart the app and authorize your Spotify account."
+private const val TOAST_FAILED_TO_GET_GENRES = "Failed to pull genres from Spotify api, please restart the app and authorize your Spotify account."
 private const val TOAST_PICK_AT_LEAST_ONE_GENRE = "Please pick at least one genre to continue"
 
 class GetInterestsActivity : AppCompatActivity() {
@@ -36,6 +36,11 @@ class GetInterestsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_get_interests)
+
+        val toolbar = findViewById<Toolbar>(R.id.interestsToolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(false)
+        supportActionBar?.setDisplayShowTitleEnabled(true)
 
         title = ACTION_BAR_TITLE
         rvGenres = findViewById(R.id.rvGenres)

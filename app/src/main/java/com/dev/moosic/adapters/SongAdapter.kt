@@ -5,14 +5,14 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.dev.moosic.MainActivity
 import com.dev.moosic.R
 import com.dev.moosic.Util
-import com.dev.moosic.models.Song
+import com.dev.moosic.controllers.MainActivityControllerInterface
+import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
+import com.dev.moosic.models.UserRepositorySong
 import com.facebook.drawee.view.SimpleDraweeView
 import com.google.gson.Gson
 import com.parse.ParseUser
@@ -24,38 +24,24 @@ private const val EMPTY_STR = ""
 private const val ARTIST_STR_SEPARATOR = ", "
 
 class SongAdapter(
-    context: Context,
-    songs: ArrayList<Song>,
-    controller: MainActivity.MainActivitySongController,
-    buttonsToShow: List<String>,
-    emptyPlaylistText: TextView?
+    context: Context, private val mainActivitySongController: MainActivityControllerInterface,
+    emptyPlaylistText: TextView?,
+    private val playlistController: UserRepoPlaylistControllerInterface
 )
     : RecyclerView.Adapter<SongAdapter.ViewHolder>(){
 
-    var mContext: Context
-    var mSongs: ArrayList<Song> = ArrayList()
-    val mainActivitySongController : MainActivity.MainActivitySongController = controller
-    var mShowAddButton = false
-    var mShowDeleteButton = false
-    var mShowHeartButton = false
-    var mSpotifyUserId : String? = null
+    var context: Context
+    var songs: ArrayList<UserRepositorySong> = ArrayList()
+    var spotifyUserId : String? = null
     var emptyPlaylistText: TextView?
 
     init {
-        this.mContext = context
-        this.mSongs = songs
-        for (str in buttonsToShow){
-            when (str) {
-                Util.FLAG_ADD_BUTTON -> mShowAddButton = true
-                Util.FLAG_DELETE_BUTTON -> mShowDeleteButton = true
-                Util.FLAG_HEART_BUTTON -> mShowHeartButton = true
-                else -> {}
-            }
-        }
+        this.context = context
+        this.songs = playlistController.getUserPlaylist()
         val currentParseUser = ParseUser.getCurrentUser()
-        this.mSpotifyUserId = currentParseUser.getString(Util.PARSEUSER_KEY_SPOTIFY_ACCOUNT_USERNAME)
+        this.spotifyUserId = currentParseUser.getString(Util.PARSEUSER_KEY_SPOTIFY_ACCOUNT_USERNAME)
         this.emptyPlaylistText = emptyPlaylistText
-        if (this.mSongs.isEmpty()) {
+        if (this.songs.isEmpty()) {
             showEmptyPlaylistText()
         }
     }
@@ -65,106 +51,80 @@ class SongAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(this.mContext).inflate(
+        val view = LayoutInflater.from(this.context).inflate(
             R.layout.single_track_item, parent, false)
         return ViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val song = this.mSongs.get(position)
+        val song = this.songs.get(position)
         holder.bind(song, position)
     }
 
     override fun getItemCount(): Int {
-        return this.mSongs.size
+        return this.songs.size
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var albumCover : SimpleDraweeView? = null
-        var songTitle : TextView? = null
-        var albumTitle : TextView? = null
-        var artistName : TextView? = null
-
-        var heartButton : ImageView? = null
-        var addToPlaylistButton : ImageView? = null
-        var deleteFromPlaylistButton : ImageView? = null
-
-        var logOutRvButton: Button? = null
+        var albumCover : SimpleDraweeView
+        var songTitle : TextView
+        var artistName : TextView
+        var heartButton : ImageView
 
         init {
             albumCover = itemView.findViewById(R.id.singleFriendPlaylistSongImage)
             songTitle = itemView.findViewById(R.id.trackTitle)
-            albumTitle = itemView.findViewById(R.id.albumTitle)
             artistName = itemView.findViewById(R.id.artistName)
             heartButton = itemView.findViewById(R.id.heartButton)
-            addToPlaylistButton = itemView.findViewById(R.id.addToPlaylistButton)
-            deleteFromPlaylistButton = itemView.findViewById(R.id.deleteFromPlaylistButton)
-            logOutRvButton = itemView.findViewById(R.id.logOutRvButton)
         }
 
-        fun bind(song: Song, position: Int) {
-            val jsonDataString = song.getJsonDataString()
+        fun bind(song: UserRepositorySong/*Song*/, position: Int) {
+            val jsonDataString = song.trackJsonData
             val gson = Gson()
             val track = gson.fromJson(jsonDataString, Track::class.java)
-            if (jsonDataString != null) {
-                albumTitle?.setText(track.album.name)
-                val artistNameText = track.artists.fold(
+            val artistNameText = track.artists.fold(
                     EMPTY_STR
                 ) { accumulator, artist ->
                     if (artist.name == track.artists.get(0).name) artist.name else
                         accumulator + ARTIST_STR_SEPARATOR + artist.name
                 }
-                artistName?.setText(artistNameText)
-            }
+                artistName.setText(artistNameText)
 
-            songTitle?.setText(song.getName())
+
+            songTitle.setText(track.name)
 
             itemView.setOnClickListener {
-                val id = song.getSpotifyId()
+                val id = track.id
                 if (id != null){
-                    song.getSpotifyUri()
+                    track.uri
                         ?.let { uri -> mainActivitySongController.playSongOnSpotify(uri, id) }
                 }
             }
 
             try {
-                val albumCoverImgUri = song.getImageUri()
-                albumCover?.setImageURI(albumCoverImgUri);
+                val albumCoverImgUri = track.album.images.get(0).url
+                albumCover.setImageURI(albumCoverImgUri);
             } catch (e : Exception) {
                 e.message?.let { Log.e(TAG, it) }
             }
 
-            if (mShowHeartButton) {
-                heartButton?.visibility = View.VISIBLE
-                heartButton?.setOnClickListener(View.OnClickListener {
-                    mainActivitySongController.addToSavedTracks(track.id)
-                })
-            } else {
-                heartButton?.visibility = View.GONE
-            }
+            heartButton.visibility = View.VISIBLE
 
-            if (mShowAddButton) {
-                addToPlaylistButton?.visibility = View.VISIBLE
-                addToPlaylistButton?.setOnClickListener(View.OnClickListener {
-                    mainActivitySongController.addToParsePlaylist(track)
-                })
-            } else {
-                addToPlaylistButton?.visibility = View.GONE
-            }
+            val heartIcon = if (playlistController.isInPlaylist(track.id)) R.drawable.ufi_heart_active
+                            else R.drawable.ufi_heart
+            heartButton.setImageResource(heartIcon)
 
-            val deleteButton : ImageView = itemView.findViewById(R.id.deleteFromPlaylistButton)
-            if (mShowDeleteButton){
-                deleteButton.visibility = View.VISIBLE
-                deleteButton.setOnClickListener(View.OnClickListener {
-                    mainActivitySongController.removeFromParsePlaylist(track, position)
+            heartButton.setOnClickListener {
+                if (playlistController.isInPlaylist(track.id)) {
+                    playlistController.removeFromPlaylist(song)
                     this@SongAdapter.notifyItemRemoved(position)
-                    this@SongAdapter.notifyItemRangeChanged(position, mSongs.size)
-                    if (mSongs.isEmpty()) {
+                    this@SongAdapter.notifyItemRangeChanged(position, songs.size)
+                    if (songs.isEmpty()) {
                         showEmptyPlaylistText()
                     }
-                })
-            } else {
-                deleteButton.visibility = View.GONE
+                } else {
+                    playlistController.addToPlaylist(song, true)
+                }
             }
 
         }

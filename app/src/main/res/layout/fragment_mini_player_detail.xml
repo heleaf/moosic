@@ -45,7 +45,7 @@
         android:id="@+id/miniPlayerDetailTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="20dp"
         android:text="Song title"
         android:textColor="#FFFFFF"
         android:textSize="20sp"
@@ -89,15 +89,15 @@
 
     <ImageButton
         android:id="@+id/miniPlayerDetailBackToHome"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="-5dp"
-        android:layout_marginTop="20dp"
-        android:backgroundTint="#FFFFFF"
-        android:src="?attr/homeAsUpIndicator"
-        app:layout_constraintStart_toStartOf="@+id/miniPlayerDetailTitle"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:backgroundTint="#00FFFFFF"
+        android:src="@android:drawable/arrow_up_float"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:tint="#673AB7" />
+        app:tint="#FFFFFF" />
 
     <ImageView
         android:id="@+id/miniPlayerDetailAddToPlaylistButton"

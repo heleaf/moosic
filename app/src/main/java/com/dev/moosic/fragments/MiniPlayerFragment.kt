@@ -9,9 +9,12 @@ import android.widget.ImageButton
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
-import com.dev.moosic.MainActivity
 import com.dev.moosic.R
+import com.dev.moosic.controllers.MainActivityControllerInterface
+import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
+import com.dev.moosic.models.UserRepositorySong
 import com.facebook.drawee.view.SimpleDraweeView
+import com.google.gson.Gson
 import kaaes.spotify.webapi.android.models.Track
 import org.parceler.Parcels
 
@@ -19,9 +22,9 @@ private const val ARG_CURRENT_TRACK = "currentTrack"
 private const val ARG_IS_PAUSED = "isPaused"
 private const val TAG = "MiniPlayerFragment"
 
-class MiniPlayerFragment(controller: MainActivity.MainActivitySongController) : Fragment() {
+class MiniPlayerFragment(private val mainActivitySongController: MainActivityControllerInterface,
+                         private val playlistController: UserRepoPlaylistControllerInterface) : Fragment() {
     private lateinit var currentTrack: Track
-    private val mainActivityController = controller
     private lateinit var trackTitle: TextView
     lateinit var trackArtist: TextView
     lateinit var trackAlbumCover: SimpleDraweeView
@@ -48,9 +51,9 @@ class MiniPlayerFragment(controller: MainActivity.MainActivitySongController) : 
 
     companion object {
         @JvmStatic
-        fun newInstance(currentTrack: Track, controller: MainActivity.MainActivitySongController,
-                        isPaused: Boolean) =
-            MiniPlayerFragment(controller).apply {
+        fun newInstance(currentTrack: Track, mainActivitySongController: MainActivityControllerInterface,
+                        isPaused: Boolean, playlistController: UserRepoPlaylistControllerInterface) =
+            MiniPlayerFragment(mainActivitySongController, playlistController).apply {
                 arguments = Bundle().apply {
                     putParcelable(ARG_CURRENT_TRACK, Parcels.wrap(currentTrack))
                     putBoolean(ARG_IS_PAUSED, isPaused)
@@ -68,12 +71,16 @@ class MiniPlayerFragment(controller: MainActivity.MainActivitySongController) : 
         closeMiniPlayerButton = view.findViewById(R.id.closeMiniPlayerButton)
         addToPlaylistButton = view.findViewById(R.id.miniPlayerPreviewAddToPlaylistButton)
 
+        val gson = Gson()
         addToPlaylistButton.setOnClickListener {
-            currentTrack.let { it1 -> mainActivityController.addToParsePlaylist(it1) }
+            currentTrack.let {
+                playlistController.addToPlaylist(UserRepositorySong(currentTrack.id,
+                gson.toJson(currentTrack).toString()), true)
+            }
         }
 
         closeMiniPlayerButton.setOnClickListener {
-            mainActivityController.hideMiniPlayerPreview()
+            mainActivitySongController.hideMiniPlayerPreview()
         }
 
         if (isPaused){
@@ -82,15 +89,15 @@ class MiniPlayerFragment(controller: MainActivity.MainActivitySongController) : 
 
         playPauseButton.setOnClickListener {
             if (isPaused) {
-                mainActivityController.resumeSongOnSpotify()
+                mainActivitySongController.resumeSongOnSpotify()
             } else {
-                mainActivityController.pauseSongOnSpotify()
+                mainActivitySongController.pauseSongOnSpotify()
             }
             isPaused = !isPaused
         }
 
         layout.setOnClickListener{
-            mainActivityController.goToMiniPlayerDetailView()
+            mainActivitySongController.goToMiniPlayerDetailView()
         }
 
         trackTitle.setText(currentTrack.name)

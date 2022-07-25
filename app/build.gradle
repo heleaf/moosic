@@ -1,6 +1,14 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id("kotlin-parcelize")
+    id 'kotlin-kapt'
+
+    // For build.gradle.kts (Kotlin DSL)
+//    kotlin("jvm") version "1.6.21"
+
+    // For build.gradle (Groovy DSL)
+//    id "org.jetbrains.kotlin.jvm" // version "1.6.21"
 }
 
 android {
@@ -52,8 +60,10 @@ dependencies {
     implementation 'org.parceler:parceler-api:1.1.12'
     annotationProcessor 'org.parceler:parceler:1.1.12'
 
+//    apt 'org.parceler:parceler:1.1.12'
+
     implementation 'com.github.kaaes:spotify-web-api-android:0.4.1'
-    implementation("com.android.support.test:runner:0.2")
+    testImplementation("com.android.support.test:runner:0.2")
 
     implementation 'com.spotify.android:auth:1.2.5' // Maven dependency
 
@@ -65,10 +75,25 @@ dependencies {
     // swipe to refresh
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
 
-//    implementation 'com.github.smhdk:KM-Recyclerview-Sticky-Header:v1.0.0'
-
     implementation 'com.jakewharton:butterknife:10.0.0'
     annotationProcessor 'com.jakewharton:butterknife-compiler:10.0.0'
     implementation 'com.google.android.material:material:1.7.0-alpha02'
+
+    implementation("org.jetbrains.bio:viktor:1.1.0")
+
+    testImplementation "io.mockk:mockk:1.12.4"
+
+    implementation("androidx.room:room-runtime:2.4.2")
+    kapt("androidx.room:room-compiler:2.4.2")
+    implementation("androidx.room:room-ktx:2.4.2")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+
+    // ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.0-alpha01")
+    // ViewModel utilities for Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.0-alpha01")
+
+//    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1"
 
 }
