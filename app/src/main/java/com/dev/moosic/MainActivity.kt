@@ -15,7 +15,6 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.lifecycle.viewModelScope
 import androidx.room.Room
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.dev.moosic.adapters.HomeFeedItemAdapter
@@ -29,7 +28,6 @@ import com.dev.moosic.fragments.*
 import com.dev.moosic.localdb.LocalDatabase
 import com.dev.moosic.localdb.LocalDbUtil
 import com.dev.moosic.localdb.daos.UserDao
-import com.dev.moosic.localdb.entities.SavedUser
 import com.dev.moosic.models.Contact
 import com.dev.moosic.models.Song
 import com.dev.moosic.models.SongFeatures
@@ -47,7 +45,6 @@ import com.spotify.protocol.client.Subscription
 import com.spotify.protocol.types.PlayerState
 import kaaes.spotify.webapi.android.SpotifyApi
 import kaaes.spotify.webapi.android.models.*
-import kotlinx.coroutines.launch
 import retrofit.Callback
 import retrofit.RetrofitError
 import retrofit.client.Response
@@ -78,6 +75,7 @@ const val GENRE_SEEDS_LIMIT = 5
 const val DUMMY_SEED = ""
 const val RECOMMENDED_SONGS_LIMIT = 20
 const val SONGS_PER_FRIEND_TO_SHOW = 5
+const val SIMILARITY_THRESHOLD = 0.5
 
 const val PERMISSIONS_REQUEST_READ_CONTACTS_CODE = 100
 
@@ -89,8 +87,8 @@ class MainActivity : AppCompatActivity(){
 
     val spotifyApi = SpotifyApi()
 
-    val mainActivitySongController = MainActivitySongController()
-    private val mainActivityFriendsController = MainActivityFriendsController()
+    lateinit var mainActivitySongController: MainActivityControllerInterface
+    lateinit var mainActivityFriendsController: FriendsController
 
     lateinit var spotifyApiAuthToken : String
     var currentUserId : String? = null
@@ -143,8 +141,9 @@ class MainActivity : AppCompatActivity(){
     var currentContact: Contact? = null
     var currentContactPlaylist: ArrayList<Track> = ArrayList()
 
+    val userPlaylistRepository = UserPlaylistRepository()
     val playlistController: UserRepoPlaylistControllerInterface =
-        UserRepoPlaylistController(UserPlaylistRepository())
+        UserRepoPlaylistController(userPlaylistRepository)
 
     private lateinit var db : LocalDatabase
     private lateinit var userDao: UserDao
@@ -202,6 +201,9 @@ class MainActivity : AppCompatActivity(){
         Util.extractTopTenSongs(savedSongModel, db) {
             if (displayingHomeFragment) goToHomeFragment()
         }
+
+        mainActivitySongController = MainActivitySongController()
+        mainActivityFriendsController = MainActivityFriendsController()
         setUpCurrentUser()
         fetchTaggedContacts()
         setUpUserRecommendedTracks()
@@ -300,15 +302,14 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun setUpCurrentUser() {
-        val currentParseUser : ParseUser = ParseUser.getCurrentUser()
-
-        if (currentParseUser.getString(Util.PARSEUSER_KEY_SPOTIFY_ACCOUNT_USERNAME) == null){
+        val currentParseUser : ParseUser? = userPlaylistRepository.getUser()
+        if (currentParseUser?.getString(Util.PARSEUSER_KEY_SPOTIFY_ACCOUNT_USERNAME) == null){
             spotifyApi.service.getMe(object: Callback<UserPrivate> {
                 override fun success(t: UserPrivate?, response: Response?) {
                     if (t != null) {
                         currentUserId = t.id
-                        currentParseUser.put(Util.PARSEUSER_KEY_SPOTIFY_ACCOUNT_USERNAME, t.id)
-                        currentParseUser.saveInBackground()
+                        currentParseUser?.put(Util.PARSEUSER_KEY_SPOTIFY_ACCOUNT_USERNAME, t.id)
+                        currentParseUser?.saveInBackground()
                         setUpUserPlaylist()
                     }
                 }
@@ -326,8 +327,8 @@ class MainActivity : AppCompatActivity(){
     }
 
     private fun setUpUserPlaylist() {
-        val currentParseUser = ParseUser.getCurrentUser()
-        val playlistObj = currentParseUser.getParseObject(Util.PARSEUSER_KEY_PARSE_PLAYLIST)
+        val currentParseUser = userPlaylistRepository.getUser()
+        val playlistObj = currentParseUser?.getParseObject(Util.PARSEUSER_KEY_PARSE_PLAYLIST)
         val playlistSongsRelation = playlistObj?.getRelation<Song>(Util.PARSEPLAYLIST_KEY_SONGS)
         val query = playlistSongsRelation?.query
         query?.addDescendingOrder(Util.PARSE_KEY_CREATED_AT)
@@ -384,7 +385,7 @@ class MainActivity : AppCompatActivity(){
                     val topArtistsIdList =
                         extractTopArtistsIds(topTracksPager.items, ARTIST_SEEDS_LIMIT)
                     val userPickedGenresString =
-                        ParseUser.getCurrentUser().getString(Util.PARSEUSER_KEY_FAVORITE_GENRES)
+                        userPlaylistRepository.getUser()?.getString(Util.PARSEUSER_KEY_FAVORITE_GENRES)
                     val gson = Gson()
                     val userPickedGenresList =
                         if (userPickedGenresString == null) null else
@@ -881,7 +882,7 @@ class MainActivity : AppCompatActivity(){
                     usersToIgnore.addAll(nonFriendParseUsers)
 
                     asyncGetRecommendedFriends(false,
-                        usersToIgnore, DEFAULT_NUMBER_RECOMMENDED_USERS,
+                        usersToIgnore, DEFAULT_NUMBER_RECOMMENDED_USERS, SIMILARITY_THRESHOLD,
                         object: Callback<List<Pair<Contact, Double>>> {
                             override fun success(
                                 recs: List<Pair<Contact, Double>>?,
@@ -990,11 +991,12 @@ class MainActivity : AppCompatActivity(){
     fun asyncGetRecommendedFriends(includeCurrentUser: Boolean,
                                    contactsToIgnore: List<Contact>,
                                    numberOfUsersRequested: Int,
+                                   similarityThreshold: Double,
                                    callback: Callback<List<Pair<Contact, Double>>>) {
         val userQuery = ParseUser.getQuery()
         val usernamesToIgnore = ArrayList<String>()
         if (!includeCurrentUser) {
-            usernamesToIgnore.add(ParseUser.getCurrentUser().username)
+            userPlaylistRepository.getUser()?.username?.let { usernamesToIgnore.add(it) }
         }
         for (contact in contactsToIgnore) {
             contact.parseUsername?.let { usernamesToIgnore.add(it) }
@@ -1023,42 +1025,46 @@ class MainActivity : AppCompatActivity(){
                         callback.failure(Util.NULL_SUCCESS_ERROR)
                         return
                     }
-                    SongFeatures.asyncGetUserPlaylistFeatureMap(ParseUser.getCurrentUser(),
-                        object: Callback<Map<String, Double>> {
-                        override fun success(userInterestVector: Map<String, Double>?, response: Response?) {
-                            if (userInterestVector == null) {
-                                callback.failure(Util.NULL_SUCCESS_ERROR)
-                                return
-                            }
-                            val interestVectorSimilarities : List<Pair<Contact, Double>>
-                                    = interestVectors.map {
-                                    userVectorPair ->
-                                Pair(userVectorPair.first,
-                                    SongFeatures.computeVectorSimilarityScore(
-                                        userVectorPair.second,
-                                        userInterestVector))
-                            }
-                            val similaritiesFilteredOutNaNs = interestVectorSimilarities.filter {
-                                    it -> !it.second.isNaN()
-                            }
-                            val vectorComparator = Comparator {
-                                    vec1 : Pair<Contact, Double>,
-                                    vec2 : Pair<Contact, Double> ->
-                                if (vec1.second - vec2.second > 0.0) 1
-                                else if (vec1.second - vec2.second == 0.0) 0
-                                else -1
-                            }
-                            val sortedVectors
-                            = similaritiesFilteredOutNaNs.sortedWith(vectorComparator).reversed()
-                            val vecsToReturn
-                            = if (sortedVectors.size < numberOfUsersRequested) sortedVectors
-                                else sortedVectors.slice(IntRange(0, numberOfUsersRequested - 1))
-                            callback.success(vecsToReturn, Util.dummyResponse)
-                        }
-                        override fun failure(error: RetrofitError?) {
-                            callback.failure(error)
-                        }
-                    })
+                    userPlaylistRepository.getUser()?.let {
+                        SongFeatures.asyncGetUserPlaylistFeatureMap(
+                            it,
+                            object: Callback<Map<String, Double>> {
+                                override fun success(userInterestVector: Map<String, Double>?, response: Response?) {
+                                    if (userInterestVector == null) {
+                                        callback.failure(Util.NULL_SUCCESS_ERROR)
+                                        return
+                                    }
+                                    val interestVectorSimilarities : List<Pair<Contact, Double>> = interestVectors.map { userVectorPair ->
+                                        Pair(userVectorPair.first,
+                                            SongFeatures.computeVectorSimilarityScore(
+                                                userVectorPair.second,
+                                                userInterestVector))
+                                    }
+                                    val similaritiesFilteredOutNaNs = interestVectorSimilarities.filter { it -> !it.second.isNaN()
+                                    }
+                                    val vectorComparator = Comparator { vec1 : Pair<Contact, Double>,
+                                                                        vec2 : Pair<Contact, Double> ->
+                                        if (vec1.second - vec2.second > 0.0) 1
+                                        else if (vec1.second - vec2.second == 0.0) 0
+                                        else -1
+                                    }
+                                    val sortedVectors = similaritiesFilteredOutNaNs.sortedWith(vectorComparator).reversed()
+                                    val topVecs = if (sortedVectors.size < numberOfUsersRequested) sortedVectors
+                                    else sortedVectors.slice(IntRange(0, numberOfUsersRequested - 1))
+
+                                    val vecsToReturn = topVecs.filter{ pair ->
+                                        val similarity = pair.second;
+                                        similarity >= similarityThreshold
+                                    }
+
+                                    callback.success(vecsToReturn, Util.dummyResponse)
+                                }
+
+                                override fun failure(error: RetrofitError?) {
+                                    callback.failure(error)
+                                }
+                            })
+                    }
                 }
                 override fun failure(error: RetrofitError?) {
                     callback.failure(error)
@@ -1097,49 +1103,51 @@ class MainActivity : AppCompatActivity(){
 
     private fun asyncFilterFriendsFromContacts(contactList: List<Contact>,
                                                callback: Callback<Pair<List<Contact>, List<Contact>>>) {
-        val usersFollowedRelation = ParseUser.getCurrentUser().getRelation<ParseUser>(
+        val usersFollowedRelation = userPlaylistRepository.getUser()?.getRelation<ParseUser>(
             Util.PARSEUSER_KEY_USERS_FOLLOWED
         )
-        asyncGetNonFriendParseUsers(contactList, 0, ArrayList<Contact>(),
-            usersFollowedRelation, object: Callback<List<Contact>> {
-            override fun success(nonFriendParseUserList: List<Contact>?, response: Response?) {
-                if (nonFriendParseUserList != null) {
-                    val nonFriendParseUsers = ArrayList<Contact>()
-                    nonFriendParseUsers.addAll(nonFriendParseUserList)
-                    val friendParseUserQuery = usersFollowedRelation.query
-                    friendParseUserQuery.findInBackground { friendParseUsers, e ->
-                        if (e != null) {
-                            val throwable = Throwable(e.message.toString())
-                            val error = retrofit.RetrofitError.unexpectedError(
-                                Util.DUMMY_URL, throwable
-                            )
-                            callback.failure(error)
-                        }
-                        else if (friendParseUsers == null) {
-                            callback.failure(Util.NULL_SUCCESS_ERROR)
-                        }
+        if (usersFollowedRelation != null) {
+            asyncGetNonFriendParseUsers(contactList, 0, ArrayList<Contact>(),
+                usersFollowedRelation, object: Callback<List<Contact>> {
+                    override fun success(nonFriendParseUserList: List<Contact>?, response: Response?) {
+                        if (nonFriendParseUserList != null) {
+                            val nonFriendParseUsers = ArrayList<Contact>()
+                            nonFriendParseUsers.addAll(nonFriendParseUserList)
+                            val friendParseUserQuery = usersFollowedRelation.query
+                            friendParseUserQuery.findInBackground { friendParseUsers, e ->
+                                if (e != null) {
+                                    val throwable = Throwable(e.message.toString())
+                                    val error = retrofit.RetrofitError.unexpectedError(
+                                        Util.DUMMY_URL, throwable
+                                    )
+                                    callback.failure(error)
+                                } else if (friendParseUsers == null) {
+                                    callback.failure(Util.NULL_SUCCESS_ERROR)
+                                }
 
-                        followedFriends.addAll(friendParseUsers)
-                        filledFollowedFriends = true
+                                followedFriends.addAll(friendParseUsers)
+                                filledFollowedFriends = true
 
-                        if (filledRecommendedSongs && displayingHomeFragment) {
-                            displayingCachedSongs = false
-                            goToHomeFragment()
+                                if (filledRecommendedSongs && displayingHomeFragment) {
+                                    displayingCachedSongs = false
+                                    goToHomeFragment()
+                                }
+
+                                val friendParseUserContacts = friendParseUsers.map{parseUser
+                                    -> Contact.fromParseUser(parseUser)}
+                                callback.success(Pair(nonFriendParseUsers,
+                                    friendParseUserContacts), Util.dummyResponse)
+                            }
                         }
-
-                        val friendParseUserContacts = friendParseUsers.map{parseUser
-                            -> Contact.fromParseUser(parseUser)}
-                        callback.success(Pair(nonFriendParseUsers,
-                            friendParseUserContacts), Util.dummyResponse)
                     }
-                }
-            }
-            override fun failure(error: RetrofitError?) {
-                Log.e(TAG, error?.message.toString())
-                Log.e(TAG, error?.url.toString())
-                error?.stackTraceToString()?.let { Log.e(TAG, it) }
-            }
-        })
+
+                    override fun failure(error: RetrofitError?) {
+                        Log.e(TAG, error?.message.toString())
+                        Log.e(TAG, error?.url.toString())
+                        error?.stackTraceToString()?.let { Log.e(TAG, it) }
+                    }
+                })
+        }
     }
 
     private fun asyncExtractFriendPlaylists(friendParseUsers: List<ParseUser>,
@@ -1392,9 +1400,9 @@ class MainActivity : AppCompatActivity(){
     }
 
     inner class MainActivityFriendsController() : FriendsController {
-        val currentUser: ParseUser = ParseUser.getCurrentUser()
+        private val currentUser: ParseUser? = userPlaylistRepository.getUser()
         private val currentUserFollowedRelation
-        = currentUser.getRelation<ParseUser>(Util.PARSEUSER_KEY_USERS_FOLLOWED)
+        = currentUser?.getRelation<ParseUser>(Util.PARSEUSER_KEY_USERS_FOLLOWED)
 
         override fun followContact(contact: Contact, position: Int, adapter: TaggedContactAdapter) {
             val contactQuery = ParseQuery.getQuery(ParseUser::class.java)
@@ -1407,8 +1415,8 @@ class MainActivity : AppCompatActivity(){
                 if (objects != null) {
                     if (objects.size > 0) {
                         val userToFollow = objects.get(0)
-                        currentUserFollowedRelation.add(userToFollow)
-                        currentUser.saveInBackground{
+                        currentUserFollowedRelation?.add(userToFollow)
+                        currentUser?.saveInBackground{
                             if (it != null) {
                                 it.message?.let { it1 -> Log.e(TAG, "error saving curr user" + it1) }
                             }
@@ -1453,8 +1461,8 @@ class MainActivity : AppCompatActivity(){
                 if (objects != null) {
                     if (objects.size > 0) {
                         val userToFollow = objects.get(0)
-                        currentUserFollowedRelation.remove(userToFollow)
-                        currentUser.saveInBackground{
+                        currentUserFollowedRelation?.remove(userToFollow)
+                        currentUser?.saveInBackground{
                             if (it != null) {
                                 Log.e(TAG, "error saving user contact relation: " + it.message)
                             }
@@ -1553,6 +1561,11 @@ class MainActivity : AppCompatActivity(){
 
     inner class UserPlaylistRepository(): UserRepositoryInterface {
         private var userPlaylistSongs : ArrayList<UserRepositorySong> = ArrayList()
+        private var currentUser: ParseUser? = ParseUser.getCurrentUser()
+
+        override fun getUser(): ParseUser? {
+            return currentUser
+        }
 
         override fun getUserPlaylistSongs(): ArrayList<UserRepositorySong> {
             return userPlaylistSongs
@@ -1570,8 +1583,8 @@ class MainActivity : AppCompatActivity(){
                     userPlaylistSongs.remove(song)
                     return@saveInBackground
                 }
-                val user = ParseUser.getCurrentUser()
-                val playlist = user.getParseObject(Util.PARSEUSER_KEY_PARSE_PLAYLIST)
+                val user = userPlaylistRepository.getUser()
+                val playlist = user?.getParseObject(Util.PARSEUSER_KEY_PARSE_PLAYLIST)
                 val playlistSongsRelation
                         = playlist?.getRelation<Song>(Util.PARSEPLAYLIST_KEY_SONGS)
                 playlistSongsRelation?.add(newSong)
@@ -1593,8 +1606,8 @@ class MainActivity : AppCompatActivity(){
                 toast("Error in removing, song not found in playlist")
                 return
             }
-            val user = ParseUser.getCurrentUser()
-            val playlist = user.getParseObject(Util.PARSEUSER_KEY_PARSE_PLAYLIST)
+            val user = userPlaylistRepository.getUser()
+            val playlist = user?.getParseObject(Util.PARSEUSER_KEY_PARSE_PLAYLIST)
             val playlistSongsRelation = playlist?.getRelation<Song>(Util.PARSEPLAYLIST_KEY_SONGS)
 
             playlistSongsRelation?.query?.whereEqualTo(Util.PARSESONG_KEY_SPOTIFY_ID, songId)

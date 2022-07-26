@@ -72,16 +72,12 @@ class Util {
         const val INTENT_KEY_USERNAME_TEXT = "usernameText"
         const val INTENT_KEY_PASSWORD_TEXT = "passwordText"
         const val INTENT_KEY_NEW_USER = "user"
-        const val INTENT_KEY_DETAIL_VIEW_USERNAME = "detailUsername"
-        const val INTENT_KEY_DETAIL_VIEW_PARSEUSERID = "detailParseUserId"
-        const val INTENT_KEY_DETAIL_VIEW_SONGCONTROLLER = "detailSongController"
 
         const val REQUEST_CODE_USER_AUTH = 1337
         const val REQUEST_CODE_GET_INTERESTS = 1999
         const val REQUEST_CODE_SETTINGS = 2000
         const val RESULT_CODE_LOG_OUT = 2001
         const val RESULT_CODE_EXIT_SETTINGS = 2002
-        const val RESULT_CODE_ADDED_SONGS_FROM_DETAIL_PLAYLIST = 2003
 
         const val TOAST_FAILED_LOGOUT = "Failed to log out"
 
