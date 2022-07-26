@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/offlineHomeMenuItem"
+        android:icon="?attr/actionModePasteDrawable"
+        android:title="Home"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/offlineSettingsMenuItem"
+        android:icon="@android:drawable/ic_dialog_dialer"
+        android:title="Settings"
+        app:showAsAction="always" />
+</menu>

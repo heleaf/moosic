@@ -6,6 +6,7 @@ import com.dev.moosic.localdb.LocalDatabase
 import com.dev.moosic.localdb.daos.UserDao
 import com.dev.moosic.localdb.entities.SavedUser
 import junit.framework.Assert.*
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -36,7 +37,7 @@ class LocalDbUnitTest {
 
     @Test
     @Throws(Exception::class)
-    fun testUserDao() {
+    fun testUserDao() = runBlocking {
         val username = "bob"
         val parseUserId = "1"
         val savedSongs = "[ann]"

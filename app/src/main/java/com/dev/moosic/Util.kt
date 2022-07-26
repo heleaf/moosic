@@ -1,16 +1,22 @@
 package com.dev.moosic
 
+import androidx.lifecycle.viewModelScope
+import com.dev.moosic.localdb.LocalDatabase
+import com.dev.moosic.localdb.entities.SavedUser
+import com.dev.moosic.models.UserRepositorySong
+import com.dev.moosic.viewmodels.SavedSongsViewModel
+import com.google.gson.Gson
+import com.parse.ParseUser
+import kotlinx.coroutines.launch
+import retrofit.Callback
 import retrofit.RetrofitError
 import retrofit.client.Header
 import retrofit.client.Response
 import retrofit.mime.TypedString
+import java.util.function.Function
 
 class Util {
     companion object {
-        const val FLAG_ADD_BUTTON = "add"
-        const val FLAG_DELETE_BUTTON = "delete"
-        const val FLAG_HEART_BUTTON = "heart"
-
         const val PARSEUSER_KEY_USERS_FOLLOWED = "usersFollowed"
         const val PARSEUSER_KEY_PHONE_NUMBER = "phoneNumber"
         const val PARSEUSER_KEY_USERNAME = "username"
@@ -66,16 +72,43 @@ class Util {
         const val INTENT_KEY_USERNAME_TEXT = "usernameText"
         const val INTENT_KEY_PASSWORD_TEXT = "passwordText"
         const val INTENT_KEY_NEW_USER = "user"
-        const val INTENT_KEY_DETAIL_VIEW_USERNAME = "detailUsername"
-        const val INTENT_KEY_DETAIL_VIEW_PARSEUSERID = "detailParseUserId"
-        const val INTENT_KEY_DETAIL_VIEW_SONGCONTROLLER = "detailSongController"
 
         const val REQUEST_CODE_USER_AUTH = 1337
         const val REQUEST_CODE_GET_INTERESTS = 1999
         const val REQUEST_CODE_SETTINGS = 2000
         const val RESULT_CODE_LOG_OUT = 2001
         const val RESULT_CODE_EXIT_SETTINGS = 2002
-        const val RESULT_CODE_ADDED_SONGS_FROM_DETAIL_PLAYLIST = 2003
+
+        const val TOAST_FAILED_LOGOUT = "Failed to log out"
+
+        fun saveTopTenSongs(viewModel: SavedSongsViewModel, db: LocalDatabase) {
+            viewModel.viewModelScope.launch {
+                val gson = Gson()
+                val savedSongsObject = gson.toJson(viewModel.songs)
+                val currentUsername = ParseUser.getCurrentUser().username
+                val currentUserId = ParseUser.getCurrentUser().objectId
+                val user = db.userDao().getUser(currentUsername)
+                if (user == null) {
+                    db.userDao().insertUserInfo(SavedUser(currentUsername, currentUserId, savedSongsObject))
+                } else {
+                    db.userDao().updateUserInfo(SavedUser(currentUsername, currentUserId, savedSongsObject))
+                }
+            }
+        }
+
+        fun extractTopTenSongs(viewModel: SavedSongsViewModel, db: LocalDatabase, successFunction: Function<Unit, Unit>) {
+            viewModel.viewModelScope.launch {
+                val user = db.userDao().getUser(ParseUser.getCurrentUser().username)
+                if (user != null) {
+                    val gson = Gson()
+                    val songStr = user.savedSongs
+                    val songList : Array<UserRepositorySong> = gson.fromJson(songStr,
+                        Array<UserRepositorySong>::class.java)
+                    viewModel.songs.addAll(songList)
+                    successFunction.apply(Unit)
+                }
+            }
+        }
 
     }
 }

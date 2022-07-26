@@ -1,14 +1,20 @@
 package com.dev.moosic
-import com.dev.moosic.controllers.TestSongControllerImpl
+import com.dev.moosic.controllers.UserRepoPlaylistController
 import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import com.dev.moosic.models.UserRepositorySong
 import io.mockk.spyk
 import io.mockk.verify
 import org.junit.Test
+import com.parse.ParseUser
 
 class SongControllerUnitTest {
     class MockUserRepository() : UserRepositoryInterface {
         private var userRepositorySongs = ArrayList<UserRepositorySong>()
+
+        override fun getUser(): ParseUser? {
+            return null
+        }
+
         override fun getUserPlaylistSongs(): ArrayList<UserRepositorySong> {
             return userRepositorySongs
         }
@@ -42,7 +48,7 @@ class SongControllerUnitTest {
     fun addToPlaylist_creates_no_duplicates(){
         val mockUserRepository = spyk<MockUserRepository>()
         val song = UserRepositorySong("1", "{}")
-        val controller : UserRepoPlaylistControllerInterface = TestSongControllerImpl(mockUserRepository)
+        val controller : UserRepoPlaylistControllerInterface = UserRepoPlaylistController(mockUserRepository)
         controller.addToPlaylist(song, false)
         verify(exactly = 1) { mockUserRepository.addSongToUserPlaylist(song, false) }
         verify(exactly = 1) { mockUserRepository.isInUserPlaylist(song.id) }
@@ -56,7 +62,7 @@ class SongControllerUnitTest {
     fun removeFromPlaylist_checks_isInPlaylist(){
         val mockUserRepository = spyk<MockUserRepository>()
         val song = UserRepositorySong("1", "{}")
-        val controller = TestSongControllerImpl(mockUserRepository)
+        val controller = UserRepoPlaylistController(mockUserRepository)
         controller.addToPlaylist(song, false)
         controller.removeFromPlaylist(song)
         verify(exactly = 2) { mockUserRepository.isInUserPlaylist(song.id) }

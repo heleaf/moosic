@@ -3,12 +3,6 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     id("kotlin-parcelize")
     id 'kotlin-kapt'
-
-    // For build.gradle.kts (Kotlin DSL)
-//    kotlin("jvm") version "1.6.21"
-
-    // For build.gradle (Groovy DSL)
-//    id "org.jetbrains.kotlin.jvm" // version "1.6.21"
 }
 
 android {
@@ -37,6 +31,12 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+
+    testOptions {
+        unitTests.all {
+            useJUnitPlatform()
+        }
+    }
 }
 
 dependencies {
@@ -50,29 +50,23 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 
     implementation 'com.github.parse-community.Parse-SDK-Android:parse:4.0.0'
-    implementation 'com.squareup.okhttp3:logging-interceptor:3.8.1' // for logging API calls to LogCat
+    implementation 'com.squareup.okhttp3:logging-interceptor:3.8.1'
 
-    // your app dependencies
-//    implementation project(':spotify-app-remote')
     implementation "com.google.code.gson:gson:2.8.5"
 
-    // parceler
     implementation 'org.parceler:parceler-api:1.1.12'
     annotationProcessor 'org.parceler:parceler:1.1.12'
-
-//    apt 'org.parceler:parceler:1.1.12'
 
     implementation 'com.github.kaaes:spotify-web-api-android:0.4.1'
     testImplementation("com.android.support.test:runner:0.2")
 
-    implementation 'com.spotify.android:auth:1.2.5' // Maven dependency
+    implementation 'com.spotify.android:auth:1.2.5'
 
     implementation 'com.facebook.fresco:fresco:2.6.0'
 
     implementation "androidx.paging:paging-runtime:3.1.1"
     implementation "androidx.lifecycle:lifecycle-livedata:2.5.0"
 
-    // swipe to refresh
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
 
     implementation 'com.jakewharton:butterknife:10.0.0'
@@ -89,11 +83,9 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
 
-    // ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.0-alpha01")
-    // ViewModel utilities for Compose
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.0-alpha01")
 
-//    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1"
-
+    testImplementation("junit:junit:4.13.2")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.8.2")
 }
