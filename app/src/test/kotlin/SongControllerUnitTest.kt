@@ -49,11 +49,11 @@ class SongControllerUnitTest {
         val mockUserRepository = spyk<MockUserRepository>()
         val song = UserRepositorySong("1", "{}")
         val controller : UserRepoPlaylistControllerInterface = UserRepoPlaylistController(mockUserRepository)
-        controller.addToPlaylist(song, false)
+        controller.addToPlaylist(song, false, false)
         verify(exactly = 1) { mockUserRepository.addSongToUserPlaylist(song, false) }
         verify(exactly = 1) { mockUserRepository.isInUserPlaylist(song.id) }
 
-        controller.addToPlaylist(song, false)
+        controller.addToPlaylist(song, false, false)
         verify(exactly = 1) { mockUserRepository.addSongToUserPlaylist(song, false) }
         verify(exactly = 2) { mockUserRepository.isInUserPlaylist(song.id) }
     }
@@ -63,7 +63,7 @@ class SongControllerUnitTest {
         val mockUserRepository = spyk<MockUserRepository>()
         val song = UserRepositorySong("1", "{}")
         val controller = UserRepoPlaylistController(mockUserRepository)
-        controller.addToPlaylist(song, false)
+        controller.addToPlaylist(song, false, false)
         controller.removeFromPlaylist(song)
         verify(exactly = 2) { mockUserRepository.isInUserPlaylist(song.id) }
         verify(exactly = 1) { mockUserRepository.addSongToUserPlaylist(song, false) }

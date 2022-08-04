@@ -7,8 +7,8 @@ interface UserRepoPlaylistControllerInterface {
     fun getUserPlaylist(): ArrayList<UserRepositorySong>
     fun logSongInModel(song: UserRepositorySong, weight: Int)
     fun isInPlaylist(songId: String) : Boolean
-    fun addToPlaylist(song: UserRepositorySong, save: Boolean)
-    fun addAllToPlaylist(songs: List<UserRepositorySong>, save: Boolean)
+    fun addToPlaylist(song: UserRepositorySong, save: Boolean, log: Boolean)
+    fun addAllToPlaylist(songs: List<UserRepositorySong>, save: Boolean, log: Boolean)
     fun removeFromPlaylist(song: UserRepositorySong)
     fun removeFromPlaylist(songId: String)
 }

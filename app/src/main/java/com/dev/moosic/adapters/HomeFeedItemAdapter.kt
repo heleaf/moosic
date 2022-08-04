@@ -10,6 +10,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.R
+import com.dev.moosic.Util
 import com.dev.moosic.controllers.MainActivityControllerInterface
 import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import com.dev.moosic.models.Contact
@@ -148,28 +149,29 @@ class HomeFeedItemAdapter(context: Context, itemList: ArrayList<Pair<Any, String
             else R.drawable.ufi_heart
             heartButton.setImageResource(heartIcon)
 
+            val gson = Gson()
+            val song = UserRepositorySong(track.id,
+                gson.toJson(track).toString())
+
             heartButton.setOnClickListener {
                 if (playlistController.isInPlaylist(track.id)) {
                     playlistController.removeFromPlaylist(track.id)
                     heartButton.setImageResource(R.drawable.ufi_heart)
                 } else {
-                    val gson = Gson()
-                    playlistController.addToPlaylist(UserRepositorySong(track.id,
-                        gson.toJson(track).toString()), true)
+                    playlistController.addToPlaylist(song, true, true)
                     heartButton.setImageResource(R.drawable.ufi_heart_active)
                 }
             }
 
             itemView.setOnLongClickListener {
-                val gson = Gson()
-                playlistController.addToPlaylist(UserRepositorySong(track.id,
-                    gson.toJson(track).toString()), true)
+                playlistController.addToPlaylist(song, true, true)
                 heartButton.setImageResource(R.drawable.ufi_heart_active)
                 return@setOnLongClickListener true
             }
 
             itemView.setOnClickListener {
-                this@HomeFeedItemAdapter.mainActivitySongController.playSongOnSpotify(track.uri, track.id)
+                this@HomeFeedItemAdapter.mainActivitySongController.playSongOnSpotify(track.uri, track.id, true)
+                playlistController.logSongInModel(song, Util.ADD_TO_PLAYLIST_WEIGHT)
             }
 
         }

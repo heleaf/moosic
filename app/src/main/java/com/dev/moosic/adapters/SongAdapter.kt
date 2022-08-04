@@ -97,7 +97,7 @@ class SongAdapter(
                 val id = track.id
                 if (id != null){
                     track.uri
-                        ?.let { uri -> mainActivitySongController.playSongOnSpotify(uri, id) }
+                        ?.let { uri -> mainActivitySongController.playSongOnSpotify(uri, id, true) }
                 }
             }
 
@@ -123,7 +123,7 @@ class SongAdapter(
                         showEmptyPlaylistText()
                     }
                 } else {
-                    playlistController.addToPlaylist(song, true)
+                    playlistController.addToPlaylist(song, true, true)
                 }
             }
 

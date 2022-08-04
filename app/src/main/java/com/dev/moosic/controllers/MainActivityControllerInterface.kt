@@ -18,7 +18,7 @@ interface MainActivityControllerInterface {
                                    swipeContainer: SwipeRefreshLayout?)
     fun resetHomeFragment(swipeContainer: SwipeRefreshLayout)
 
-    fun playSongOnSpotify(uri: String, spotifyId: String)
+    fun playSongOnSpotify(uri: String, spotifyId: String, log: Boolean)
     fun pauseSongOnSpotify()
     fun resumeSongOnSpotify()
     fun goToMiniPlayerDetailView()

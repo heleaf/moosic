@@ -80,7 +80,7 @@ class MiniPlayerDetailFragment(private val mainActivitySongController: MainActiv
         addToPlaylistButton.setOnClickListener {
             currentTrack.let {
                 playlistController.addToPlaylist(UserRepositorySong(currentTrack.id,
-                gson.toJson(currentTrack).toString()), true)
+                gson.toJson(currentTrack).toString()), true, true)
             }
         }
 

@@ -69,7 +69,7 @@ class FriendsFragment(private val friendsController: FriendsController) : Fragme
 
         val recyclerItemDecoration : RecyclerItemDecoration
         = RecyclerItemDecoration(requireContext(), resources.getDimensionPixelSize(R.dimen.header_height),
-        false, getSectionCallback(taggedContactList))
+        true, getSectionCallback(taggedContactList))
         rvContacts.addItemDecoration(recyclerItemDecoration)
     }
 

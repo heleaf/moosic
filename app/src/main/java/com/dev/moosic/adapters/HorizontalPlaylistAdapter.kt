@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.dev.moosic.R
+import com.dev.moosic.Util
 import com.dev.moosic.controllers.MainActivityControllerInterface
 import com.dev.moosic.controllers.UserRepoPlaylistControllerInterface
 import com.dev.moosic.models.Song
@@ -64,15 +65,16 @@ class HorizontalPlaylistAdapter(context: Context, songs: ArrayList<Song>,
 
             val gson = Gson()
             val track = gson.fromJson(song.getJsonDataString(), Track::class.java)
+            val userRepoSong = UserRepositorySong(track.id,
+                gson.toJson(track).toString())
 
             itemView.setOnLongClickListener {
-                playlistController.addToPlaylist(UserRepositorySong(track.id,
-                    gson.toJson(track).toString()), true)
+                playlistController.addToPlaylist(userRepoSong, true, true)
                 return@setOnLongClickListener true
             }
 
             itemView.setOnClickListener {
-                miniPlayerController.playSongOnSpotify(track.uri, track.id)
+                miniPlayerController.playSongOnSpotify(track.uri, track.id, true)
             }
 
         }

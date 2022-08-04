@@ -92,7 +92,7 @@ class TrackAdapter(context : Context, tracks : ArrayList<Track>,
                     val gson = Gson()
                     playlistController.addToPlaylist(
                         UserRepositorySong(track.id,
-                        gson.toJson(track).toString()), true)
+                        gson.toJson(track).toString()), true, true)
                     heartButton.setImageResource(R.drawable.ufi_heart_active)
                 }
             }
@@ -101,13 +101,13 @@ class TrackAdapter(context : Context, tracks : ArrayList<Track>,
                 val gson = Gson()
                 playlistController.addToPlaylist(
                     UserRepositorySong(track.id,
-                    gson.toJson(track).toString()), true)
+                    gson.toJson(track).toString()), true, true)
                 heartButton.setImageResource(R.drawable.ufi_heart_active)
                 return@setOnLongClickListener true
             }
 
             itemView.setOnClickListener {
-                miniPlayerController.playSongOnSpotify(track.uri, track.id)
+                miniPlayerController.playSongOnSpotify(track.uri, track.id, true)
             }
 
         }
